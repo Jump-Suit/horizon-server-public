@@ -1,16 +1,12 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.TextFilterResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.TextFilterResponse)]
     public class MediusTextFilterResponse : BaseLobbyMessage, IMediusResponse
     {
-		public override byte PacketType => (byte)MediusLobbyMessageIds.TextFilterResponse;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.TextFilterResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 
@@ -47,13 +43,12 @@ namespace RT.Models
             writer.Write(StatusCode);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"Text:{Text} " +
-$"StatusCode:{StatusCode}";
+                $"MessageID: {MessageID} " +
+                $"Text: {Text} " +
+                $"StatusCode: {StatusCode}";
         }
     }
 }

@@ -3,7 +3,6 @@ using RT.Common;
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
-using System.Text;
 
 namespace Server.Common.Logging
 {
@@ -65,6 +64,11 @@ namespace Server.Common.Logging
         public string[] MediusDMEExtLogFilter { get; set; } = Enum.GetNames(typeof(MediusDmeMessageIds));
 
         /// <summary>
+        /// Collection of Medius Plugin Zipper messages to print out
+        /// </summary>
+        public string[] MediusNetMessageTypesLogFilter { get; set; } = Enum.GetNames(typeof(NetMessageTypeIds));
+
+        /// <summary>
         /// Internal preprocessed collection of message id filters.
         /// </summary>
         private Dictionary<RT_MSG_TYPE, bool> _rtLogFilters = new Dictionary<RT_MSG_TYPE, bool>();
@@ -72,6 +76,7 @@ namespace Server.Common.Logging
         private Dictionary<MediusLobbyMessageIds, bool> _lobbyLogFilters = new Dictionary<MediusLobbyMessageIds, bool>();
         private Dictionary<MediusMGCLMessageIds, bool> _mgclLogFilters = new Dictionary<MediusMGCLMessageIds, bool>();
         private Dictionary<MediusLobbyExtMessageIds, bool> _lobbyExtLogFilters = new Dictionary<MediusLobbyExtMessageIds, bool>();
+        private Dictionary<NetMessageTypeIds, bool> _netLogFilters = new Dictionary<NetMessageTypeIds, bool>();
 
         /// <summary>
         /// Whether or not the given RT message id should be logged
@@ -111,6 +116,14 @@ namespace Server.Common.Logging
         public bool IsLog(MediusLobbyExtMessageIds msgType)
         {
             return _lobbyExtLogFilters.TryGetValue(msgType, out var r) && r;
+        }
+
+        /// <summary>
+        /// Whether or not the given Medius lobby extension message id should be logged
+        /// </summary>
+        public bool IsLogPlugin(NetMessageTypeIds msgType)
+        {
+            return _netLogFilters.TryGetValue(msgType, out var r) && r;
         }
 
         /// <summary>
@@ -159,6 +172,84 @@ namespace Server.Common.Logging
                     if (Enum.TryParse<MediusLobbyExtMessageIds>(filter, out var value))
                         _lobbyExtLogFilters.Add(value, true);
             }
+
+            _netLogFilters.Clear();
+            if (MediusNetMessageTypesLogFilter != null)
+            {
+                foreach (var filter in MediusNetMessageTypesLogFilter)
+                    if (Enum.TryParse<NetMessageTypeIds>(filter, out var value))
+                        _netLogFilters.Add(value, true);
+            }
         }
+    }
+
+    public class DMELogSettings
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        public static LogSettings Singleton { get; set; } = null;
+
+        /// <summary>
+        /// Path to the log file.
+        /// </summary>
+        public string LogPath { get; set; } = "logs/DME.log";
+
+        /// <summary>
+        /// Whether to also log to the console.
+        /// </summary>
+        public bool LogToConsole { get; set; } = true;
+
+        /// <summary>
+        /// Size in bytes for each log file.
+        /// </summary>
+        public int RollingFileSize = 1024 * 1024 * 1;
+
+        /// <summary>
+        /// Max number of files before rolling back to the first log file.
+        /// </summary>
+        public int RollingFileCount = 100;
+
+        /// <summary>
+        /// Log level.
+        /// </summary>
+        public LogLevel LogLevel { get; set; } = LogLevel.Information;
+
+
+    }
+
+    public class NATLogSettings
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        public static LogSettings Singleton { get; set; } = null;
+
+        /// <summary>
+        /// Path to the log file.
+        /// </summary>
+        public string LogPath { get; set; } = "logs/nat.log";
+
+        /// <summary>
+        /// Whether to also log to the console.
+        /// </summary>
+        public bool LogToConsole { get; set; } = true;
+
+        /// <summary>
+        /// Size in bytes for each log file.
+        /// </summary>
+        public int RollingFileSize = 1024 * 1024 * 1;
+
+        /// <summary>
+        /// Max number of files before rolling back to the first log file.
+        /// </summary>
+        public int RollingFileCount = 100;
+
+        /// <summary>
+        /// Log level.
+        /// </summary>
+        public LogLevel LogLevel { get; set; } = LogLevel.Information;
+
+
     }
 }

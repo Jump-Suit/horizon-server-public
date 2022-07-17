@@ -1,16 +1,12 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.LadderList_ExtraInfoResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.LadderList_ExtraInfoResponse)]
     public class MediusLadderList_ExtraInfoResponse : BaseLobbyMessage, IMediusResponse
     {
-		public override byte PacketType => (byte)MediusLobbyMessageIds.LadderList_ExtraInfoResponse;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.LadderList_ExtraInfoResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 
@@ -67,19 +63,18 @@ namespace RT.Models
             writer.Write(new byte[3]);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"StatusCode:{StatusCode} " +
-$"LadderPosition:{LadderPosition} " +
-$"LadderStat:{LadderStat} " +
-$"AccountID:{AccountID} " +
-$"AccountName:{AccountName} " +
-$"AccountStats:{AccountStats} " +
-$"OnlineState:{OnlineState} " +
-$"EndOfList:{EndOfList}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
+                $"LadderPosition: {LadderPosition} " +
+                $"LadderStat: {LadderStat} " +
+                $"AccountID: {AccountID} " +
+                $"AccountName: {AccountName} " +
+                $"AccountStats: {AccountStats} " +
+                $"OnlineState: {OnlineState} " +
+                $"EndOfList: {EndOfList}";
         }
     }
 }

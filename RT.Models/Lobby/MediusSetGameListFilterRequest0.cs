@@ -1,13 +1,9 @@
 ﻿using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-    [MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.SetGameListFilter0)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.SetGameListFilter0)]
     public class MediusSetGameListFilterRequest0 : BaseLobbyMessage, IMediusRequest
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.SetGameListFilter0;
@@ -55,11 +51,11 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-                $"SessionKey:{SessionKey} " +
-                $"FilterField:{FilterField} " +
-                $"ComparisonOperator:{ComparisonOperator} " +
-                $"BaselineValue:{BaselineValue}";
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey} " +
+                $"FilterField: {FilterField} " +
+                $"ComparisonOperator: {ComparisonOperator} " +
+                $"BaselineValue: {BaselineValue}";
         }
     }
 }

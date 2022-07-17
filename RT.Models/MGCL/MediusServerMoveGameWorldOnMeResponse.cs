@@ -1,17 +1,13 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobbyReport, MediusMGCLMessageIds.ServerMoveGameWorldOnMeResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobbyReport, MediusMGCLMessageIds.ServerMoveGameWorldOnMeResponse)]
     public class MediusServerMoveGameWorldOnMeResponse : BaseMGCLMessage, IMediusResponse
     {
 
-		public override byte PacketType => (byte)MediusMGCLMessageIds.ServerMoveGameWorldOnMeResponse;
+        public override byte PacketType => (byte)MediusMGCLMessageIds.ServerMoveGameWorldOnMeResponse;
 
         public MessageId MessageID { get; set; }
         public MGCL_ERROR_CODE Confirmation;
@@ -43,13 +39,12 @@ namespace RT.Models
             writer.Write(MediusWorldID);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-                $"Confirmation:{Confirmation} " +
-                $"MediusWorldID:{MediusWorldID}";
+                $"MessageID: {MessageID} " +
+                $"Confirmation: {Confirmation} " +
+                $"MediusWorldID: {MediusWorldID}";
         }
     }
 }

@@ -1,17 +1,14 @@
 using RT.Common;
 using Server.Common;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobbyExt, MediusLobbyExtMessageIds.GameList_ExtraInfoResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.GameList_ExtraInfoResponse)]
     public class MediusGameList_ExtraInfoResponse : BaseLobbyExtMessage, IMediusResponse
     {
 
-		public override byte PacketType => (byte)MediusLobbyExtMessageIds.GameList_ExtraInfoResponse;
+        public override byte PacketType => (byte)MediusLobbyExtMessageIds.GameList_ExtraInfoResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 
@@ -36,7 +33,7 @@ namespace RT.Models
         public MediusWorldSecurityLevelType SecurityLevel;
         public MediusWorldStatus WorldStatus;
         public MediusGameHostType GameHostType;
-        public string GameName; // GAMENAME_MAXLEN
+        public string GameName;
         public byte[] GameStats = new byte[Constants.GAMESTATS_MAXLEN];
         public bool EndOfList;
 
@@ -137,7 +134,7 @@ $"SecurityLevel:{SecurityLevel} " +
 $"WorldStatus:{WorldStatus} " +
 $"GameHostType:{GameHostType} " +
 $"GameName:{GameName} " +
-$"GameStats:{GameStats} " +
+$"GameStats:{BitConverter.ToString(GameStats)} " +
 $"EndOfList:{EndOfList}";
         }
     }

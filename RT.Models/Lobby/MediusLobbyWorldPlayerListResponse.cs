@@ -1,16 +1,12 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.LobbyWorldPlayerListResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.LobbyWorldPlayerListResponse)]
     public class MediusLobbyWorldPlayerListResponse : BaseLobbyMessage, IMediusResponse
     {
-		public override byte PacketType => (byte)MediusLobbyMessageIds.LobbyWorldPlayerListResponse;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.LobbyWorldPlayerListResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 
@@ -68,14 +64,14 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"StatusCode:{StatusCode} " +
-$"PlayerStatus:{PlayerStatus} " +
-$"AccountID:{AccountID} " +
-$"AccountName:{AccountName} " +
-$"Stats:{Stats} " +
-$"ConnectionClass:{ConnectionClass} " +
-$"EndOfList:{EndOfList}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
+                $"PlayerStatus: {PlayerStatus} " +
+                $"AccountID: {AccountID} " +
+                $"AccountNam e: {AccountName} " +
+                $"Stats: {Stats} " +
+                $"ConnectionClass: {ConnectionClass} " +
+                $"EndOfList: {EndOfList}";
         }
     }
 }

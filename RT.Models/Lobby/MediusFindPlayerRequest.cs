@@ -1,17 +1,13 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.FindPlayer)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.FindPlayer)]
     public class MediusFindPlayerRequest : BaseLobbyMessage, IMediusRequest
     {
 
-		public override byte PacketType => (byte)MediusLobbyMessageIds.FindPlayer;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.FindPlayer;
 
         public MessageId MessageID { get; set; }
 

@@ -1,16 +1,12 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.SessionBeginResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.SessionBeginResponse)]
     public class MediusSessionBeginResponse : BaseLobbyMessage, IMediusResponse
     {
-		public override byte PacketType => (byte)MediusLobbyMessageIds.SessionBeginResponse;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.SessionBeginResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 
@@ -53,9 +49,9 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-    $"StatusCode:{StatusCode}" +
-    $"SessionKey:{SessionKey}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
+                $"SessionKey: {SessionKey}";
         }
     }
 }

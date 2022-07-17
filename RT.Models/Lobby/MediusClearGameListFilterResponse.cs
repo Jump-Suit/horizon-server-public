@@ -1,17 +1,13 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.ClearGameListFilterResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.ClearGameListFilterResponse)]
     public class MediusClearGameListFilterResponse : BaseLobbyMessage, IMediusResponse
     {
 
-		public override byte PacketType => (byte)MediusLobbyMessageIds.ClearGameListFilterResponse;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.ClearGameListFilterResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 

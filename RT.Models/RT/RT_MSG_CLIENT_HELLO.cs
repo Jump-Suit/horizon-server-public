@@ -1,8 +1,4 @@
 ﻿using RT.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
@@ -29,11 +25,11 @@ namespace RT.Models
             for (int i = 0; i < 5; ++i)
                 writer.Write((Parameters == null || i >= Parameters.Length) ? ushort.MinValue : Parameters[i]);
         }
-        
-         public override string ToString()
+
+        public override string ToString()
         {
             return base.ToString() + " " +
-                $"Version:{Parameters[1]}";
+                $"Version: {Parameters[1]}";
         }
     }
 }

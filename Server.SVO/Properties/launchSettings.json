@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "Server.SVO": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    },
+    "Profile 1": {
+      "commandName": "Executable",
+      "executablePath": "D:\\PC Development\\!Github Repos\\Deadlocked-Server-Private-Revamp\\Server.SVO\\bin\\Debug\\netcoreapp6.0\\Server.SVO.exe"
+    }
+  }
+}

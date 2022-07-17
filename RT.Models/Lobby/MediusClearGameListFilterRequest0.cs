@@ -1,13 +1,9 @@
 ﻿using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-    [MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.ClearGameListFilter0)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.ClearGameListFilter0)]
     public class MediusClearGameListFilterRequest0 : BaseLobbyExtMessage, IMediusRequest
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.ClearGameListFilter0;

@@ -1,13 +1,10 @@
 using RT.Common;
 using Server.Common;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.PlayerReport)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.PlayerReport)]
     public class MediusPlayerReport : BaseLobbyMessage
     {
 
@@ -15,7 +12,7 @@ namespace RT.Models
 
         public string SessionKey; // SESSIONKEY_MAXLEN
         public int MediusWorldID;
-        public byte[] Stats = new byte[Constants.ACCOUNTSTATS_MAXLEN]; 
+        public byte[] Stats = new byte[Constants.ACCOUNTSTATS_MAXLEN];
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {

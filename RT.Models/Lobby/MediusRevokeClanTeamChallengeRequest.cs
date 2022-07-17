@@ -1,13 +1,7 @@
-﻿using RT.Common;
-using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-
-namespace RT.Models
+﻿namespace RT.Models
 {
-    [MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.RevokeClanTeamChallenge)]
+    /*
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.RevokeClanTeamChallenge)]
     public class MediusRevokeClanTeamChallengeRequest : BaseLobbyMessage, IMediusRequest
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.RevokeClanTeamChallenge;
@@ -51,4 +45,5 @@ namespace RT.Models
                 $"ClanChallengeID:{ClanChallengeID}";
         }
     }
+    */
 }

@@ -1,8 +1,5 @@
 ﻿using RT.Common;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
@@ -23,7 +20,7 @@ namespace RT.Models
         {
             if (Key == null || Key.Length != 0x40)
                 throw new InvalidOperationException("Unable to serialize CLIENT_GET_KEY key because key is either null or not 64 bytes long!");
-            
+
             writer.Write(Key);
         }
     }

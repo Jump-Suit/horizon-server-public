@@ -1,17 +1,13 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobbyExt, MediusLobbyExtMessageIds.SetAutoChatHistoryResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.SetAutoChatHistoryResponse)]
     public class MediusSetAutoChatHistoryResponse : BaseLobbyExtMessage, IMediusResponse
     {
 
-		public override byte PacketType => (byte)MediusLobbyExtMessageIds.SetAutoChatHistoryResponse;
+        public override byte PacketType => (byte)MediusLobbyExtMessageIds.SetAutoChatHistoryResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 

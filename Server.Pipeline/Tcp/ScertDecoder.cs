@@ -1,16 +1,14 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using DotNetty.Buffers;
 using DotNetty.Codecs;
 using DotNetty.Common.Internal.Logging;
 using DotNetty.Transport.Channels;
 using RT.Common;
-using RT.Cryptography;
 using RT.Models;
+using System;
+using System.Collections.Generic;
 
 namespace Server.Pipeline.Tcp
 {
@@ -64,7 +62,7 @@ namespace Server.Pipeline.Tcp
             var scertClient = context.GetAttribute(Constants.SCERT_CLIENT).Get();
 
             if (frameLength <= 0)
-                return BaseScertMessage.Instantiate((RT_MSG_TYPE)(id & 0x7F), null, new byte[0], scertClient.MediusVersion, scertClient.CipherService);
+                return BaseScertMessage.Instantiate((RT_MSG_TYPE)(id & 0x7F), null, new byte[0], (int)scertClient.MediusVersion, scertClient.CipherService);
 
             if (id >= 0x80)
             {
@@ -93,8 +91,7 @@ namespace Server.Pipeline.Tcp
 
             // 
             input.SetReaderIndex(input.ReaderIndex + totalLength + frameLengthInt);
-            return BaseScertMessage.Instantiate((RT_MSG_TYPE)id, hash, messageContents, scertClient.MediusVersion, scertClient.CipherService);
+            return BaseScertMessage.Instantiate((RT_MSG_TYPE)id, hash, messageContents, (int)scertClient.MediusVersion, scertClient.CipherService);
         }
-
     }
 }

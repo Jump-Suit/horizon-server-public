@@ -1,13 +1,9 @@
 ﻿using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-    [MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.DeleteClanMessage)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.DeleteClanMessage)]
     public class MediusDeleteClanMessageRequest : BaseLobbyMessage, IMediusRequest
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.DeleteClanMessage;
@@ -42,13 +38,12 @@ namespace RT.Models
             writer.Write(ClanMessageID);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID}" + " " +
-                $"SessionKey:{SessionKey}" + " " +
-                $"ClanMessageID:{ClanMessageID}";
+                $"MessageID: {MessageID}" + " " +
+                $"SessionKey: {SessionKey}" + " " +
+                $"ClanMessageID: {ClanMessageID}";
         }
     }
 }

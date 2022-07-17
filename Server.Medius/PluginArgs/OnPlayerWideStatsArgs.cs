@@ -1,7 +1,4 @@
 ﻿using Server.Medius.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Server.Medius.PluginArgs
 {
@@ -35,7 +32,7 @@ namespace Server.Medius.PluginArgs
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"Player:{Player}";
+                $"Player: {Player}";
         }
     }
 }

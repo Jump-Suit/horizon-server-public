@@ -1,9 +1,6 @@
 ﻿using DotNetty.Transport.Channels;
 using RT.Models;
 using Server.Medius.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Server.Medius.PluginArgs
 {
@@ -14,11 +11,9 @@ namespace Server.Medius.PluginArgs
         public IChannel Channel { get; set; } = null;
 
         public BaseScertMessage Message { get; set; } = null;
-
         public bool IsIncoming { get; }
 
         public bool Ignore { get; set; } = false;
-
 
         public OnMessageArgs(bool isIncoming)
         {

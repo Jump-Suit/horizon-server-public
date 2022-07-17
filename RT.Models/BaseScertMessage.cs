@@ -1,13 +1,11 @@
 ﻿using DotNetty.Common.Internal.Logging;
+using RT.Common;
 using RT.Cryptography;
-using Microsoft.Extensions.Logging;
+using Server.Common.Logging;
+using Server.Common.Stream;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using RT.Common;
-using Server.Common.Logging;
-using Server.Common.Stream;
 
 namespace RT.Models
 {
@@ -44,7 +42,7 @@ namespace RT.Models
         /// <summary>
         /// Serializes the message.
         /// </summary>
-        public List<byte[]> Serialize(int mediusVersion, CipherService cipherService)
+        public List<byte[]> Serialize(int? mediusVersion, CipherService cipherService)
         {
             var results = new List<byte[]>();
             byte[] result = null;
@@ -55,7 +53,7 @@ namespace RT.Models
             // Serialize message
             using (var stream = new MemoryStream(buffer, true))
             {
-                using (var writer = new MessageWriter(stream) { MediusVersion = mediusVersion })
+                using (var writer = new MessageWriter(stream) { MediusVersion = (int)mediusVersion })
                 {
                     Serialize(writer);
                     length = (int)writer.BaseStream.Position;
@@ -67,7 +65,7 @@ namespace RT.Models
             // Check for fragmentation
             if (Id == RT_MSG_TYPE.RT_MSG_SERVER_APP && length > Constants.MEDIUS_MESSAGE_MAXLEN)
             {
-                var msgClass = (NetMessageTypes)buffer[0];
+                var msgClass = (NetMessageClass)buffer[0];
                 var msgType = buffer[1];
                 var fragments = DMETypePacketFragment.FromPayload(msgClass, msgType, buffer, 2, length - 2);
 
@@ -87,7 +85,7 @@ namespace RT.Models
 
                             var data = new byte[length];
                             Array.Copy(buffer, data, length);
-                            if (!this.SkipEncryption && cipherService != null && cipherService.Encrypt(ctx, data, out var signed, out var hash))
+                            if (!SkipEncryption && cipherService != null && cipherService.Encrypt(ctx, data, out var signed, out var hash))
                             {
                                 totalHeaderSize += HASH_SIZE;
 
@@ -119,7 +117,7 @@ namespace RT.Models
             {
                 var data = new byte[length];
                 Array.Copy(buffer, data, length);
-                if (!this.SkipEncryption && cipherService != null && cipherService.Encrypt(ctx, data, out var signed, out var hash))
+                if (!SkipEncryption && cipherService != null && cipherService.Encrypt(ctx, data, out var signed, out var hash))
                 {
                     totalHeaderSize += HASH_SIZE;
 
@@ -284,9 +282,8 @@ namespace RT.Models
 
         public override string ToString()
         {
-            return $"Id:{Id}";
+            return $"Id: {Id}";
         }
-
     }
 
     [AttributeUsage(AttributeTargets.Class)]

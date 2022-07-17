@@ -1,17 +1,13 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobbyReport, MediusMGCLMessageIds.ServerSessionBeginResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobbyReport, MediusMGCLMessageIds.ServerSessionBeginResponse)]
     public class MediusServerSessionBeginResponse : BaseMGCLMessage, IMediusResponse
     {
 
-		public override byte PacketType => (byte)MediusMGCLMessageIds.ServerSessionBeginResponse;
+        public override byte PacketType => (byte)MediusMGCLMessageIds.ServerSessionBeginResponse;
 
         public MessageId MessageID { get; set; }
         public MGCL_ERROR_CODE Confirmation;
@@ -43,13 +39,12 @@ namespace RT.Models
             writer.Write(ConnectInfo);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-                $"Confirmation:{Confirmation} " +
-                $"ConnectInfo:{ConnectInfo}";
+                $"MessageID: {MessageID} " +
+                $"Confirmation: {Confirmation} " +
+                $"ConnectInfo: {ConnectInfo}";
         }
     }
 }

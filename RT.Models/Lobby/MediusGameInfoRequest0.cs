@@ -1,13 +1,9 @@
 ﻿using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-    [MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.GameInfo0)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.GameInfo0)]
     public class MediusGameInfoRequest0 : BaseLobbyMessage, IMediusRequest
     {
 

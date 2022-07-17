@@ -1,15 +1,14 @@
-﻿using RT.Models;
-using RT.Common;
-using DotNetty.Buffers;
+﻿using DotNetty.Buffers;
 using DotNetty.Codecs;
 using DotNetty.Common.Internal.Logging;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
+using RT.Common;
 using RT.Cryptography;
+using RT.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Server.Pipeline.Udp
 {
@@ -67,7 +66,7 @@ namespace Server.Pipeline.Udp
             var scertClient = context.GetAttribute(Constants.SCERT_CLIENT).Get();
 
             if (frameLength <= 0)
-                return BaseScertMessage.Instantiate((RT_MSG_TYPE)(id & 0x7F), null, new byte[0], scertClient.MediusVersion, scertClient.CipherService);
+                return BaseScertMessage.Instantiate((RT_MSG_TYPE)(id & 0x7F), null, new byte[0], (int)scertClient.MediusVersion, scertClient.CipherService);
 
             if (id >= 0x80)
             {
@@ -97,7 +96,7 @@ namespace Server.Pipeline.Udp
             // 
             int totalFrameLength = headerLength + frameLengthInt;
             input.Content.SetReaderIndex(input.Content.ReaderIndex + totalFrameLength);
-            return new ScertDatagramPacket(BaseScertMessage.Instantiate((RT_MSG_TYPE)id, hash, messageContents, scertClient.MediusVersion, scertClient.CipherService), null, input.Sender);
+            return new ScertDatagramPacket(BaseScertMessage.Instantiate((RT_MSG_TYPE)id, hash, messageContents, (int)scertClient.MediusVersion, scertClient.CipherService), null, input.Sender);
         }
     }
 }

@@ -1,16 +1,12 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.SessionBegin)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.SessionBegin)]
     public class MediusSessionBeginRequest : BaseLobbyMessage, IMediusRequest
     {
-		public override byte PacketType => (byte)MediusLobbyMessageIds.SessionBegin;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.SessionBegin;
 
         public MessageId MessageID { get; set; }
 
@@ -42,12 +38,11 @@ namespace RT.Models
             writer.Write(ConnectionClass);
         }
 
-
         public override string ToString()
         {
-            return base.ToString() + " " + 
-                $"MessageID:{MessageID} " +
-                $"ConnectionClass:{ConnectionClass}";
+            return base.ToString() + " " +
+                $"MessageID: {MessageID} " +
+                $"ConnectionClass: {ConnectionClass}";
         }
     }
 }

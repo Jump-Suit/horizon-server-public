@@ -1,16 +1,12 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobbyExt, MediusLobbyExtMessageIds.GetServerTimeResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.GetServerTimeResponse)]
     public class MediusGetServerTimeResponse : BaseLobbyExtMessage, IMediusResponse
     {
-		public override byte PacketType => (byte)MediusLobbyExtMessageIds.GetServerTimeResponse;
+        public override byte PacketType => (byte)MediusLobbyExtMessageIds.GetServerTimeResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 
@@ -54,10 +50,10 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"StatusCode:{StatusCode} " +
-$"GMT_time:{GMT_time} " +
-$"Local_server_timezone:{Local_server_timezone}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode:{StatusCode} " +
+                $"GMT_time: {GMT_time} " +
+                $"Local_server_timezone: {Local_server_timezone}";
         }
     }
 }

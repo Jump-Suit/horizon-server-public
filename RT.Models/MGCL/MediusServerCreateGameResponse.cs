@@ -1,17 +1,16 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobbyReport, MediusMGCLMessageIds.ServerCreateGameResponse)]
+    /// <summary>
+    ///  Response to grant or deny game creation on this MGCL host. The confirmation maps to MGCL_ERROR_CODE.
+    /// </summary>
+	[MediusMessage(NetMessageClass.MessageClassLobbyReport, MediusMGCLMessageIds.ServerCreateGameResponse)]
     public class MediusServerCreateGameResponse : BaseMGCLMessage, IMediusResponse
     {
 
-		public override byte PacketType => (byte)MediusMGCLMessageIds.ServerCreateGameResponse;
+        public override byte PacketType => (byte)MediusMGCLMessageIds.ServerCreateGameResponse;
 
         public MessageId MessageID { get; set; }
         public MGCL_ERROR_CODE Confirmation;
@@ -43,13 +42,12 @@ namespace RT.Models
             writer.Write(WorldID);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-                $"Confirmation:{Confirmation} " +
-                $"WorldID:{WorldID}";
+                $"MessageID: {MessageID} " +
+                $"Confirmation: {Confirmation} " +
+                $"WorldID: {WorldID}";
         }
     }
 }

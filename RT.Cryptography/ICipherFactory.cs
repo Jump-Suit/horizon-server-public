@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace RT.Cryptography
+﻿namespace RT.Cryptography
 {
     public interface ICipherFactory
     {

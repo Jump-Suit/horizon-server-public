@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace RT.Cryptography
+﻿namespace RT.Cryptography
 {
     /// <summary>
     /// The highest 3 bits of the hash.

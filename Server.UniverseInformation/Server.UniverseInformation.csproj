@@ -1,20 +1,28 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="DotNetty.Handlers" Version="0.7.0" />
+	<PropertyGroup>
+		<SourceRevisionId>build$([System.DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ss:fffZ"))</SourceRevisionId>
+	</PropertyGroup>
+
+	<ItemGroup>
+    <PackageReference Include="DotNetty.Handlers" Version="0.7.2" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.1.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.14.0" />
     <PackageReference Include="NReco.Logging.File" Version="1.0.5" />
+    <PackageReference Include="System.Management" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\RT.Common\RT.Common.csproj" />
     <ProjectReference Include="..\RT.Cryptography\RT.Cryptography.csproj" />
     <ProjectReference Include="..\RT.Models\RT.Models.csproj" />
+    <ProjectReference Include="..\Server.Database\Server.Database.csproj" />
     <ProjectReference Include="..\Server.Pipeline\Server.Pipeline.csproj" />
     <ProjectReference Include="..\Server.Common\Server.Common.csproj" />
   </ItemGroup>

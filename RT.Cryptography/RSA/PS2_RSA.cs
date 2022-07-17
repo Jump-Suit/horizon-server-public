@@ -2,9 +2,7 @@
 using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Math;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace RT.Cryptography
 {
@@ -17,14 +15,14 @@ namespace RT.Cryptography
         public BigInteger N { get; protected set; }
         public BigInteger E { get; protected set; }
         public BigInteger D { get; protected set; }
-        
+
         public PS2_RSA(BigInteger n, BigInteger e, BigInteger d)
         {
             N = n;
             E = e;
             D = d;
         }
-        
+
         private BigInteger Encrypt(BigInteger m)
         {
             return m.ModPow(E, N);
@@ -38,7 +36,7 @@ namespace RT.Cryptography
         public virtual bool Decrypt(byte[] input, byte[] hash, out byte[] plain)
         {
             plain = new byte[input.Length];
-            if (input.Length > this.N.BitLength/8)
+            if (input.Length > this.N.BitLength / 8)
                 throw new NotImplementedException($"Unable to decrypt RSA cipher with length greater than key ({input.Length}).");
 
             // decrypt

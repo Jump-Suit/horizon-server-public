@@ -1,17 +1,13 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.FileDownload)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.FileDownload)]
     public class MediusFileDownloadRequest : BaseLobbyMessage, IMediusRequest
     {
 
-		public override byte PacketType => (byte)MediusLobbyMessageIds.FileDownload;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.FileDownload;
 
         public MessageId MessageID { get; set; }
 
@@ -45,12 +41,11 @@ namespace RT.Models
             writer.Write(new byte[3]);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"MediusFileInfo:{MediusFileInfo}";
+                $"MessageID: {MessageID} " +
+                $"MediusFileInfo: {MediusFileInfo}";
         }
     }
 }

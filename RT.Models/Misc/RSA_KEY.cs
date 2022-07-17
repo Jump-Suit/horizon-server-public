@@ -1,10 +1,7 @@
 ﻿using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace RT.Models
 {
@@ -22,7 +19,7 @@ namespace RT.Models
         {
             for (int i = 0; i < key.Length; i++)
             {
-                key[i] = (uint)((keyBytes[(i*4) + 3] << 24) | (keyBytes[(i * 4) + 2] << 16) | (keyBytes[(i * 4) + 1] << 8) | (keyBytes[(i * 4) + 0]));
+                key[i] = (uint)((keyBytes[(i * 4) + 3] << 24) | (keyBytes[(i * 4) + 2] << 16) | (keyBytes[(i * 4) + 1] << 8) | (keyBytes[(i * 4) + 0]));
             }
         }
 

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace Server.Database.Models
 {
@@ -20,10 +18,15 @@ namespace Server.Database.Models
         /// <summary>
         /// Collection of ladder stats.
         /// </summary>
+        public int[] ClanStats { get; set; }
+
+        /// <summary>
+        /// Collection of ladder wide stats.
+        /// </summary>
         public int[] ClanWideStats { get; set; }
 
         /// <summary>
-        /// Collection of ladder stats.
+        /// Collection of ladder wide stats.
         /// </summary>
         public int[] ClanCustomWideStats { get; set; }
     }

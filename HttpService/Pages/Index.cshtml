@@ -1,0 +1,32 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+    <center>
+    <h1 class="display-4">Welcome to SCE-RT MediusLobbyServer</h1>
+    
+    <br>
+    <p>Please select one of the following:</p>
+    <ul>
+        <li><a href="/showstats?stat=conn">Show Connection Statistics</a></li>
+        <li><a href="/showstats?stat=cb">Show Callback Statistics</a></li>
+        <li><a href="/config?cmd=showconf">Show Config Settings</a></li>
+        <li><a href="/config?cmd=reloadconf">Schedule reload of Config File</a></li>
+        <li><a href="/dictionary?cmd=showdict">Show Dictionary Settings</a></li>
+        <li><a href="/dictionary?cmd=reloaddict">Schedule reload of Dictionary File</a></li>
+        <li><a href="/sendmessage">Send System Message</a></li>
+        <li><a href="/anticheatReconfig">Reconfigure AntiCheat system</a></li>
+        <li><a href="/anticheatVersion">Get Version of AntiCheat system</a></li>
+        <li><a href="/exit">Exit</a></li>
+    </ul>
+
+    <p>MLS SCE-RT Web Interface
+        <br>TimeStamp: 
+        <br>Version: 
+
+    </p>
+    </center>
+</div>

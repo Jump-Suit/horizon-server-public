@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace RT.Cryptography
 {
@@ -153,7 +151,7 @@ namespace RT.Cryptography
                 r0 = (uint)((buffer[i + 0] << 24) | (buffer[i + 1] << 16) | (buffer[i + 2] << 8) | (buffer[i + 3] << 0));
                 r19 ^= r0;
             }
-            
+
             uint hash = (uint)(((ulong)((r16 + r17 + r18 + r19) & 0x1FFFFFFF) | (ulong)context << 29));
             return BitConverter.GetBytes(hash);
         }

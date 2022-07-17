@@ -5,12 +5,11 @@ using Server.Common;
 using Server.Database.Config;
 using Server.Database.Models;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -20,7 +19,7 @@ namespace Server.Database
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<DbController>();
 
-        private DbSettings _settings = new DbSettings();
+        public DbSettings _settings = new DbSettings();
 
         private int _simulatedAccountIdCounter = 1;
         private int _simulatedClanIdCounter = 1;
@@ -30,21 +29,49 @@ namespace Server.Database
         private List<AccountDTO> _simulatedAccounts = new List<AccountDTO>();
         private List<ClanDTO> _simulatedClans = new List<ClanDTO>();
 
-        public DbController(string configPath)
+        public DbController(string configFile)
         {
+            #region Dirs
+            string root = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string subdirConfigDir = root + @"\config\";
             // Load db settings
-            if (File.Exists(configPath))
+            string subdirConfigFile = subdirConfigDir + configFile;
+            #endregion
+
+            #region if db.config.json exists
+            if (File.Exists(configFile))
             {
                 // Populate existing object
-                try { JsonConvert.PopulateObject(File.ReadAllText(configPath), _settings); }
+                try { JsonConvert.PopulateObject(File.ReadAllText(configFile), _settings); }
                 catch (Exception e) { Logger.Error(e); }
             }
+            #endregion
             else
             {
-                // Save default db config
-                File.WriteAllText(configPath, JsonConvert.SerializeObject(_settings, Formatting.Indented));
+                #region Create Dir and Save Default db config
+                // If Logs directory does not exist, create it. 
+                if (!Directory.Exists(configFile))
+                {
+                    //Directory.CreateDirectory(subdirConfigDir);
+
+                    // Save default db config
+                    File.WriteAllText(configFile, JsonConvert.SerializeObject(_settings, Formatting.Indented));
+                }
+                #endregion
             }
         }
+
+        #region Sub Classes
+        public class IpBan
+        {
+            public string IpAddress { get; set; }
+        }
+
+        public class MacBan
+        {
+            public string MacAddress { get; set; }
+        }
+        #endregion
 
         /// <summary>
         /// Authenticate with middleware.
@@ -69,7 +96,6 @@ namespace Server.Database
             return !string.IsNullOrEmpty(_dbAccessToken);
         }
 
-
         #region Account
 
         /// <summary>
@@ -90,6 +116,34 @@ namespace Server.Database
                 else
                 {
                     result = await GetDbAsync<AccountDTO>($"Account/searchAccountByName?AccountName={name}&AppId={appId}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Get account by name.
+        /// </summary>
+        /// <param name="name">Case insensitive name of player.</param>
+        /// <returns>Returns account.</returns>
+        public async Task<AccountDTO> GetAccountByName(string name)
+        {
+            AccountDTO result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    result = _simulatedAccounts.FirstOrDefault(x => x.AccountName.ToLower() == name.ToLower());
+                }
+                else
+                {
+                    result = await GetDbAsync<AccountDTO>($"Account/searchAccountByName?AccountName={name}");
                 }
             }
             catch (Exception e)
@@ -199,6 +253,28 @@ namespace Server.Database
                 else
                 {
                     result = (await GetDbAsync($"Account/deleteAccount?AccountName={accountName}&AppId={appId}")).IsSuccessStatusCode;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+            return result;
+        }
+
+        public async Task<bool> PostAccountUpdatePassword(int accountId, string oldPassword, string newPassword)
+        {
+            bool result = false;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    result = true;
+                }
+                else
+                {
+                    result = (await GetDbAsync($"Account/updateAccountPassword?accountId={accountId}&oldPassowrd={oldPassword}&newPassword={newPassword}")).IsSuccessStatusCode;
                 }
             }
             catch (Exception e)
@@ -445,7 +521,7 @@ namespace Server.Database
             {
                 if (_settings.SimulatedMode)
                 {
-                    result = _simulatedClans.Count(x=>!x.IsDisbanded);
+                    result = _simulatedClans.Count(x => !x.IsDisbanded);
                 }
                 else
                 {
@@ -464,6 +540,8 @@ namespace Server.Database
             return result;
         }
 
+
+
         /// <summary>
         /// Gets whether or not the ip is banned.
         /// </summary>
@@ -479,7 +557,12 @@ namespace Server.Database
                 }
                 else
                 {
-                    result = await PostDbAsync<bool>($"Account/getIpIsBanned", $"{ip}");
+                    IpBan IpBanArray = new IpBan
+                    {
+                        IpAddress = ip
+                    };
+                    System.Text.Json.JsonSerializer.Serialize(IpBanArray);
+                    result = await PostDbAsync<bool>($"Account/getIpIsBanned", IpBanArray);
                 }
             }
             catch (Exception e)
@@ -506,7 +589,12 @@ namespace Server.Database
                 }
                 else
                 {
-                    result = await PostDbAsync<bool>($"Account/getMacIsBanned", $"{mac}");
+                    MacBan MacBanArray = new MacBan
+                    {
+                        MacAddress = mac
+                    };
+                    System.Text.Json.JsonSerializer.Serialize(MacBanArray);
+                    result = await PostDbAsync<bool>($"Account/getMacIsBanned", MacBanArray);
                 }
             }
             catch (Exception e)
@@ -726,6 +814,46 @@ namespace Server.Database
         /// <param name="accountId">Account id of player.</param>
         /// <param name="statId">Index of stat. Starts at 1.</param>
         /// <returns>Leaderboard result for player.</returns>
+        public async Task<LeaderboardDTO> GetPlayerLeaderboard(int accountId)
+        {
+            LeaderboardDTO result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    var account = await GetAccountById(accountId);
+                    if (account == null)
+                        return null;
+
+                    return new LeaderboardDTO()
+                    {
+                        AccountId = accountId,
+                        AccountName = account.AccountName,
+                        Index = 1,
+                        MediusStats = account.MediusStats,
+                        TotalRankedAccounts = 1
+                    };
+                }
+                else
+                {
+                    result = await GetDbAsync<LeaderboardDTO>($"Stats/getPlayerLeaderboard?AccountId={accountId}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Get player ranking in a given leaderboard.
+        /// </summary>
+        /// <param name="accountId">Account id of player.</param>
+        /// <param name="statId">Index of stat. Starts at 1.</param>
+        /// <returns>Leaderboard result for player.</returns>
         public async Task<LeaderboardDTO> GetPlayerLeaderboardIndex(int accountId, int statId)
         {
             LeaderboardDTO result = null;
@@ -744,7 +872,7 @@ namespace Server.Database
                         AccountName = account.AccountName,
                         Index = 1,
                         MediusStats = account.MediusStats,
-                        StatValue = account.AccountWideStats[statId-1],
+                        StatValue = account.AccountWideStats[statId - 1],
                         TotalRankedAccounts = 1
                     };
                 }
@@ -792,7 +920,7 @@ namespace Server.Database
                 }
                 else
                 {
-                    result = await GetDbAsync<ClanLeaderboardDTO>($"Stats/getClanLeaderboardIndex?ClanId={clanId}&StatId={statId+1}");
+                    result = await GetDbAsync<ClanLeaderboardDTO>($"Stats/getClanLeaderboardIndex?ClanId={clanId}&StatId={statId + 1}");
                 }
             }
             catch (Exception e)
@@ -818,7 +946,7 @@ namespace Server.Database
             {
                 if (_settings.SimulatedMode)
                 {
-                    var ordered = _simulatedClans.Where(x => x.AppId == appId).Where(x=>!x.IsDisbanded).OrderByDescending(x => x.ClanWideStats[statId]).Skip(startIndex).Take(size).ToList();
+                    var ordered = _simulatedClans.Where(x => x.AppId == appId).Where(x => !x.IsDisbanded).OrderByDescending(x => x.ClanWideStats[statId]).Skip(startIndex).Take(size).ToList();
                     result = ordered.Select(x => new ClanLeaderboardDTO()
                     {
                         ClanId = x.ClanId,
@@ -831,7 +959,7 @@ namespace Server.Database
                 }
                 else
                 {
-                    result = await GetDbAsync<ClanLeaderboardDTO[]>($"Stats/getClanLeaderboard?StatId={statId+1}&StartIndex={startIndex}&Size={size}&AppId={appId}");
+                    result = await GetDbAsync<ClanLeaderboardDTO[]>($"Stats/getClanLeaderboard?StatId={statId + 1}&StartIndex={startIndex}&Size={size}&AppId={appId}");
                 }
             }
             catch (Exception e)
@@ -857,7 +985,7 @@ namespace Server.Database
             {
                 if (_settings.SimulatedMode)
                 {
-                    var ordered = _simulatedAccounts.Where(x=>x.AppId == appId).OrderByDescending(x => x.AccountWideStats[statId]).Skip(startIndex).Take(size).ToList();
+                    var ordered = _simulatedAccounts.Where(x => x.AppId == appId).OrderByDescending(x => x.AccountWideStats[statId]).Skip(startIndex).Take(size).ToList();
                     result = ordered.Select(x => new LeaderboardDTO()
                     {
                         AccountId = x.AccountId,
@@ -871,6 +999,43 @@ namespace Server.Database
                 else
                 {
                     result = await GetDbAsync<LeaderboardDTO[]>($"Stats/getLeaderboard?StatId={statId}&StartIndex={startIndex}&Size={size}&AppId={appId}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Get leaderboard for a given stat by page and size.
+        /// </summary>
+        /// <param name="startIndex">Position to start gathering results from. Starts at 0.</param>
+        /// <param name="size">Max number of items to retrieve.</param>
+        /// <returns>Collection of leaderboard results for each player in page.</returns>
+        public async Task<LeaderboardDTO[]> GetLeaderboardList(int startIndex, int size, int appId)
+        {
+            LeaderboardDTO[] result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    var ordered = _simulatedAccounts.Where(x => x.AppId == appId).OrderByDescending(x => x.AccountWideStats[0]).Skip(startIndex).Take(size).ToList();
+                    result = ordered.Select(x => new LeaderboardDTO()
+                    {
+                        AccountId = x.AccountId,
+                        AccountName = x.AccountName,
+                        MediusStats = x.MediusStats,
+                        TotalRankedAccounts = 0,
+                        Index = startIndex + ordered.IndexOf(x)
+                    }).ToArray();
+                }
+                else
+                {
+                    result = await GetDbAsync<LeaderboardDTO[]>($"Stats/getLeaderboard?Size={size}&AppId={appId}");
                 }
             }
             catch (Exception e)
@@ -1326,7 +1491,7 @@ namespace Server.Database
                     // only allow leader or player remove player
                     if (fromAccountId != accountId && clan.ClanLeaderAccount.AccountId != fromAccountId)
                         return false;
-                    
+
                     // prevent leader from leaving -- must transfer or disband
                     if (clan.ClanLeaderAccount.AccountId == accountId)
                         return false;
@@ -1503,7 +1668,7 @@ namespace Server.Database
                     invite.ResponseMessage = message;
                     invite.ResponseStatus = responseStatus;
                     invite.ResponseTime = (int)Utils.GetUnixTime();
-                    
+
                     // handle accept
                     if (responseStatus == 1)
                     {
@@ -1739,9 +1904,10 @@ namespace Server.Database
                 {
                     return new DimAnnouncements()
                     {
-                        AnnouncementTitle = "Title",
-                        AnnouncementBody = "Body",
-                        CreateDt = DateTime.UtcNow
+                        Id = 1,
+                        AnnouncementTitle = "Announcement Title",
+                        AnnouncementBody = "Announcement Body",
+                        CreateDt = DateTime.UtcNow,
                     };
                 }
                 else
@@ -1772,9 +1938,11 @@ namespace Server.Database
                     {
                         new DimAnnouncements()
                         {
-                            AnnouncementTitle = "Title",
-                            AnnouncementBody = "Body",
-                            CreateDt = DateTime.UtcNow
+                            Id = 1,
+                            AnnouncementTitle = "Announcement Title",
+                            AnnouncementBody = "Announcement Body",
+							CreateDt = DateTime.UtcNow,
+
                         }
                     };
                 }
@@ -1804,8 +1972,10 @@ namespace Server.Database
                 {
                     return new DimEula()
                     {
-                        EulaTitle = "Title",
-                        EulaBody = "Body"
+
+                        EulaTitle = "Eula Test",
+                        EulaBody = "Eula Body",
+
                     };
                 }
                 else
@@ -1835,13 +2005,116 @@ namespace Server.Database
                 {
                     return new DimEula()
                     {
-                        EulaTitle = "Title",
-                        EulaBody = "Body"
+                        EulaTitle = "Eula Test",
+                        EulaBody = "Eula Body",
                     };
                 }
                 else
                 {
                     result = await GetDbAsync<DimEula>($"api/getEULA?fromDt={DateTime.UtcNow.AddDays(-1)}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        #endregion
+
+        #region Locations
+
+        /// <summary>
+        /// Get Locations
+        /// </summary>
+        public async Task<DimLocations> GetDimLocations(int LocationId, int appId)
+        {
+            DimLocations result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    return new DimLocations()
+                    {
+                        Id = 1,
+                        LocationId = 1,
+                        LocationName = "Default",
+
+                    };
+                }
+                else
+                {
+                    result = await GetDbAsync<DimLocations>($"api/keys/getLocations?LocationId={LocationId}&AppId={appId}&fromDt={DateTime.UtcNow}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        #endregion
+
+        #region NpIdGetByAccountNames 
+
+        /// <summary>
+        /// Gets the NpIds by Account Name
+        /// </summary>
+        public async Task<DimNpByAccountNames> GetNpIdByAccountNames(int appId)
+        {
+            DimNpByAccountNames result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    return new DimNpByAccountNames()
+                    {
+                        Id = 1,
+                    };
+                }
+                else
+                {
+                    result = await GetDbAsync<DimNpByAccountNames>($"Account/NpIds/getNpIdByAccountNames?fromDt={DateTime.UtcNow}&AppId={appId}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        #endregion
+
+        #region NpIdPost
+
+        /// <summary>
+        /// Post the NpId to the database
+        /// </summary>
+        public async Task<DimNpIdPost> PostNpId(byte[] data, int appId)
+        {
+            DimNpIdPost result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    return new DimNpIdPost()
+                    {
+                        Id = 1,
+                        data = data,
+                    };
+                }
+                else
+                {
+                    result = await GetDbAsync<DimNpIdPost>($"Account/NpIds/postNpId?data={data}&fromDt={DateTime.UtcNow}&AppId={appId}");
                 }
             }
             catch (Exception e)
@@ -1983,6 +2256,147 @@ namespace Server.Database
                 else
                 {
                     result = (await DeleteDbAsync($"api/Game/clear")).IsSuccessStatusCode;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        #endregion
+
+        #region Party
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="party"></param>
+        /// <returns></returns>
+        public async Task<bool> CreateParty(PartyDTO party)
+        {
+            bool result = false;
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    result = true;
+                }
+                else
+                {
+                    result = (await PostDbAsync($"api/Party/create", JsonConvert.SerializeObject(party))).IsSuccessStatusCode;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="party"></param>
+        /// <returns></returns>
+        public async Task<bool> UpdateParty(PartyDTO party)
+        {
+            bool result = false;
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    result = true;
+                }
+                else
+                {
+                    result = (await PutDbAsync($"api/Game/update/{party.PartyId}", JsonConvert.SerializeObject(party))).IsSuccessStatusCode;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="partyId"></param>
+        /// <param name="metadata"></param>
+        /// <returns></returns>
+        public async Task<bool> UpdatePartyMetadata(int partyId, string metadata)
+        {
+            bool result = false;
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    result = true;
+                }
+                else
+                {
+                    result = (await PutDbAsync($"api/Party/updateMetaData/{partyId}", JsonConvert.SerializeObject(metadata))).IsSuccessStatusCode;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Delete party by party id.
+        /// </summary>
+        /// <param name="partyId">Party id.</param>
+        /// <returns>Success or failure.</returns>
+        public async Task<bool> DeleteParty(int partyId)
+        {
+            bool result = false;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    result = true;
+                }
+                else
+                {
+                    result = (await DeleteDbAsync($"api/Party/delete/{partyId}")).IsSuccessStatusCode;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Clear the active Parties table.
+        /// </summary>
+        /// <returns></returns>
+        public async Task<bool> ClearActiveParties()
+        {
+            bool result = false;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    result = true;
+                }
+                else
+                {
+                    result = (await DeleteDbAsync($"api/Party/clear")).IsSuccessStatusCode;
                 }
             }
             catch (Exception e)

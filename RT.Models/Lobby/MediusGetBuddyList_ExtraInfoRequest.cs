@@ -1,16 +1,12 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.GetBuddyList_ExtraInfo)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.GetBuddyList_ExtraInfo)]
     public class MediusGetBuddyList_ExtraInfoRequest : BaseLobbyMessage, IMediusRequest
     {
-		public override byte PacketType => (byte)MediusLobbyMessageIds.GetBuddyList_ExtraInfo;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.GetBuddyList_ExtraInfo;
 
         public MessageId MessageID { get; set; }
 
@@ -35,8 +31,8 @@ namespace RT.Models
 
         public override string ToString()
         {
-return base.ToString() + " " +
-                $"MessageID:{MessageID}";
+            return base.ToString() + " " +
+                            $"MessageID:{MessageID}";
         }
     }
 }

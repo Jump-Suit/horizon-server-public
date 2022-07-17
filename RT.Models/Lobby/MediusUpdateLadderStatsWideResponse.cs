@@ -1,16 +1,12 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobbyExt, MediusLobbyExtMessageIds.UpdateLadderStatsWideResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.UpdateLadderStatsWideResponse)]
     public class MediusUpdateLadderStatsWideResponse : BaseLobbyExtMessage, IMediusResponse
     {
-		public override byte PacketType => (byte)MediusLobbyExtMessageIds.UpdateLadderStatsWideResponse;
+        public override byte PacketType => (byte)MediusLobbyExtMessageIds.UpdateLadderStatsWideResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 

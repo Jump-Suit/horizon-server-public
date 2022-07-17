@@ -3,9 +3,6 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Security;
 using System;
-using System.Collections.Generic;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace RT.Cryptography
 {
@@ -28,7 +25,6 @@ namespace RT.Cryptography
 
             return CreateSymFromPublicKey(context, publicKey);
         }
-
         public ICipher CreateNew(RsaKeyPair rsaKeyPair)
         {
             return rsaKeyPair?.ToPS2();

@@ -1,16 +1,12 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobbyReport, MediusMGCLMessageIds.ServerReport)]
+    [MediusMessage(NetMessageClass.MessageClassLobbyReport, MediusMGCLMessageIds.ServerReport)]
     public class MediusServerReport : BaseMGCLMessage
     {
-        public override NetMessageTypes PacketClass => NetMessageTypes.MessageClassLobbyReport;
+        public override NetMessageClass PacketClass => NetMessageClass.MessageClassLobbyReport;
         public override byte PacketType => (byte)MediusMGCLMessageIds.ServerReport;
 
         public string SessionKey;
@@ -52,16 +48,15 @@ namespace RT.Models
             writer.Write(AlertLevel);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"SessionKey:{SessionKey} " +
-                $"MaxWorlds:{MaxWorlds} " +
-                $"MaxPlayersPerWorld:{MaxPlayersPerWorld} " +
-                $"ActiveWorldCount:{ActiveWorldCount} " +
-                $"TotalActivePlayers:{TotalActivePlayers} " +
-                $"AlertLevel:{AlertLevel}";
+                $"SessionKey: {SessionKey} " +
+                $"MaxWorlds: {MaxWorlds} " +
+                $"MaxPlayersPerWorld: {MaxPlayersPerWorld} " +
+                $"ActiveWorldCount: {ActiveWorldCount} " +
+                $"TotalActivePlayers: {TotalActivePlayers} " +
+                $"AlertLevel: {AlertLevel}";
         }
     }
 }

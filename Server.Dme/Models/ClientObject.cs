@@ -1,18 +1,14 @@
 ﻿using DotNetty.Common.Internal.Logging;
 using DotNetty.Transport.Channels;
-using Org.BouncyCastle.Asn1;
-using Org.BouncyCastle.Ocsp;
-using Server.Common;
 using RT.Common;
 using RT.Models;
+using Server.Common;
 using Server.Pipeline.Udp;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Server.Dme.Models
@@ -63,6 +59,11 @@ namespace Server.Dme.Models
         /// 
         /// </summary>
         public int ApplicationId { get; set; } = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int MediusVersion { get; set; } = 0;
 
         /// <summary>
         /// 
@@ -212,7 +213,7 @@ namespace Server.Dme.Models
             }
             catch (Exception)
             {
-                
+
             }
             finally
             {

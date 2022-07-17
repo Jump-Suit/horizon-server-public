@@ -1,8 +1,4 @@
 ﻿using RT.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
@@ -24,6 +20,5 @@ namespace RT.Models
         {
             writer.Write(Value);
         }
-
     }
 }

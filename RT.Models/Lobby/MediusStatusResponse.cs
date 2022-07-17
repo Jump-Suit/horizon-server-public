@@ -1,19 +1,15 @@
 ﻿using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
     public class MediusStatusResponse : BaseMediusMessage, IMediusResponse
     {
-        public NetMessageTypes Class;
+        public NetMessageClass Class;
         public byte Type;
 
         public override byte PacketType => Type;
-        public override NetMessageTypes PacketClass => Class;
+        public override NetMessageClass PacketClass => Class;
 
         public bool IsSuccess => StatusCode >= 0;
 
@@ -47,12 +43,11 @@ namespace RT.Models
             writer.Write(StatusCode);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"StatusCode:{StatusCode}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode}";
         }
     }
 }

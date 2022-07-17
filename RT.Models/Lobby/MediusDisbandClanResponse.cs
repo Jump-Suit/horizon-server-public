@@ -1,13 +1,9 @@
 ﻿using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-    [MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.DisbandClanResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.DisbandClanResponse)]
     public class MediusDisbandClanResponse : BaseLobbyMessage, IMediusResponse
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.DisbandClanResponse;
@@ -39,12 +35,11 @@ namespace RT.Models
             writer.Write(StatusCode);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID}" + " " +
-                $"StatusCode:{StatusCode}";
+                $"MessageID: {MessageID}" + " " +
+                $"StatusCode: {StatusCode}";
         }
     }
 }

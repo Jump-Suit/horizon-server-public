@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace Haukcode.HighResolutionTimer
 {
-// Disable these StyleCop rules for this file, as we are using native names here.
+    // Disable these StyleCop rules for this file, as we are using native names here.
 #pragma warning disable SA1300 // Element should begin with upper-case letter
 
     internal partial class LinuxInterop

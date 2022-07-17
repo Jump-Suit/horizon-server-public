@@ -1,14 +1,10 @@
 ﻿using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Net;
-using System.Text;
 
 namespace RT.Models
 {
-    [MediusMessage(NetMessageTypes.MessageClassDME, MediusDmeMessageIds.ClientConnects)]
+    [MediusMessage(NetMessageClass.MessageClassDME, MediusDmeMessageIds.ClientConnects)]
     public class DMEClientConnects : BaseDMEMessage
     {
 
@@ -50,11 +46,11 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                 $"UNK_00:{UNK_00} " +
-                 $"PlayerIndex:{PlayerIndex} " +
-                 $"PlayerIp:{PlayerIp} " +
-                 $"UNK_06:{UNK_06} " +
-                 $"Key:{Key}";
+                 $"UNK_00: {UNK_00} " +
+                 $"PlayerIndex: {PlayerIndex} " +
+                 $"PlayerIp: {PlayerIp} " +
+                 $"UNK_06: {UNK_06} " +
+                 $"Key: {Key}";
         }
     }
 }

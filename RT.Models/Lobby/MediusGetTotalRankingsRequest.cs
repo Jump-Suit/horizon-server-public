@@ -1,16 +1,12 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.GetTotalRankings)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.GetTotalRankings)]
     public class MediusGetTotalRankingsRequest : BaseLobbyMessage, IMediusRequest
     {
-		public override byte PacketType => (byte)MediusLobbyMessageIds.GetTotalRankings;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.GetTotalRankings;
 
         public MessageId MessageID { get; set; }
 

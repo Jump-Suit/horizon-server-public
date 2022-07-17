@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Server.Database.Models
+﻿namespace Server.Database.Models
 {
     public class AccountDTO
     {
@@ -31,8 +27,14 @@ namespace Server.Database.Models
         /// </summary>
         public AccountRelationDTO[] Ignored { get; set; }
 
+
         /// <summary>
         /// Collection of ladder stats.
+        /// </summary>
+        public int[] AccountStats { get; set; }
+
+        /// <summary>
+        /// Collection of ladder Wide stats.
         /// </summary>
         public int[] AccountWideStats { get; set; }
 
@@ -45,7 +47,7 @@ namespace Server.Database.Models
         /// 
         /// </summary>
         public int? ClanId { get; set; }
-        
+
         /// <summary>
         /// Application specific user data as a Base64 encoded string.
         /// Convert back to byte array for use with Medius application.
@@ -112,6 +114,11 @@ namespace Server.Database.Models
         /// Account name.
         /// </summary>
         public string AccountName { get; set; }
+
+        /// <summary>
+        /// Player Status.
+        /// </summary>
+        public int PlayerStatus { get; set; }
     }
 
     public class AccountStatusDTO
@@ -135,6 +142,16 @@ namespace Server.Database.Models
         /// Name of game
         /// </summary>
         public string GameName { get; set; }
+
+        /// <summary>
+        /// If set, which game the user is in.
+        /// </summary>
+        public int? PartyId { get; set; }
+
+        /// <summary>
+        /// Name of game
+        /// </summary>
+        public string PartyName { get; set; }
 
         /// <summary>
         /// If set, which channel the user is in.

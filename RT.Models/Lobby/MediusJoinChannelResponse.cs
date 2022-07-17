@@ -1,16 +1,12 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.JoinChannelResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.JoinChannelResponse)]
     public class MediusJoinChannelResponse : BaseLobbyMessage, IMediusResponse
     {
-		public override byte PacketType => (byte)MediusLobbyMessageIds.JoinChannelResponse;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.JoinChannelResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 

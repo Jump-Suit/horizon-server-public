@@ -1,16 +1,15 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.RemoveFromIgnoreListResponse)]
+    /// <summary>
+    /// Introduced in Medius 1.42
+    /// </summary>
+	[MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.RemoveFromIgnoreListResponse)]
     public class MediusRemoveFromIgnoreListResponse : BaseLobbyMessage, IMediusResponse
     {
-		public override byte PacketType => (byte)MediusLobbyMessageIds.RemoveFromIgnoreListResponse;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.RemoveFromIgnoreListResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 

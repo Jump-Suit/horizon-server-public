@@ -1,17 +1,12 @@
 using RT.Common;
 using Server.Common;
-using Org.BouncyCastle.Asn1.Mozilla;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.GetBuddyList_ExtraInfoResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.GetBuddyList_ExtraInfoResponse)]
     public class MediusGetBuddyList_ExtraInfoResponse : BaseLobbyMessage, IMediusResponse
     {
-		public override byte PacketType => (byte)MediusLobbyMessageIds.GetBuddyList_ExtraInfoResponse;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.GetBuddyList_ExtraInfoResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 

@@ -1,16 +1,13 @@
 using RT.Common;
 using Server.Common;
-using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.PolicyResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.PolicyResponse)]
     public class MediusGetPolicyResponse : BaseLobbyMessage, IMediusResponse
     {
-		public override byte PacketType => (byte)MediusLobbyMessageIds.PolicyResponse;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.PolicyResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 
@@ -57,9 +54,9 @@ namespace RT.Models
         {
             return base.ToString() + " " +
                 $"MessageID:{MessageID} " +
-             $"StatusCode:{StatusCode} " +
-$"Policy:{Policy} " +
-$"EndOfText:{EndOfText}";
+                $"StatusCode:{StatusCode} " +
+                $"Policy:{Policy} " +
+                $"EndOfText:{EndOfText}";
         }
 
         public static List<MediusGetPolicyResponse> FromText(MessageId messageId, string policy)

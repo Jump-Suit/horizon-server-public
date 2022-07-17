@@ -1,16 +1,12 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobbyExt, MediusLobbyExtMessageIds.UniverseVariableSvoURLResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.UniverseVariableSvoURLResponse)]
     public class MediusUniverseVariableSvoURLResponse : BaseLobbyExtMessage, IMediusResponse
     {
-		public override byte PacketType => (byte)MediusLobbyExtMessageIds.UniverseVariableSvoURLResponse;
+        public override byte PacketType => (byte)MediusLobbyExtMessageIds.UniverseVariableSvoURLResponse;
 
         public bool IsSuccess => true;
 
@@ -31,7 +27,7 @@ namespace RT.Models
             {
                 // 1 byte length prefixed url
                 byte len = reader.ReadByte();
-                URL = reader.ReadString(len+1);
+                URL = reader.ReadString(len + 1);
             }
             else
             {
@@ -52,7 +48,7 @@ namespace RT.Models
             if (writer.MediusVersion >= 109)
             {
                 // 1 byte length prefixed url
-                writer.Write((byte)(URL.Length+1));
+                writer.Write((byte)(URL.Length + 1));
                 writer.Write(URL, URL.Length);
             }
             else

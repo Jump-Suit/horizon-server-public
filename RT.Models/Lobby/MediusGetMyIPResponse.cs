@@ -1,22 +1,23 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Net;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.GetMyIPResponse)]
+    /// <summary>
+    /// Response for the request to get your external IP Address
+    /// </summary>
+	[MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.GetMyIPResponse)]
     public class MediusGetMyIPResponse : BaseLobbyMessage, IMediusResponse
     {
-		public override byte PacketType => (byte)MediusLobbyMessageIds.GetMyIPResponse;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.GetMyIPResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Retrieves local IP Address (as seen by the Medius Servers, not behind a NAT).
+        /// </summary>
         public IPAddress IP = IPAddress.Any;
         public MediusCallbackStatus StatusCode;
 

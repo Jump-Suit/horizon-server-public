@@ -1,9 +1,5 @@
 ﻿using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
@@ -51,10 +47,12 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"TargetWorldId:{TargetWorldId:X8} " +
-                $"UNK0:{UNK0:X2} " +
-                $"AppId:{AppId:X8} " +
-                $"Key:{Key}";
+                $"TargetWorldId: {TargetWorldId:X8} " +
+                $"UNK0: {UNK0:X2} " +
+                $"AppId: {AppId:X8} " +
+                $"Key: {Key} " +
+                $"SessionKey: {SessionKey} " +
+                $"AccessToken: {AccessToken}";
         }
     }
 }

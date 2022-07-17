@@ -1,17 +1,13 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.ChannelList_ExtraInfoResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.ChannelList_ExtraInfoResponse)]
     public class MediusChannelList_ExtraInfoResponse : BaseLobbyMessage, IMediusResponse
     {
 
-		public override byte PacketType => (byte)MediusLobbyMessageIds.ChannelList_ExtraInfoResponse;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.ChannelList_ExtraInfoResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 
@@ -45,8 +41,13 @@ namespace RT.Models
             MediusWorldID = reader.ReadInt32();
             PlayerCount = reader.ReadUInt16();
             MaxPlayers = reader.ReadUInt16();
-            GameWorldCount = reader.ReadUInt16();
-            reader.ReadBytes(2);
+
+            if (reader.MediusVersion > 108)
+            {
+                GameWorldCount = reader.ReadUInt16();
+                reader.ReadBytes(2);
+            }
+
             SecurityLevel = reader.Read<MediusWorldSecurityLevelType>();
             GenericField1 = reader.ReadUInt32();
             GenericField2 = reader.ReadUInt32();
@@ -72,8 +73,13 @@ namespace RT.Models
             writer.Write(MediusWorldID);
             writer.Write(PlayerCount);
             writer.Write(MaxPlayers);
-            writer.Write(GameWorldCount);
-            writer.Write(new byte[2]);
+
+            if (writer.MediusVersion > 108)
+            {
+                writer.Write(GameWorldCount);
+                writer.Write(new byte[2]);
+            }
+
             writer.Write(SecurityLevel);
             writer.Write(GenericField1);
             writer.Write(GenericField2);

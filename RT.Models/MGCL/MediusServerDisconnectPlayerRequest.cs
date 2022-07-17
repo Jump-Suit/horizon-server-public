@@ -1,17 +1,13 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobbyReport, MediusMGCLMessageIds.ServerDisconnectPlayerRequest)]
+    [MediusMessage(NetMessageClass.MessageClassLobbyReport, MediusMGCLMessageIds.ServerDisconnectPlayerRequest)]
     public class MediusServerDisconnectPlayerRequest : BaseMGCLMessage, IMediusRequest
     {
 
-		public override byte PacketType => (byte)MediusMGCLMessageIds.ServerDisconnectPlayerRequest;
+        public override byte PacketType => (byte)MediusMGCLMessageIds.ServerDisconnectPlayerRequest;
 
         public MessageId MessageID { get; set; }
         public int DmeWorldID;
@@ -41,13 +37,12 @@ namespace RT.Models
             writer.Write(DmeClientIndex);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-                $"DmeWorldID:{DmeWorldID} " +
-                $"DmeClientIndex:{DmeClientIndex}";
+                $"MessageID: {MessageID} " +
+                $"DmeWorldID: {DmeWorldID} " +
+                $"DmeClientIndex: {DmeClientIndex}";
         }
     }
 }

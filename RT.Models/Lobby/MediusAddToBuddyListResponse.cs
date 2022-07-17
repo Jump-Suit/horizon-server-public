@@ -1,17 +1,13 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.AddToBuddyListResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.AddToBuddyListResponse)]
     public class MediusAddToBuddyListResponse : BaseLobbyMessage, IMediusResponse
     {
 
-		public override byte PacketType => (byte)MediusLobbyMessageIds.AddToBuddyListResponse;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.AddToBuddyListResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 

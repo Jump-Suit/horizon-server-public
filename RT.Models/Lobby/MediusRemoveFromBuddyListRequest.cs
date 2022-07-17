@@ -1,16 +1,12 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.RemoveFromBuddyList)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.RemoveFromBuddyList)]
     public class MediusRemoveFromBuddyListRequest : BaseLobbyMessage, IMediusRequest
     {
-		public override byte PacketType => (byte)MediusLobbyMessageIds.RemoveFromBuddyList;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.RemoveFromBuddyList;
 
         public MessageId MessageID { get; set; }
 

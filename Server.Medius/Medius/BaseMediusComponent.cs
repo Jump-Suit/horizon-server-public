@@ -1,27 +1,22 @@
 ﻿using DotNetty.Common.Internal.Logging;
 using DotNetty.Handlers.Logging;
+using DotNetty.Handlers.Timeout;
 using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
+using RT.Common;
 using RT.Cryptography;
-using Microsoft.Extensions.Logging.Console;
+using RT.Models;
+using Server.Common;
+using Server.Medius.Models;
+using Server.Medius.PluginArgs;
+using Server.Pipeline.Tcp;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using RT.Models;
-using RT.Common;
-using Server.Pipeline.Tcp;
-using Server.Medius.Models;
-using Server.Medius.PluginArgs;
-using DotNetty.Handlers.Timeout;
-using Server.Common;
 
 namespace Server.Medius
 {
@@ -109,31 +104,10 @@ namespace Server.Medius
                     data.IsBanned = r.IsCompletedSuccessfully && r.Result;
                     if (data.IsBanned == true)
                     {
-                        QueueBanMessage(data);
-                    }
-                    else
-                    {
-                        // Check if in maintenance mode
-                        Program.Database.GetServerFlags().ContinueWith((r) =>
-                        {
-                            if (r.IsCompletedSuccessfully && r.Result != null && r.Result.MaintenanceMode != null)
-                            {
-                                // Ensure that maintenance is active
-                                // Ensure that we're past the from date
-                                // Ensure that we're before the to date (if set)
-                                if (r.Result.MaintenanceMode.IsActive
-                                        && Utils.GetHighPrecisionUtcTime() > r.Result.MaintenanceMode.FromDt
-                                        && (!r.Result.MaintenanceMode.ToDt.HasValue
-                                            || r.Result.MaintenanceMode.ToDt > Utils.GetHighPrecisionUtcTime()))
-                                {
-                                    QueueBanMessage(data, "Server in maintenance.");
-                                }
-                            }
-                        });
+                        QueueBanMessage(data, "Your IP has been banned!");
                     }
                 });
             };
-
             // Remove client on disconnect
             _scertHandler.OnChannelInactive += async (channel) =>
             {
@@ -205,7 +179,7 @@ namespace Server.Medius
 
         public void Log()
         {
-            
+
         }
 
         public virtual async Task Stop()
@@ -323,9 +297,16 @@ namespace Server.Medius
 
                         if (data.ClientObject != null)
                         {
-                            // Echo
-                            if ((Utils.GetHighPrecisionUtcTime() - data.ClientObject.UtcLastServerEchoSent).TotalSeconds > Program.Settings.ServerEchoInterval)
-                                data.ClientObject.QueueServerEcho();
+                            if (Program.Settings.ServerEchoUnsupported == true)
+                            {
+                                // Do NOT send Echo
+                            }
+                            else
+                            {
+                                // Echo
+                                if ((Utils.GetHighPrecisionUtcTime() - data.ClientObject.UtcLastServerEchoSent).TotalSeconds > Program.Settings.ServerEchoInterval)
+                                    data.ClientObject.QueueServerEcho();
+                            }
 
                             // Add client object's send queue to responses
                             while (data.ClientObject.SendMessageQueue.TryDequeue(out var message))
@@ -368,6 +349,21 @@ namespace Server.Medius
             });
         }
 
+        protected virtual void QueueClanKickMessage(ChannelData data, string msg)
+        {
+
+
+            // Send clan kick message
+            data.SendQueue.Enqueue(new RT_MSG_SERVER_SYSTEM_MESSAGE()
+            {
+                Severity = Program.Settings.BanSystemMessageSeverity,
+                EncodingType = 1,
+                LanguageType = 2,
+                EndOfMessage = true,
+                Message = msg
+            });
+        }
+
         protected abstract Task ProcessMessage(BaseScertMessage message, IChannel clientChannel, ChannelData data);
 
         #region Channel
@@ -385,13 +381,13 @@ namespace Server.Medius
                 // close channel
                 await channel.CloseAsync();
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 // Silence exception since the client probably just closed the socket before we could write to it
             }
             finally
             {
-                
+
             }
         }
 
@@ -455,7 +451,7 @@ namespace Server.Medius
                     Channel = clientChannel,
                     Message = clientApp.Message
                 };
-                await Program .Plugins.OnMediusMessageEvent(clientApp.Message.PacketClass, clientApp.Message.PacketType, onMediusMsg);
+                await Program.Plugins.OnMediusMessageEvent(clientApp.Message.PacketClass, clientApp.Message.PacketType, onMediusMsg);
                 if (onMediusMsg.Ignore)
                     return true;
             }
@@ -467,7 +463,7 @@ namespace Server.Medius
                     Channel = clientChannel,
                     Message = serverApp.Message
                 };
-                await Program .Plugins.OnMediusMessageEvent(serverApp.Message.PacketClass, serverApp.Message.PacketType, onMediusMsg);
+                await Program.Plugins.OnMediusMessageEvent(serverApp.Message.PacketClass, serverApp.Message.PacketType, onMediusMsg);
                 if (onMediusMsg.Ignore)
                     return true;
             }

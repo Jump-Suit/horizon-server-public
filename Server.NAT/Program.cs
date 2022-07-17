@@ -1,8 +1,8 @@
 ﻿using DotNetty.Common.Internal.Logging;
 using Newtonsoft.Json;
 using Server.NAT.Config;
-using System;
 using System.IO;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -38,6 +38,15 @@ namespace Server.NAT
             {
                 MissingMemberHandling = MissingMemberHandling.Ignore
             };
+
+
+            string root = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string subdir = root + "/logs";
+            // If directory does not exist, create it. 
+            if (!Directory.Exists(subdir))
+            {
+                Directory.CreateDirectory(subdir);
+            }
 
             // Load settings
             if (File.Exists(CONFIG_FILE))

@@ -1,12 +1,11 @@
 ﻿using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Introduced in Medius 1.43
+    /// </summary>
     [ScertMessage(RT_MSG_TYPE.RT_MSG_SERVER_SYSTEM_MESSAGE)]
     public class RT_MSG_SERVER_SYSTEM_MESSAGE : BaseScertMessage
     {
@@ -40,11 +39,11 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"Severity:{Severity} " +
-                $"EncodingType:{EncodingType} " +
-                $"MediusLanguageType:{LanguageType} " +
-                $"EndOfMessage:{EndOfMessage} " +
-                $"Message:{Message}";
+                $"Severity: {Severity} " +
+                $"EncodingType: {EncodingType} " +
+                $"MediusLanguageType: {LanguageType} " +
+                $"EndOfMessage: {EndOfMessage} " +
+                $"Message: {Message}";
         }
     }
 }

@@ -1,0 +1,21 @@
+﻿@page
+@model HttpService.Pages.SendMessageModel
+@{
+}
+
+<p>MLS Send Message</p>
+
+<FORM action="/sendmessage" method="get">
+    <P> <LABEL for="worldindex">WorldIndex: </LABEL>
+    <INPUT type="text" name="worldindex"><BR>
+        <LABEL for="destclient">Dest Client: </LABEL>
+        <INPUT type="text" name="destclient"><BR>
+            <LABEL for="message">Message: </LABEL>
+            <TEXTAREA name="message">Your name here.</TEXTAREA><BR>
+                <INPUT type="submit" value="Send">
+                <INPUT type="reset">
+
+    </P> 
+</FORM>
+
+                    <center> Message sent</center>

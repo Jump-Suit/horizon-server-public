@@ -1,25 +1,18 @@
 ﻿using DotNetty.Common.Internal.Logging;
-using DotNetty.Common.Utilities;
 using DotNetty.Handlers.Logging;
 using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
-using Microsoft.VisualBasic.FileIO;
 using RT.Common;
-using RT.Cryptography;
 using RT.Models;
-using Server.Pipeline.Tcp;
-using Server.Pipeline.Udp;
 using Server.Dme.Models;
+using Server.Dme.PluginArgs;
+using Server.Pipeline.Udp;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
-using Server.Dme.PluginArgs;
-using Server.Plugins.Interface;
 
 namespace Server.Dme
 {
@@ -90,7 +83,7 @@ namespace Server.Dme
                 };
 
                 // Plugin
-                await Program.Plugins.OnEvent(PluginEvent.DME_GAME_ON_RECV_UDP, pluginArgs);
+                await Program.Plugins.OnEvent(Plugins.PluginEvent.DME_GAME_ON_RECV_UDP, pluginArgs);
 
                 if (!pluginArgs.Ignore)
                     _recvQueue.Enqueue(message);
@@ -108,6 +101,7 @@ namespace Server.Dme
                     pipeline.AddLast(new ScertDatagramEncoder(Constants.MEDIUS_UDP_MESSAGE_MAXLEN));
                     pipeline.AddLast(new ScertDatagramIEnumerableEncoder(Constants.MEDIUS_UDP_MESSAGE_MAXLEN));
                     pipeline.AddLast(new ScertDatagramDecoder());
+
                     //pipeline.AddLast(new ScertDecoder());
                     pipeline.AddLast(new ScertDatagramMultiAppDecoder());
                     pipeline.AddLast(_scertHandler);
@@ -176,7 +170,10 @@ namespace Server.Dme
                     }
                 case RT_MSG_CLIENT_ECHO clientEcho:
                     {
-                        SendTo(new RT_MSG_CLIENT_ECHO() { Value = clientEcho.Value }, packet.Source);
+                        SendTo(new RT_MSG_CLIENT_ECHO()
+                        {
+                            Value = 0xA5
+                        }, packet.Source);
                         break;
                     }
                 case RT_MSG_CLIENT_APP_BROADCAST clientAppBroadcast:
@@ -212,9 +209,10 @@ namespace Server.Dme
                         break;
                     }
 
-                case RT_MSG_CLIENT_DISCONNECT_WITH_REASON clientDisconnectWithReason:
+                case RT_MSG_CLIENT_DISCONNECT _:
+                case RT_MSG_CLIENT_DISCONNECT_WITH_REASON _:
                     {
-                        
+
                         break;
                     }
                 default:
@@ -296,8 +294,8 @@ namespace Server.Dme
                 {
                     // Add send queue to responses
                     while (_sendQueue.TryDequeue(out var message))
-                        if (!await PassMessageToPlugins(_boundChannel, ClientObject, message.Message, false))
-                            responses.Add(message);
+                        if (!await PassMessageToPlugins(_boundChannel, ClientObject, message.Message, true))
+                            ProcessMessage(message);
 
                     //
                     if (responses.Count > 0)
@@ -322,7 +320,7 @@ namespace Server.Dme
             };
 
             // Send to plugins
-            await Program .Plugins.OnMessageEvent(message.Id, onMsg);
+            await Program.Plugins.OnMessageEvent(message.Id, onMsg);
             if (onMsg.Ignore)
                 return true;
 
@@ -337,7 +335,7 @@ namespace Server.Dme
                     Channel = clientChannel,
                     Message = clientApp.Message
                 };
-                await Program .Plugins.OnMediusMessageEvent(clientApp.Message.PacketClass, clientApp.Message.PacketType, onMediusMsg);
+                await Program.Plugins.OnMediusMessageEvent(clientApp.Message.PacketClass, clientApp.Message.PacketType, onMediusMsg);
                 if (onMediusMsg.Ignore)
                     return true;
             }
@@ -349,7 +347,7 @@ namespace Server.Dme
                     Channel = clientChannel,
                     Message = serverApp.Message
                 };
-                await Program .Plugins.OnMediusMessageEvent(serverApp.Message.PacketClass, serverApp.Message.PacketType, onMediusMsg);
+                await Program.Plugins.OnMediusMessageEvent(serverApp.Message.PacketClass, serverApp.Message.PacketType, onMediusMsg);
                 if (onMediusMsg.Ignore)
                     return true;
             }

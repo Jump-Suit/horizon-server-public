@@ -1,13 +1,9 @@
 ﻿using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-    [MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.WorldReport0)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.WorldReport0)]
     public class MediusWorldReport0 : BaseLobbyMessage
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.WorldReport0;
@@ -77,20 +73,20 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"SessionKey:{SessionKey} " +
-                $"MediusWorldID:{MediusWorldID} " +
-                $"PlayerCount:{PlayerCount} " +
-                $"GameName:{GameName} " +
-                $"GameStats:{GameStats} " +
-                $"MinPlayers:{MinPlayers} " +
-                $"MaxPlayers:{MaxPlayers} " +
-                $"GameLevel:{GameLevel} " +
-                $"PlayerSkillLevel:{PlayerSkillLevel} " +
-                $"RulesSet:{RulesSet} " +
-                $"GenericField1:{GenericField1:X8} " +
-                $"GenericField2:{GenericField2:X8} " +
-                $"GenericField3:{GenericField3:X8} " +
-                $"WorldStatus:{WorldStatus}";
+                $"SessionKey: {SessionKey} " +
+                $"MediusWorldID: {MediusWorldID} " +
+                $"PlayerCount: {PlayerCount} " +
+                $"GameName: {GameName} " +
+                $"GameStats: {GameStats} " +
+                $"MinPlayers: {MinPlayers} " +
+                $"MaxPlayers: {MaxPlayers} " +
+                $"GameLevel: {GameLevel} " +
+                $"PlayerSkillLevel: {PlayerSkillLevel} " +
+                $"RulesSet: {RulesSet} " +
+                $"GenericField1: {GenericField1:X8} " +
+                $"GenericField2: {GenericField2:X8} " +
+                $"GenericField3: {GenericField3:X8} " +
+                $"WorldStatus: {WorldStatus}";
         }
     }
 }

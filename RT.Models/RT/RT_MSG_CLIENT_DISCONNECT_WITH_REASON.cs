@@ -1,8 +1,5 @@
 ﻿using RT.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+using Server.Common;
 
 namespace RT.Models
 {
@@ -11,22 +8,22 @@ namespace RT.Models
     {
         public override RT_MSG_TYPE Id => RT_MSG_TYPE.RT_MSG_CLIENT_DISCONNECT_WITH_REASON;
 
-        public byte Reason;
+        public RT_MSG_CLIENT_DISCONNECT_REASON disconnectReason;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
-            Reason = reader.ReadByte();
+            disconnectReason = reader.Read<RT_MSG_CLIENT_DISCONNECT_REASON>();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
         {
-            writer.Write(Reason);
+            writer.Write(disconnectReason);
         }
 
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"Reason:{Reason}";
+                $"Reason: {disconnectReason}";
         }
     }
 }

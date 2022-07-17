@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 namespace Server.Common.Stream
@@ -8,6 +6,8 @@ namespace Server.Common.Stream
     public class MessageWriter : BinaryWriter
     {
         public int MediusVersion { get; set; }
+
+        public int AppId { get; set; }
 
         public MessageWriter() : base() { }
         public MessageWriter(System.IO.Stream output) : base(output) { }

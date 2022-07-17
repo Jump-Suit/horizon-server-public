@@ -1,12 +1,13 @@
 ﻿using DotNetty.Common.Internal.Logging;
 using RT.Common;
 using RT.Models;
+using Server.Common;
 using Server.Medius.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Server.Medius
@@ -19,11 +20,15 @@ namespace Server.Medius
         private Dictionary<string, ClientObject> _accountNameToClient = new Dictionary<string, ClientObject>();
         private Dictionary<string, ClientObject> _accessTokenToClient = new Dictionary<string, ClientObject>();
         private Dictionary<string, ClientObject> _sessionKeyToClient = new Dictionary<string, ClientObject>();
+        private Dictionary<int, ClientObject> _playersLoggedIn = new Dictionary<int, ClientObject>();
+
 
         private Dictionary<string, DMEObject> _accessTokenToDmeClient = new Dictionary<string, DMEObject>();
         private Dictionary<string, DMEObject> _sessionKeyToDmeClient = new Dictionary<string, DMEObject>();
 
-        private Dictionary<int, Channel> _channelIdToChannel = new Dictionary<int, Channel>();
+        private List<Channel> _channels = new List<Channel>();
+        private List<Game> _games = new List<Game>();
+        private List<MediusFile> _mediusFiles = new List<MediusFile>();
         private Dictionary<int, Game> _gameIdToGame = new Dictionary<int, Game>();
 
         private Dictionary<int, Clan> _clanIdToClan = new Dictionary<int, Clan>();
@@ -32,15 +37,22 @@ namespace Server.Medius
         private ConcurrentQueue<ClientObject> _addQueue = new ConcurrentQueue<ClientObject>();
 
         #region Clients
-
         public List<ClientObject> GetClients(int appId)
         {
             return _accountIdToClient.Select(x => x.Value).Where(x => x.ApplicationId == appId).ToList();
         }
 
-        public ClientObject GetClientByAccountId(int accountId)
+        public ClientObject GetClientByAccountId(int? accountId)
         {
-            if (_accountIdToClient.TryGetValue(accountId, out var result))
+            if (_accountIdToClient.TryGetValue((int)accountId, out var result))
+                return result;
+
+            return null;
+        }
+
+        public ClientObject GetClientByWorldId(int worldId)
+        {
+            if (_playersLoggedIn.TryGetValue(worldId, out var result))
                 return result;
 
             return null;
@@ -62,6 +74,15 @@ namespace Server.Medius
 
             return null;
         }
+
+        public ClientObject GetClientBySessionKey(string sessionKey)
+        {
+            if (_sessionKeyToClient.TryGetValue(sessionKey, out var result))
+                return result;
+
+            return null;
+        }
+
 
         public DMEObject GetDmeByAccessToken(string accessToken)
         {
@@ -117,6 +138,14 @@ namespace Server.Medius
 
         #region Games
 
+        public uint GetGameCount(ChannelType channelType, int appId)
+        {
+            lock (_games)
+            {
+                return (uint)_games.Count(x => x.ChannelType == channelType && x.ApplicationId == appId);
+            }
+        }
+
         public Game GetGameByDmeWorldId(int dmeWorldId)
         {
             return _gameIdToGame.FirstOrDefault(x => x.Value?.DMEWorldId == dmeWorldId).Value;
@@ -140,9 +169,28 @@ namespace Server.Medius
         {
             return _gameIdToGame
                             .Select(x => x.Value)
+                            .Where(x => x.ApplicationId == appId && (x.WorldStatus == MediusWorldStatus.WorldActive || x.WorldStatus == MediusWorldStatus.WorldStaging) && (filters.Count() == 0 || filters.Any(y => y.IsMatch(x))))
+                            .Skip((pageIndex - 1) * pageSize)
+                            .Take(pageSize);
+        }
+
+        public IEnumerable<Game> GetGameListByGameId(int appId, int pageIndex, int pageSize, int? game)
+        {
+            return _gameIdToGame
+                            .Select(x => x.Value)
                             .Where(x => x.ApplicationId == appId &&
-                                        (x.WorldStatus == MediusWorldStatus.WorldActive || x.WorldStatus == MediusWorldStatus.WorldStaging) &&
-                                        !filters.Any(y => !y.IsMatch(x)))
+                                        (x.WorldStatus == MediusWorldStatus.WorldActive || x.WorldStatus == MediusWorldStatus.WorldStaging)
+                                        && x.Id == game)
+                            .Skip((pageIndex - 1) * pageSize)
+                            .Take(pageSize);
+        }
+
+        public IEnumerable<Game> GetGameList(int appId, int pageIndex, int pageSize)
+        {
+            return _gameIdToGame
+                            .Select(x => x.Value)
+                            .Where(x => x.ApplicationId == appId &&
+                                        (x.WorldStatus == MediusWorldStatus.WorldActive || x.WorldStatus == MediusWorldStatus.WorldStaging))
                             .Skip((pageIndex - 1) * pageSize)
                             .Take(pageSize);
         }
@@ -152,6 +200,8 @@ namespace Server.Medius
             string gameName = null;
             if (request is MediusCreateGameRequest r)
                 gameName = r.GameName;
+            else if (request is MediusCreateGameRequest0 r0)
+                gameName = r0.GameName;
             else if (request is MediusCreateGameRequest1 r1)
                 gameName = r1.GameName;
 
@@ -172,7 +222,7 @@ namespace Server.Medius
             }
 
             // Try to get next free dme server
-            // If none exist, return error to clist
+            // If none exist, return error to client
             var dme = Program.ProxyServer.GetFreeDme(client.ApplicationId);
             if (dme == null)
             {
@@ -216,6 +266,7 @@ namespace Server.Medius
             }
         }
 
+        #region JoinGameRequest
         public void JoinGame(ClientObject client, MediusJoinGameRequest request)
         {
             var game = GetGameByGameId(request.MediusWorldID);
@@ -246,66 +297,149 @@ namespace Server.Medius
             else
             {
                 var dme = game.DMEServer;
-                dme.Queue(new MediusServerJoinGameRequest()
+                // if This is a Peer to Peer Player Host as DME we treat differently
+                if (game.GameHostType == MediusGameHostType.MediusGameHostPeerToPeer)
                 {
-                    MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
-                    ConnectInfo = new NetConnectionInfo()
+                    dme.Queue(new MediusServerJoinGameRequest()
                     {
-                        Type = NetConnectionType.NetConnectionTypeClientServerTCPAuxUDP,
-                        WorldID = game.DMEWorldId,
-                        SessionKey = client.SessionKey,
-                        ServerKey = Program.GlobalAuthPublic
-                    }
-                });
+                        MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
+                        ConnectInfo = new NetConnectionInfo()
+                        {
+                            Type = NetConnectionType.NetConnectionTypePeerToPeerUDP,
+                            WorldID = game.DMEWorldId,
+                            SessionKey = client.SessionKey,
+                            ServerKey = Program.GlobalAuthPublic
+                        }
+                    });
+                }
+                // Else send normal Connection type
+                else
+                {
+                    dme.Queue(new MediusServerJoinGameRequest()
+                    {
+                        MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
+                        ConnectInfo = new NetConnectionInfo()
+                        {
+                            Type = NetConnectionType.NetConnectionTypeClientServerTCPAuxUDP,
+                            WorldID = game.DMEWorldId,
+                            SessionKey = client.SessionKey,
+                            ServerKey = Program.GlobalAuthPublic
+                        }
+                    });
+                }
+
             }
         }
+        #endregion
+
+        #region JoinGameRequest0
+        public void JoinGame0(ClientObject client, MediusJoinGameRequest0 request)
+        {
+            var game = GetGameByGameId(request.MediusWorldID);
+            if (game == null)
+            {
+                client.Queue(new MediusJoinGameResponse()
+                {
+                    MessageID = request.MessageID,
+                    StatusCode = MediusCallbackStatus.MediusGameNotFound
+                });
+            }
+            else if (game.GamePassword != null && game.GamePassword != string.Empty && game.GamePassword != request.GamePassword)
+            {
+                client.Queue(new MediusJoinGameResponse()
+                {
+                    MessageID = request.MessageID,
+                    StatusCode = MediusCallbackStatus.MediusInvalidPassword
+                });
+            }
+            /*
+            else if (game.PlayerCount >= game.MaxPlayers)
+            {
+                client.Queue(new MediusJoinGameResponse()
+                {
+                    MessageID = request.MessageID,
+                    StatusCode = MediusCallbackStatus.MediusWorldIsFull
+                });
+            }
+            */
+            else
+            {
+                var dme = game.DMEServer;
+                // if This is a Peer to Peer Player Host as DME we treat differently
+                if (game.GameHostType == MediusGameHostType.MediusGameHostPeerToPeer)
+                {
+                    dme.Queue(new MediusServerJoinGameRequest()
+                    {
+                        MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
+                        ConnectInfo = new NetConnectionInfo()
+                        {
+                            Type = NetConnectionType.NetConnectionTypePeerToPeerUDP,
+                            WorldID = game.DMEWorldId,
+                            SessionKey = client.SessionKey,
+                            ServerKey = Program.GlobalAuthPublic
+                        }
+                    });
+                }
+                // Else send normal Connection type
+                else
+                {
+                    dme.Queue(new MediusServerJoinGameRequest()
+                    {
+                        MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
+                        ConnectInfo = new NetConnectionInfo()
+                        {
+                            Type = NetConnectionType.NetConnectionTypeClientServerTCP,
+                            WorldID = game.DMEWorldId,
+                            SessionKey = client.SessionKey,
+                            ServerKey = Program.GlobalAuthPublic
+                        }
+                    });
+                }
+            }
+        }
+        #endregion
 
         #endregion
 
         #region Channels
 
-        public Channel GetChannelByChannelId(int channelId)
+        public Channel GetChannelByChannelId(int channelId, int appId)
         {
-            lock (_channelIdToChannel)
+            lock (_channels)
             {
-                if (_channelIdToChannel.TryGetValue(channelId, out var result))
-                    return result;
+                return _channels.FirstOrDefault(x => x.Id == channelId && x.ApplicationId == appId);
             }
-
-            return null;
         }
 
         public Channel GetChannelByChannelName(string channelName, int appId)
         {
-            lock (_channelIdToChannel)
+            lock (_channels)
             {
-                return _channelIdToChannel.FirstOrDefault(x => x.Value.Name == channelName && x.Value.ApplicationId == appId).Value;
+                return _channels.FirstOrDefault(x => x.Name == channelName && x.ApplicationId == appId);
             }
         }
 
-        public uint GetChannelCount(ChannelType type)
+        public uint GetChannelCount(ChannelType type, int appId)
         {
-            lock (_channelIdToChannel)
+            lock (_channels)
             {
-                return (uint)_channelIdToChannel.Count(x => x.Value.Type == type);
+                return (uint)_channels.Count(x => x.Type == type && x.ApplicationId == appId);
             }
         }
 
         public Channel GetDefaultLobbyChannel(int appId)
         {
-            lock (_channelIdToChannel)
+            lock (_channels)
             {
                 // If all app ids are compatible then return the default
                 if (Program.Settings.ApplicationIds == null)
                 {
-                    return _channelIdToChannel
-                        .Select(x => x.Value)
+                    return _channels
                         .FirstOrDefault(x => x.Type == ChannelType.Lobby && x.ApplicationId == 0);
                 }
                 else
                 {
-                    return _channelIdToChannel
-                        .Select(x => x.Value)
+                    return _channels
                         .FirstOrDefault(x => x.Type == ChannelType.Lobby && x.ApplicationId == appId);
                 }
             }
@@ -313,22 +447,68 @@ namespace Server.Medius
 
         public void AddChannel(Channel channel)
         {
-            lock (_channelIdToChannel)
+            lock (_channels)
             {
-                _channelIdToChannel.Add(channel.Id, channel);
+                _channels.Add(channel);
             }
         }
 
         public IEnumerable<Channel> GetChannelList(int appId, int pageIndex, int pageSize, ChannelType type)
         {
-            return _channelIdToChannel
-                .Select(x => x.Value)
-                .Where(x => x.ApplicationId == appId && x.Type == type)
-                .Skip((pageIndex - 1) * pageSize)
-                .Take(pageSize);
+            lock (_channels)
+            {
+                return _channels
+                    .Where(x => x.ApplicationId == appId && x.Type == type)
+                    .Skip((pageIndex - 1) * pageSize)
+                    .Take(pageSize);
+            }
         }
 
         #endregion
+
+        public IEnumerable<MediusFile> GetFilesList(string path, string filenameBeginsWith, uint pageSize, uint startingEntryNumber)
+        {
+            lock (_mediusFiles)
+            {
+
+                string[] files = null;
+                int counter = 0;
+
+                if (filenameBeginsWith.ToString() == "*")
+                {
+                    files = Directory.GetFiles(path).Select(file => Path.GetFileName(file)).ToArray();
+                }
+                else
+                {
+                    files = Directory.GetFiles(path, Convert.ToString(filenameBeginsWith));
+                }
+
+                if (files.Length < pageSize)
+                {
+                    counter = files.Count();
+                }
+                else
+                {
+                    counter = (int)pageSize - 1;
+                }
+
+                for (int i = (int)startingEntryNumber - 1; i < counter; i++)
+                {
+                    string fileName = files[i];
+                    FileInfo fi = new FileInfo(fileName);
+
+                    _mediusFiles.Add(new MediusFile()
+                    {
+                        Filename = files[i],
+                        FileID = (uint)i,
+                        FileSize = (uint)fi.Length,
+                        CreationTimeStamp = Utils.ToUnixTime(fi.CreationTime),
+                    });
+                }
+                return _mediusFiles;
+            }
+        }
+
 
         #region Clans
 
@@ -363,32 +543,32 @@ namespace Server.Medius
         {
             await TickClients();
 
-            await TickChannels ();
+            await TickChannels();
 
             await TickGames();
         }
 
         private async Task TickChannels()
         {
-            Queue<int> channelsToRemove = new Queue<int>();
+            Queue<Channel> channelsToRemove = new Queue<Channel>();
 
             // Tick channels
-            foreach (var channelKeyPair in _channelIdToChannel)
+            foreach (var channel in _channels)
             {
-                if (channelKeyPair.Value.ReadyToDestroy)
+                if (channel.ReadyToDestroy)
                 {
-                    Logger.Info($"Destroying Channel {channelKeyPair.Value}");
-                    channelsToRemove.Enqueue(channelKeyPair.Key);
+                    Logger.Info($"Destroying Channel {channel}");
+                    channelsToRemove.Enqueue(channel);
                 }
                 else
                 {
-                    await channelKeyPair.Value.Tick();
+                    await channel.Tick();
                 }
             }
 
             // Remove channels
-            while (channelsToRemove.TryDequeue(out var channelId))
-                _channelIdToChannel.Remove(channelId);
+            while (channelsToRemove.TryDequeue(out var channel))
+                _channels.Remove(channel);
         }
 
         private async Task TickGames()
@@ -454,7 +634,7 @@ namespace Server.Medius
             {
                 if (!clientKeyPair.Value.IsConnected)
                 {
-                    if (clientKeyPair.Value.Timedout)
+                    if (clientKeyPair.Value.Timedout && Program.Settings.ServerEchoUnsupported != true)
                         Logger.Warn($"Timing out client {clientKeyPair.Value}");
                     else
                         Logger.Info($"Destroying Client {clientKeyPair.Value}");

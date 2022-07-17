@@ -1,16 +1,12 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.JoinChannel)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.JoinChannel)]
     public class MediusJoinChannelRequest : BaseLobbyMessage, IMediusRequest
     {
-		public override byte PacketType => (byte)MediusLobbyMessageIds.JoinChannel;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.JoinChannel;
 
         public MessageId MessageID { get; set; }
 

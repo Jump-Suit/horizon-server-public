@@ -1,17 +1,13 @@
 using RT.Common;
 using RT.Models.Misc;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobbyExt, MediusLobbyExtMessageIds.GenericChatMessage)]
+    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.GenericChatMessage)]
     public class MediusGenericChatMessage : BaseLobbyExtMessage, IMediusChatMessage
     {
-		public override byte PacketType => (byte)MediusLobbyExtMessageIds.GenericChatMessage;
+        public override byte PacketType => (byte)MediusLobbyExtMessageIds.GenericChatMessage;
 
         public MessageId MessageID { get; set; }
 

@@ -1,17 +1,16 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.AddToIgnoreList)]
+    /// <summary>
+    /// Introduced in Medius 1.42
+    /// </summary>
+	[MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.AddToIgnoreList)]
     public class MediusAddToIgnoreListRequest : BaseLobbyMessage, IMediusRequest
     {
 
-		public override byte PacketType => (byte)MediusLobbyMessageIds.AddToIgnoreList;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.AddToIgnoreList;
 
         public MessageId MessageID { get; set; }
 

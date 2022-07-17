@@ -1,14 +1,13 @@
 ﻿using DotNetty.Common.Internal.Logging;
 using RT.Common;
+using Server.Plugins.Interface;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
-using Server.Plugins.Interface;
 
 namespace Server.Plugins
 {
@@ -18,7 +17,7 @@ namespace Server.Plugins
 
         private ConcurrentDictionary<PluginEvent, List<OnRegisterActionHandler>> _pluginCallbackInstances = new ConcurrentDictionary<PluginEvent, List<OnRegisterActionHandler>>();
         private ConcurrentDictionary<RT_MSG_TYPE, List<OnRegisterMessageActionHandler>> _pluginScertMessageCallbackInstances = new ConcurrentDictionary<RT_MSG_TYPE, List<OnRegisterMessageActionHandler>>();
-        private ConcurrentDictionary<(NetMessageTypes, byte), List<OnRegisterMediusMessageActionHandler>> _pluginMediusMessageCallbackInstances = new ConcurrentDictionary<(NetMessageTypes, byte), List<OnRegisterMediusMessageActionHandler>>();
+        private ConcurrentDictionary<(NetMessageClass, byte), List<OnRegisterMediusMessageActionHandler>> _pluginMediusMessageCallbackInstances = new ConcurrentDictionary<(NetMessageClass, byte), List<OnRegisterMediusMessageActionHandler>>();
         private bool _reload = false;
         private DirectoryInfo _pluginDir = null;
         private FileSystemWatcher _watcher = null;
@@ -26,27 +25,27 @@ namespace Server.Plugins
         public PluginsManager(string pluginsDirectory)
         {
             // Ensure valid plugins directory
-            this._pluginDir = new DirectoryInfo(pluginsDirectory);
-            if (!this._pluginDir.Exists)
+            _pluginDir = new DirectoryInfo(pluginsDirectory);
+            if (!_pluginDir.Exists)
                 return;
 
             // Add a watcher so we can auto reload the plugins on change
-            this._watcher = new FileSystemWatcher(this._pluginDir.FullName, "*.dll");
-            this._watcher.IncludeSubdirectories = true;
-            this._watcher.Changed += (s, e) => { this._reload = true; };
-            this._watcher.Renamed += (s, e) => { this._reload = true; };
-            this._watcher.Created += (s, e) => { this._reload = true; };
-            this._watcher.Deleted += (s, e) => { this._reload = true; };
-            this._watcher.EnableRaisingEvents = true;
+            _watcher = new FileSystemWatcher(_pluginDir.FullName, "*.dll");
+            _watcher.IncludeSubdirectories = true;
+            _watcher.Changed += (s, e) => { _reload = true; };
+            _watcher.Renamed += (s, e) => { _reload = true; };
+            _watcher.Created += (s, e) => { _reload = true; };
+            _watcher.Deleted += (s, e) => { _reload = true; };
+            _watcher.EnableRaisingEvents = true;
 
             reloadPlugins();
         }
 
         public async Task Tick()
         {
-            if (this._reload)
+            if (_reload)
             {
-                this._reload = false;
+                _reload = false;
                 reloadPlugins();
             }
 
@@ -62,6 +61,7 @@ namespace Server.Plugins
 
         #region On Event
 
+
         public async Task OnEvent(PluginEvent eventType, object data)
         {
             if (!_pluginCallbackInstances.ContainsKey(eventType))
@@ -71,7 +71,7 @@ namespace Server.Plugins
             {
                 try
                 {
-                    await callback.Invoke(eventType, data);
+                    await callback.Invoke((Interface.PluginEvent)eventType, data);
                 }
                 catch (Exception e)
                 {
@@ -100,7 +100,7 @@ namespace Server.Plugins
             }
         }
 
-        public async Task OnMediusMessageEvent(NetMessageTypes msgClass, byte msgType, object data)
+        public async Task OnMediusMessageEvent(NetMessageClass msgClass, byte msgType, object data)
         {
             var key = (msgClass, msgType);
             if (!_pluginMediusMessageCallbackInstances.ContainsKey(key))
@@ -124,13 +124,13 @@ namespace Server.Plugins
 
         #region Register Event
 
-        public void RegisterAction(PluginEvent eventType, OnRegisterActionHandler callback)
+        public void RegisterAction(Interface.PluginEvent eventType, OnRegisterActionHandler callback)
         {
             List<OnRegisterActionHandler> callbacks;
-            if (!_pluginCallbackInstances.ContainsKey(eventType))
-                _pluginCallbackInstances.TryAdd(eventType, callbacks = new List<OnRegisterActionHandler>());
+            if (!_pluginCallbackInstances.ContainsKey((PluginEvent)eventType))
+                _pluginCallbackInstances.TryAdd((PluginEvent)eventType, callbacks = new List<OnRegisterActionHandler>());
             else
-                callbacks = _pluginCallbackInstances[eventType];
+                callbacks = _pluginCallbackInstances[(PluginEvent)eventType];
 
 
             callbacks.Add(callback);
@@ -148,7 +148,7 @@ namespace Server.Plugins
             callbacks.Add(callback);
         }
 
-        public void RegisterMediusMessageAction(NetMessageTypes msgClass, byte msgType, OnRegisterMediusMessageActionHandler callback)
+        public void RegisterMediusMessageAction(NetMessageClass msgClass, byte msgType, OnRegisterMediusMessageActionHandler callback)
         {
             List<OnRegisterMediusMessageActionHandler> callbacks;
             var key = (msgClass, msgType);
@@ -193,11 +193,11 @@ namespace Server.Plugins
             Logger.Warn($"Reloading plugins");
 
             // Ensure valid plugins directory
-            if (!this._pluginDir.Exists)
+            if (!_pluginDir.Exists)
                 return;
 
             // Add assemblies
-            foreach (var file in this._pluginDir.GetFiles("*.dll", SearchOption.AllDirectories))
+            foreach (var file in _pluginDir.GetFiles("*.dll", SearchOption.AllDirectories))
             {
                 try
                 {

@@ -1,10 +1,7 @@
 ﻿using RT.Common;
-using System;
+using Server.Common;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.CompilerServices;
-using System.Text;
-using Server.Common;
 using System.Linq;
 
 namespace RT.Models
@@ -52,7 +49,7 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"Messages:{String.Join("\r\n", Messages?.Select(x => x.ToString()))}";
+                $"Messages: {string.Join("\r\n", Messages?.Select(x => x.ToString()))}";
         }
     }
 }

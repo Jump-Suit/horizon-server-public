@@ -1,16 +1,12 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.UniverseNewsResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.UniverseNewsResponse)]
     public class MediusUniverseNewsResponse : BaseLobbyMessage, IMediusResponse
     {
-		public override byte PacketType => (byte)MediusLobbyMessageIds.UniverseNewsResponse;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.UniverseNewsResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 
@@ -50,7 +46,7 @@ namespace RT.Models
             writer.Write(News, Constants.NEWS_MAXLEN);
             writer.Write(EndOfList);
             writer.Write(new byte[3]);
-            
+
         }
 
 

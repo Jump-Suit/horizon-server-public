@@ -1,19 +1,17 @@
 ﻿using DotNetty.Common.Internal.Logging;
 using RT.Common;
 using RT.Models;
-using Server.Database;
+using Server.Common;
 using Server.Database.Models;
 using Server.Medius.PluginArgs;
 using Server.Plugins;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using Server.Common;
-using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
-using Server.Plugins.Interface;
+using static Server.Medius.Models.Game;
 
 namespace Server.Medius.Models
 {
@@ -24,20 +22,37 @@ namespace Server.Medius.Models
         static readonly IInternalLogger _logger = InternalLoggerFactory.GetInstance<ClientObject>();
         protected virtual IInternalLogger Logger => _logger;
 
+        public List<GameClient> Clients = new List<GameClient>();
+
         /// <summary>
         /// 
         /// </summary>
-        public MediusPlayerStatus Status => GetStatus();
+        public MediusPlayerStatus PlayerStatus => GetStatus();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public MGCL_GAME_HOST_TYPE ServerType { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
         public int AccountId { get; protected set; } = -1;
-        
+
         /// <summary>
         /// 
         /// </summary>
         public string AccountName { get; protected set; } = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string AccountStats { get; protected set; } = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string AccountDisplayName { get; set; } = null;
 
         /// <summary>
         /// Current access token required to access the account.
@@ -50,9 +65,14 @@ namespace Server.Medius.Models
         public string SessionKey { get; protected set; } = null;
 
         /// <summary>
-        /// 
+        /// Unique MGCL hardcoded game identifer per Medius title
         /// </summary>
         public int ApplicationId { get; set; } = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int LocationId { get; set; } = 0;
 
         /// <summary>
         /// 
@@ -62,7 +82,12 @@ namespace Server.Medius.Models
         /// <summary>
         /// 
         /// </summary>
-        public int? ClanId { get; set; } = null;
+        public int? ClanId { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int? WorldId { get; set; } = null;
 
         /// <summary>
         /// 
@@ -80,6 +105,11 @@ namespace Server.Medius.Models
         public Game CurrentGame { get; protected set; } = null;
 
         /// <summary>
+        /// Current Party
+        /// </summary>
+        public Party CurrentParty { get; protected set; } = null;
+
+        /// <summary>
         /// 
         /// </summary>
         public int? DmeClientId { get; protected set; } = null;
@@ -92,12 +122,12 @@ namespace Server.Medius.Models
         /// <summary>
         /// 
         /// </summary>
-        public DateTime UtcLastServerEchoSent { get; protected set; } = Common.Utils.GetHighPrecisionUtcTime();
+        public DateTime UtcLastServerEchoSent { get; protected set; } = Utils.GetHighPrecisionUtcTime();
 
         /// <summary>
         /// 
         /// </summary>
-        public DateTime UtcLastServerEchoReply { get; protected set; } = Common.Utils.GetHighPrecisionUtcTime();
+        public DateTime UtcLastServerEchoReply { get; protected set; } = Utils.GetHighPrecisionUtcTime();
 
         /// <summary>
         /// 
@@ -112,7 +142,17 @@ namespace Server.Medius.Models
         /// <summary>
         /// 
         /// </summary>
-        public Dictionary<int, string> FriendsList { get; protected set; }
+        public string[] FriendsListPS3 { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public Dictionary<int, string> FriendsList { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int[] Stats { get; set; } = new int[15];
 
         /// <summary>
         /// 
@@ -124,13 +164,19 @@ namespace Server.Medius.Models
         /// </summary>
         public int[] CustomWideStats { get; set; } = new int[0];
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public UploadState Upload { get; set; }
+
         public virtual bool IsLoggedIn => !_logoutTime.HasValue && _loginTime.HasValue && IsConnected;
         public bool IsInGame => CurrentGame != null && CurrentChannel != null && CurrentChannel.Type == ChannelType.Game;
+        //public bool 
 
-        public virtual bool Timedout => (Common.Utils.GetHighPrecisionUtcTime() - UtcLastServerEchoReply).TotalSeconds > Program.Settings.ClientTimeoutSeconds;
+        public virtual bool Timedout => (Utils.GetHighPrecisionUtcTime() - UtcLastServerEchoReply).TotalSeconds > Program.Settings.ClientTimeoutSeconds;
         public virtual bool IsConnected => KeepAlive || (_hasSocket && _hasActiveSession && !Timedout);  //(KeepAlive || _hasActiveSession) && !Timedout;
 
-        public bool KeepAlive => _keepAliveTime.HasValue && (Common.Utils.GetHighPrecisionUtcTime() - _keepAliveTime).Value.TotalSeconds < Program.Settings.KeepAliveGracePeriod;
+        public bool KeepAlive => _keepAliveTime.HasValue && (Utils.GetHighPrecisionUtcTime() - _keepAliveTime).Value.TotalSeconds < Program.Settings.KeepAliveGracePeriod;
 
         /// <summary>
         /// 
@@ -167,6 +213,11 @@ namespace Server.Medius.Models
         /// </summary>
         private DateTime _lastServerEchoValue = DateTime.UnixEpoch;
 
+        /// <summary>
+        /// File being Uploaded
+        /// </summary>
+        public MediusFile mediufFileToUpload;
+
 
 
         public ClientObject()
@@ -183,7 +234,7 @@ namespace Server.Medius.Models
         public void QueueServerEcho()
         {
             SendMessageQueue.Enqueue(new RT_MSG_SERVER_ECHO());
-            UtcLastServerEchoSent = Common.Utils.GetHighPrecisionUtcTime();
+            UtcLastServerEchoSent = Utils.GetHighPrecisionUtcTime();
         }
 
         public void OnRecvServerEcho(RT_MSG_SERVER_ECHO echo)
@@ -192,7 +243,7 @@ namespace Server.Medius.Models
             if (echoTime > _lastServerEchoValue)
             {
                 _lastServerEchoValue = echoTime;
-                UtcLastServerEchoReply = Common.Utils.GetHighPrecisionUtcTime();
+                UtcLastServerEchoReply = Utils.GetHighPrecisionUtcTime();
                 LatencyMs = (uint)(UtcLastServerEchoReply - echoTime).TotalMilliseconds;
             }
         }
@@ -201,7 +252,7 @@ namespace Server.Medius.Models
 
         public void KeepAliveUntilNextConnection()
         {
-            _keepAliveTime = Common.Utils.GetHighPrecisionUtcTime();
+            _keepAliveTime = Utils.GetHighPrecisionUtcTime();
         }
 
         public void OnConnected()
@@ -231,7 +282,14 @@ namespace Server.Medius.Models
             if (IsInGame)
                 return MediusPlayerStatus.MediusPlayerInGameWorld;
 
+
             return MediusPlayerStatus.MediusPlayerInChatWorld;
+
+            /* // Needs proper handling between Universes for MUIS
+            if (IsInOtherUniverse)
+                return MediusPlayerStatus.MediusPlayerInOtherUniverse;
+            */
+
         }
 
         /// <summary>
@@ -246,6 +304,8 @@ namespace Server.Medius.Models
                 ChannelId = CurrentChannel?.Id,
                 GameId = CurrentGame?.Id,
                 GameName = CurrentGame?.GameName,
+                PartyId = CurrentParty?.Id,
+                PartyName = CurrentParty?.PartyName,
                 WorldId = CurrentGame?.Id ?? CurrentChannel?.Id
             });
         }
@@ -323,6 +383,31 @@ namespace Server.Medius.Models
 
         #endregion
 
+        #region Party
+
+        public async Task LeaveParty(Party party)
+        {
+            if (CurrentParty != null && CurrentParty == party)
+            {
+                await LeaveCurrentParty();
+
+                // Tell database
+                PostStatus();
+            }
+        }
+
+        private async Task LeaveCurrentParty()
+        {
+            if (CurrentParty != null)
+            {
+                await CurrentParty.RemovePlayer(this);
+                CurrentParty = null;
+            }
+            DmeClientId = null;
+        }
+
+        #endregion
+
         #region Game
 
         public async Task JoinGame(Game game, int dmeClientIndex)
@@ -332,7 +417,7 @@ namespace Server.Medius.Models
 
             CurrentGame = game;
             DmeClientId = dmeClientIndex;
-            CurrentGame.AddPlayer(this);
+            await CurrentGame.AddPlayer(this);
 
             // Tell database
             PostStatus();
@@ -421,8 +506,7 @@ namespace Server.Medius.Models
 
         public GameListFilter SetGameListFilter(MediusSetGameListFilterRequest request)
         {
-            GameListFilter result = null;
-
+            GameListFilter result;
             GameListFilters.Add(result = new GameListFilter()
             {
                 FieldID = _gameListFilterIdCounter++,
@@ -437,8 +521,7 @@ namespace Server.Medius.Models
 
         public GameListFilter SetGameListFilter(MediusSetGameListFilterRequest0 request)
         {
-            GameListFilter result = null;
-
+            GameListFilter result;
             GameListFilters.Add(result = new GameListFilter()
             {
                 FieldID = _gameListFilterIdCounter++,
@@ -481,6 +564,11 @@ namespace Server.Medius.Models
             Queue(new RT_MSG_SERVER_APP() { Message = message });
         }
 
+        public void Queue(BaseMediusPluginMessage message)
+        {
+            Queue(new RT_MSG_SERVER_PLUGIN_TO_APP() { Message = message });
+        }
+
         public void Queue(IEnumerable<BaseMediusMessage> messages)
         {
             Queue(messages.Select(x => new RT_MSG_SERVER_APP() { Message = x }));
@@ -492,6 +580,15 @@ namespace Server.Medius.Models
         {
             return $"({AccountId}:{AccountName})";
         }
+    }
 
+    public class UploadState
+    {
+        public FileStream Stream { get; set; }
+        public uint FileId { get; set; }
+        public int PacketNumber { get; set; }
+        public uint TotalSize { get; set; }
+        public int BytesReceived { get; set; }
+        public DateTime TimeBegan { get; set; } = DateTime.UtcNow;
     }
 }

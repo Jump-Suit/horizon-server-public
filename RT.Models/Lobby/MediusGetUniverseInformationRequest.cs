@@ -1,16 +1,12 @@
 using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-	[MediusMessage(NetMessageTypes.MessageClassLobby, MediusLobbyMessageIds.GetUniverseInformation)]
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.GetUniverseInformation)]
     public class MediusGetUniverseInformationRequest : BaseLobbyMessage, IMediusRequest
     {
-		public override byte PacketType => (byte)MediusLobbyMessageIds.GetUniverseInformation;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.GetUniverseInformation;
 
         public MessageId MessageID { get; set; }
 
@@ -48,14 +44,13 @@ namespace RT.Models
             writer.Write(Language);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"InfoType:{InfoType} " +
-$"CharacterEncoding:{CharacterEncoding} " +
-$"Language:{Language}";
+                $"MessageID: {MessageID} " +
+                $"InfoType: {InfoType} " +
+                $"CharacterEncoding: {CharacterEncoding} " +
+                $"Language: {Language}";
         }
     }
 }

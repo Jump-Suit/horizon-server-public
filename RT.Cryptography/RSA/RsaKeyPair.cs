@@ -2,8 +2,6 @@
 using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Math;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace RT.Cryptography
 {

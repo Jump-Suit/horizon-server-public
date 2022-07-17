@@ -1,33 +1,26 @@
 ﻿using DotNetty.Common.Internal.Logging;
-using RT.Cryptography;
-using Microsoft.Extensions.Logging;
+using Haukcode.HighResolutionTimer;
 using Microsoft.Extensions.Logging.Console;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using Org.BouncyCastle.Crypto.Tls;
-using Org.BouncyCastle.Math;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
+using NReco.Logging.File;
 using RT.Models;
-using Server.Medius.Models;
+using Server.Common;
+using Server.Common.Logging;
 using Server.Database;
 using Server.Medius.Config;
-using NReco.Logging.File;
-using Server.Common.Logging;
+using Server.Medius.Models;
 using Server.Plugins;
-using System.Net.NetworkInformation;
-using Server.Common;
-using Haukcode.HighResolutionTimer;
+using System;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Management;
+using System.Net;
+using System.Net.Sockets;
+using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Server.Medius
 {
@@ -42,11 +35,15 @@ namespace Server.Medius
         public static ServerSettings Settings = new ServerSettings();
         public static DbController Database = new DbController(DB_CONFIG_FILE);
 
-        public static IPAddress SERVER_IP = IPAddress.Parse("192.168.0.178");
+        //public static Init libAntiCheat = new Init();
+
+        public static IPAddress SERVER_IP;
+        public static string IP_TYPE;
 
         public static MediusManager Manager = new MediusManager();
         public static PluginsManager Plugins = null;
 
+        public static MAPS ProfileServer = new MAPS();
         public static MAS AuthenticationServer = new MAS();
         public static MLS LobbyServer = new MLS();
         public static MPS ProxyServer = new MPS();
@@ -60,7 +57,6 @@ namespace Server.Medius
         private static DateTime? _lastSuccessfulDbAuth = null;
         private static DateTime _lastConfigRefresh = Utils.GetHighPrecisionUtcTime();
         private static DateTime _lastComponentLog = Utils.GetHighPrecisionUtcTime();
-        private static bool _hasPurgedAccountStatuses = false;
 
         private static int _ticks = 0;
         private static Stopwatch _sw = new Stopwatch();
@@ -105,12 +101,14 @@ namespace Server.Medius
                     if (!await Database.Authenticate())
                     {
                         // Log and exit when unable to authenticate
-                        Logger.Error("Unable to authenticate with the db middleware server");
+                        Logger.Error($"Unable to authenticate connection to Cache Server.");
                         return;
                     }
                     else
                     {
                         _lastSuccessfulDbAuth = Utils.GetHighPrecisionUtcTime();
+
+                        Logger.Info("Connected to Cache Server");
 
 #if !DEBUG
                         if (!_hasPurgedAccountStatuses)
@@ -122,8 +120,16 @@ namespace Server.Medius
                     }
                 }
 
+                // Tick Profiling
+
+                // prof:* Total Number of Connect Attempts (%d), Number Disconnects (%d), Total On (%d)
+                // 
+                //Logger.Info($"prof:* Total Server Uptime = {GetUptime()} Seconds == (%d days, %d hours, %d minutes, %d seconds)");
+
+                //Logger.Info($"prof:* Total Available RAM = {} bytes");
+
                 // Tick
-                await Task.WhenAll(AuthenticationServer.Tick(), LobbyServer.Tick(), ProxyServer.Tick());
+                await Task.WhenAll(ProfileServer.Tick(), AuthenticationServer.Tick(), LobbyServer.Tick(), ProxyServer.Tick());
 
                 // Tick manager
                 await Manager.Tick();
@@ -134,6 +140,7 @@ namespace Server.Medius
                 // 
                 if ((Utils.GetHighPrecisionUtcTime() - _lastComponentLog).TotalSeconds > 15f)
                 {
+                    ProfileServer.Log();
                     AuthenticationServer.Log();
                     LobbyServer.Log();
                     ProxyServer.Log();
@@ -143,7 +150,7 @@ namespace Server.Medius
                 // Reload config
                 if ((Utils.GetHighPrecisionUtcTime() - _lastConfigRefresh).TotalMilliseconds > Settings.RefreshConfigInterval)
                 {
-                    RefreshConfig();
+                    await RefreshConfig();
                     _lastConfigRefresh = Utils.GetHighPrecisionUtcTime();
                 }
             }
@@ -151,6 +158,7 @@ namespace Server.Medius
             {
                 Logger.Error(ex);
 
+                await ProfileServer.Stop();
                 await AuthenticationServer.Stop();
                 await LobbyServer.Stop();
                 await ProxyServer.Stop();
@@ -160,24 +168,353 @@ namespace Server.Medius
         static async Task StartServerAsync()
         {
             int waitMs = sleepMS;
+            string AppIdArray = string.Join(", ", Settings.ApplicationIds);
 
-            Logger.Info("Starting medius components...");
+            Logger.Info("Initializing medius components...");
+            Logger.Info("**************************************************");
+            #region MediusGetBuildTimeStamp
+            var MediusBuildTimeStamp = GetLinkerTime(Assembly.GetEntryAssembly());
+            Logger.Info($"* MediusBuildTimeStamp at {MediusBuildTimeStamp}");
+            #endregion
 
-            Logger.Info($"Starting MAS on port {AuthenticationServer.Port}.");
-            AuthenticationServer.Start();
-            Logger.Info($"MAS started.");
+            string datetime = DateTime.Now.ToString("MMMM/dd/yyyy hh:mm:ss tt");
+            Logger.Info($"* Launched on {datetime}");
 
-            Logger.Info($"Starting MLS on port {LobbyServer.Port}.");
-            LobbyServer.Start();
-            Logger.Info($"MLS started.");
+            //ProcesId and Parent ProcessId
+            //Logger.Info($":");
 
-            Logger.Info($"Starting MPS on port {ProxyServer.Port}.");
-            ProxyServer.Start();
-            Logger.Info($"MPS started.");
+            if (Database._settings.SimulatedMode == true)
+            {
+                Logger.Info("* Database Disabled Medius Stack");
+            }
+            else
+            {
+                Logger.Info("* Database Enabled Medius Stack");
+            }
 
-            // 
-            Logger.Info("Started.");
+            Logger.Info($"* Server Key Type: {Settings.EncryptMessages}");
 
+            #region Remote Log Viewing
+            if (Settings.RemoteLogViewPort == 0)
+            {
+                //* Remote log viewing setup failure with port %d.
+                Logger.Info("* Remote log viewing disabled.");
+            }
+            else if (Settings.RemoteLogViewPort > 0)
+            {
+                Logger.Info($"* Remote log viewing enabled at port {Settings.RemoteLogViewPort}.");
+            }
+            #endregion
+
+            Logger.Info("**************************************************");
+
+
+            #region Anti-Cheat Init (WIP)
+            if (Settings.AntiCheatOn == true)
+            {
+
+                Logger.Info("Initializing anticheat (WIP)\n");
+            }
+            #endregion
+
+            #region MediusGetVersion
+            if (Settings.MediusServerVersionOverride == true)
+            {
+                #region MAPS - Zipper Interactive MAG/Socom 4
+                if (Settings.EnableMAPS == true)
+                {
+                    Logger.Info($"MAPS Version: {Settings.MAPSVersion}");
+                    Logger.Info($"Enabling MAPS on Server IP = {SERVER_IP} TCP Port = {AuthenticationServer.Port} UDP Port = {AuthenticationServer.Port}.");
+                    ProfileServer.Start();
+                    Logger.Info("Medius Profile Server Intialized and Now Accepting Clients");
+                }
+                #endregion
+
+                #region MAS Enabled?
+                if (Settings.EnableMAS == true)
+                {
+                    #region MAS 
+                    Logger.Info($"MAS Version: {Settings.MASVersion}");
+                    Logger.Info($"Enabling MAS on Server IP = {SERVER_IP} TCP Port = {AuthenticationServer.Port} UDP Port = {AuthenticationServer.Port}.");
+                    Logger.Info($"Medius Authentication Server running under ApplicationID {AppIdArray}");
+
+                    //Connecting to Medius Universe Manager 127.0.0.1 10076 1
+                    //Connected to Universe Manager server
+
+                    AuthenticationServer.Start();
+                    Logger.Info("Medius Authentication Server Initialized");
+                    #endregion
+
+                }
+                #endregion
+
+                #region MLS Enabled?
+                if (Settings.EnableMAS == true)
+                {
+                    Logger.Info($"MLS Version: {Settings.MLSVersion}");
+                    Logger.Info($"Enabling MLS on Server IP = {SERVER_IP} TCP Port = {LobbyServer.Port} UDP Port = {LobbyServer.Port}.");
+                    Logger.Info($"Medius Lobby Server running under ApplicationID {AppIdArray}");
+
+                    DMEServerResetMetrics();
+
+                    LobbyServer.Start();
+                    Logger.Info("Medius Lobby Server Initialized and Now Accepting Clients");
+                }
+                #endregion
+
+                #region MPS Enabled?
+                if (Settings.EnableMPS == true)
+                {
+                    Logger.Info($"MPS Version: {Settings.MPSVersion}");
+                    Logger.Info($"Enabling MPS on Server IP = {SERVER_IP} TCP Port = {ProxyServer.Port}.");
+                    Logger.Info($"Medius Proxy Server running under ApplicationID {AppIdArray}");
+                    ProxyServer.Start();
+                    Logger.Info("Medius Proxy Server Initialized and Now Accepting Clients");
+
+                    //Connecting to Medius Universe Manager 127.0.0.1 10076 1
+                    //Connected to Universe Manager server after 1 attempts
+                }
+                #endregion
+            }
+            else
+            {
+
+                #region MAPS - Zipper Interactive MAG/Socom 4
+                if (Settings.EnableMAPS == true)
+                {
+                    Logger.Info($"Enabling MAPS on Server IP = {SERVER_IP} TCP Port = {ProfileServer.Port} UDP Port = {ProfileServer.Port}.");
+                    Logger.Info($"Medius Profile Server running under ApplicationID {AppIdArray}");
+
+                    ProfileServer.Start();
+                    Logger.Info("Medius Profile Server Intialized and Now Accepting Clients");
+                }
+                #endregion
+
+                #region MAS
+                if (Settings.EnableMAS == true)
+                {
+                    Logger.Info($"Enabling MAS on Server IP = {SERVER_IP} TCP Port = {AuthenticationServer.Port} UDP Port = {AuthenticationServer.Port}.");
+                    Logger.Info($"Medius Authentication Server running under ApplicationID {AppIdArray}");
+
+                    //Connecting to Medius Universe Manager 127.0.0.1 10076 1
+                    //Connected to Universe Manager server
+
+                    AuthenticationServer.Start();
+                    Logger.Info("Medius Authentication Server Initialized");
+
+                }
+                #endregion
+
+                #region MLS Enabled?
+                if (Settings.EnableMAS == true)
+                {
+                    Logger.Info($"Enabling MLS on Server IP = {SERVER_IP} TCP Port = {LobbyServer.Port} UDP Port = {LobbyServer.Port}.");
+                    Logger.Info($"Medius Lobby Server running under ApplicationID {AppIdArray}");
+
+                    DMEServerResetMetrics();
+
+                    LobbyServer.Start();
+                    Logger.Info("Medius Lobby Server Initialized and Now Accepting Clients");
+                }
+                #endregion
+
+                #region MPS Enabled?
+                if (Settings.EnableMPS == true)
+                {
+                    Logger.Info($"Enabling MPS on Server IP = {SERVER_IP} TCP Port = {ProxyServer.Port}.");
+                    Logger.Info($"Medius Proxy Server running under ApplicationID {AppIdArray}");
+                    ProxyServer.Start();
+                    Logger.Info("Medius Proxy Server Initialized and Now Accepting Clients");
+
+                    //Connecting to Medius Universe Manager 127.0.0.1 10076 1
+                    //Connected to Universe Manager server after 1 attempts
+                }
+                #endregion
+
+                // Use hardcoded methods in code to handle specific games server versions
+                Logger.Info("Using Game Specific Server Versions");
+            }
+
+
+            #region NAT
+            //Get NATIp
+            if (Settings.NATIp != null)
+            {
+                try
+                {
+                    IPHostEntry host = Dns.GetHostEntry(Settings.NATIp);
+
+                    if (Settings.NATIp != host.HostName)
+                    {
+                        IPAddress ip = IPAddress.Parse(host.AddressList.First().ToString());
+                        ip.MapToIPv4();
+                        try
+                        {
+                            DoGetHostAddressEntry(ip);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Error($"Unable to resolve NAT service IP: {ip}  Exiting with exception: {ex}");
+                            Environment.Exit(1);
+                        }
+                    }
+                    else
+                    {
+                        DoGetHostNameEntry(Settings.NATIp);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"Unable to resolve NAT service IP: {Settings.NATIp}  Exiting with exception: {ex}");
+                    Environment.Exit(1);
+                }
+
+
+            }
+            #endregion
+
+
+            //* Diagnostic Profiling Enabled: %d Counts
+
+            //Test:NGS Environment flag: %d
+
+            //Billing Service Provider
+
+            //Server-Side Vulgarity Filter Switch 
+            //Valid Characters= %s
+            //Dictionary Hard[%s] SoftNo[%s] SoftYes[%s] Substring[%s] Substring[%s]
+
+            //ERROR: Could not reset DME Svr metrics[%d]?
+            //TOMUM -  SEND PERCENTAGE[%d] RECV PERCENTAGE [%d]
+            //DME SVR -  SEND BYTES[%ld] RECV BYTES[%ld]
+            //SYS -  MAX SYS[%f]
+            //Error initializing MediusTimer.  Continuing...
+
+            //MediusParseLadderList0AppIDs
+            //BinaryParseInitialize
+
+            /*
+            string rt_msg_client_get_version_string = "rt_msg_client version: 1.08.0206";
+            Logger.Info($"Initialized Message Client Library {rt_msg_client_get_version_string}");
+            */
+
+            //DMEServer Enabling Dynamic Client Memory
+            //rt_msg_server_enable_dynamic_client_memory
+            //DmeServerEnableDynamicClientMemory failed. Continuing
+
+            //Messaging Version = %d.%02d.%04d
+            //%s library version = %d.%02d.%04d
+            //Medius Lobby Server Intialized and Now Accepting Clients
+
+            //Unable to connect to Cache Server. Error %d
+            //Connected to Cache Server
+
+            //MediusConnectLobbyToMUCG
+            //Connecting to MUCG %s %d %d
+            //MUCGIP
+            //MUCGPort
+            //WorldID
+            //MUMIP
+            //MUMPort
+            //ForwardChatMsgFromMUCG
+            //ForwardClanChatMsgFromMUCG
+            //CurrentOnlineCount return value
+            // Recovery Callback
+            //EventsRequested
+            //MUCGProcessSyncCB
+            //MediusMUCGEventCB
+
+            //Error connecting to MUCG
+
+            //MUCGSendSync returned error %d
+
+            //MFS_ProcessDownloadRequests
+            //Error processing download queue. Error %d
+            //MFS_ProcessUploadRequests
+            //Error processing upload queue. Error %d
+
+            //socket:Lost connection to Cache Server. Reconnecting[%d]
+            //Unable to connect to Cache Server. Error %d
+            //"Connected to Cache Server
+
+            //ERR: LOST CONNECTION WITH MUM -- Cleaning up DME Worlds.  ATTEMPTING TO RE-ESTABLISH!!
+
+            //MediusConnectLobbyToMUM
+
+            //MUCGGetConnectState
+            //Lost Connection to MUCG. Will attempt reconnect in %d seconds
+
+            //ForceConfigReload
+            //
+            //ConfigManager Cannot Reload Configuration File %d
+
+            //Reloading Dictionary Files
+            //clSoftNo
+            //clSoftYes
+            //clHard
+            //FPATExists
+            //load_fpat
+            //read_file_type
+            //read_fpat
+            //Incorrect file type in %s.\n
+            //Unable to open %s.\n
+            //fpat
+            //loadclassifier
+
+            //DmeServerUpdateAllWorlds
+            //update:Error Code %d Updating All Worlds
+            //update:DME Server Network Error = %d
+
+            //AOSCacheFlushCheck
+            //Error during AOS cache flush
+
+            //BillingProviderProcessResultQueue
+            //BillingProviderProcessResultQueue error.
+
+            //RunningStatus
+            //Shutting down NotificationScheduler.
+            //Error shutting down MFS download queue
+            //Error shutting down MFS upload queue
+
+            //DMEServerCleanup or DMEServerCleanupWorld
+            //update:DmeServerCleanupWorld error - world %d error =%d
+            //update:DmeServerCleanup error =%d
+
+            //Destroy Billing
+            //BillingProviderDestroy
+            //update:Ending Medius Lobby Server Operations
+
+            //CacheDestroy
+            //clSoftNo
+            //clSoftYes
+            //clHard
+            //fpat
+
+            //pendingTransClose
+            //destroyMediusHttpd
+            //MFS_transferDestroy
+            //ClanCache_Destroy
+            //Deleting ClanCache Error: %d
+
+            #endregion
+
+            Logger.Info("Medius Stacks Initialized");
+
+
+            #region MFS
+            if (Settings.AllowMediusFileServices == true)
+            {
+                Logger.Info($"Initializing MFS Download Queue of size {Settings.MFSDownloadQSize}");
+
+                Logger.Info($"Initializing MFS Upload Queue of size {Settings.MFSUploadQSize}");
+                MFS_transferInit();
+
+                Logger.Info($"MFS Queue Timeout Interval {Settings.MFSQueueTimeoutInterval}");
+            }
+
+            #endregion
+
+            #region Timer
             // start timer
             _timer = new HighResolutionTimer();
             _timer.SetPeriod(waitMs);
@@ -201,12 +538,14 @@ namespace Server.Medius
                 // wait for next tick
                 _timer.WaitForTrigger();
             }
+
+            #endregion
         }
 
         static async Task Main(string[] args)
         {
             // 
-            Initialize();
+            await Initialize();
 
             // Add file logger if path is valid
             if (new FileInfo(LogSettings.Singleton.LogPath)?.Directory?.Exists ?? false)
@@ -236,84 +575,344 @@ namespace Server.Medius
             await StartServerAsync();
         }
 
-        static void Initialize()
+        static async Task Initialize()
         {
-            RefreshServerIp();
-            RefreshConfig();
+            await RefreshConfig();
 
-            // 
+            #region Locations TEMP
+            if (Settings.Locations != null)
+            {
+                foreach (var location in Settings.Locations)
+                {
+                    if (location.AppIds == null || location.AppIds.Length == 0)
+                    {
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = 0,
+                            MaxPlayers = 256,
+                            Name = location.ChannelName ?? location.Name,
+                            GenericFieldLevel = location.GenericFieldLevel,
+                            Id = location.Id,
+                            Type = ChannelType.Lobby
+                        });
+                    }
+                    else
+                    {
+                        foreach (var appId in location.AppIds)
+                        {
+                            Manager.AddChannel(new Channel()
+                            {
+                                ApplicationId = appId,
+                                MaxPlayers = 256,
+                                Name = location.ChannelName ?? location.Name,
+                                GenericFieldLevel = location.GenericFieldLevel,
+                                Id = location.Id,
+                                Type = ChannelType.Lobby
+                            });
+                        }
+                    }
+                }
+            }
+            #endregion
+
             if (Settings.ApplicationIds != null)
             {
                 foreach (var appId in Settings.ApplicationIds)
                 {
+
+
+                    #region Calling All Cars PS3
+                    if (appId == 20623 || appId == 20624)
+                    {
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "US",
+                            Type = ChannelType.Lobby,
+                            GenericField1 = 1,
+                            GenericField2 = 1,
+                        });
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "EU",
+                            Type = ChannelType.Lobby,
+                            GenericField1 = 1,
+                            GenericField2 = 1,
+                        });
+                    }
+                    #endregion
+
+                    #region Motorstorm 1 / Monument Valley
+                    //SCEA SCEE SCEI SCEK
+                    else if (appId == 20764 || appId == 20364 || appId == 21000 || appId == 21044)
+                    {
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "Motorstorm US West",
+                            Type = ChannelType.Lobby
+                        });
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "Motorstorm US Central",
+                            Type = ChannelType.Lobby
+                        });
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "Motorstorm US East",
+                            Type = ChannelType.Lobby
+                        });
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "Motorstorm EU",
+                            Type = ChannelType.Lobby
+                        });
+                        /*
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "モーターストームJP",
+                            Type = ChannelType.Lobby
+                        });
+                        */
+                    }
+                    #endregion
+
+                    #region NBA 07
+                    else if (appId == 20244)
+                    {
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "SportsConnect US",
+                            Type = ChannelType.Lobby,
+                            GenericField1 = 1,
+                            GenericField2 = 1,
+                        });
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "SportsConnect EU",
+                            Type = ChannelType.Lobby,
+                            GenericField1 = 1,
+                            GenericField2 = 1,
+                        });
+                    }
+                    #endregion
+
+                    #region WRC 4
+                    else if (appId == 10394)
+                    {
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "Region US",
+                            Type = ChannelType.Lobby,
+                        });
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "Region EU",
+                            Type = ChannelType.Lobby,
+                        });
+                    }
+                    #endregion
+
+                    #region Socom 1
+                    else if (appId == 10274)
+                    {
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "Region US",
+                            Type = ChannelType.Lobby,
+                        });
+                    }
+                    #endregion
+
+                    #region Arc the Lad: End of Darkness
+                    else if (appId == 10984)
+                    {
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "Yewbell",
+                            Type = ChannelType.Lobby,
+                        });
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "Rueloon",
+                            Type = ChannelType.Lobby,
+                        });
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "Dilzweld",
+                            Type = ChannelType.Lobby,
+                        });
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "Milmarna",
+                            Type = ChannelType.Lobby,
+                        });
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "Romastle Plains",
+                            Type = ChannelType.Lobby,
+                        });
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "Halshinne",
+                            Type = ChannelType.Lobby,
+                        });
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "Lamda Temple",
+                            Type = ChannelType.Lobby,
+                        });
+                    }
+                    #endregion
+
+                    #region Default 
+                    if (Manager.GetDefaultLobbyChannel(appId) == null)
+                    {
+                        Manager.AddChannel(new Channel()
+                        {
+                            ApplicationId = appId,
+                            MaxPlayers = 256,
+                            Name = "Default",
+                            Type = ChannelType.Lobby
+                        });
+                    }
+                    #endregion
+                }
+            }
+            else
+            {
+                if (Manager.GetDefaultLobbyChannel(0) == null)
+                {
                     Manager.AddChannel(new Channel()
                     {
-                        ApplicationId = appId,
+                        ApplicationId = 0,
                         MaxPlayers = 256,
                         Name = "Default",
                         Type = ChannelType.Lobby
                     });
                 }
             }
-            else
-            {
-                Manager.AddChannel(new Channel()
-                {
-                    ApplicationId = 0,
-                    MaxPlayers = 256,
-                    Name = "Default",
-                    Type = ChannelType.Lobby
-                });
-            }
         }
 
         /// <summary>
         /// 
         /// </summary>
-        static void RefreshConfig()
+        static Task RefreshConfig()
         {
-            var usePublicIp = Settings.UsePublicIp;
-
             // 
             var serializerSettings = new JsonSerializerSettings()
             {
                 MissingMemberHandling = MissingMemberHandling.Ignore,
             };
 
-            // Load settings
-            if (File.Exists(CONFIG_FILE))
+            #region Dirs
+            string root = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string subdirLogs = root + @"\logs";
+            string subdirMFSFiles = root + @"\MFSFiles";
+            string subdirHorizonPlugins = root + @"\plugins";
+            string subdirConfig = root + @"\config";
+            string subdirConfigFile = subdirConfig + @"\" + CONFIG_FILE;
+            #endregion
+
+            /*
+            #region Create Dirs
+            // If Logs directory does not exist, create it. 
+            if (!Directory.Exists(subdirLogs))
             {
-                // Populate existing object
-                JsonConvert.PopulateObject(File.ReadAllText(CONFIG_FILE), Settings, serializerSettings);
+                Directory.CreateDirectory(subdirLogs);
+            }
+
+            // If MFSFiles directory does not exist, create it. 
+            if (!Directory.Exists(subdirMFSFiles))
+            {
+                Directory.CreateDirectory(subdirMFSFiles);
+            }
+
+            // If config directory does not exist, create it. 
+            if (!Directory.Exists(subdirConfig))
+            {
+                Directory.CreateDirectory(subdirConfig);
+            }
+            #endregion
+            */
+
+            #region Check Config.json
+            // Create Defaults if File doesn't exist
+            if (!File.Exists(CONFIG_FILE))
+            {
+                File.WriteAllText(CONFIG_FILE, JsonConvert.SerializeObject(Settings, Formatting.Indented));
             }
             else
             {
-                // Save defaults
-                File.WriteAllText(CONFIG_FILE, JsonConvert.SerializeObject(Settings, Formatting.Indented));
+
+                // Load Settings
+                Settings.Locations?.Clear();
+
+                // Populate existing object
+                JsonConvert.PopulateObject(File.ReadAllText(CONFIG_FILE), Settings, serializerSettings);
             }
+            #endregion
 
             // Set LogSettings singleton
             LogSettings.Singleton = Settings.Logging;
 
-            // Determine server ip
-            if (usePublicIp != Settings.UsePublicIp)
+            #region Determine Server IP
+            if (!Settings.UsePublicIp)
             {
-                if (!Settings.UsePublicIp)
+                SERVER_IP = Utils.GetLocalIPAddress();
+                IP_TYPE = "Local";
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(Settings.PublicIpOverride))
                 {
-                    SERVER_IP = Utils.GetLocalIPAddress();
+                    SERVER_IP = IPAddress.Parse(Utils.GetPublicIPAddress());
+                    IP_TYPE = "Public";
+
                 }
                 else
                 {
-                    if (string.IsNullOrWhiteSpace(Settings.PublicIpOverride))
-                        SERVER_IP = IPAddress.Parse(Utils.GetPublicIPAddress());
-                    else
-                        SERVER_IP = IPAddress.Parse(Settings.PublicIpOverride);
+                    SERVER_IP = IPAddress.Parse(Settings.PublicIpOverride);
+                    IP_TYPE = "Public (Override)";
                 }
             }
-
-            // Determine server ip
-            if (usePublicIp != Settings.UsePublicIp)
-                RefreshServerIp();
+            #endregion
 
             // Update NAT Ip with server ip if null
             if (string.IsNullOrEmpty(Settings.NATIp))
@@ -331,21 +930,7 @@ namespace Server.Medius
 
             // Load tick time into sleep ms for main loop
             sleepMS = TickMS;
-        }
-
-        static void RefreshServerIp()
-        {
-            if (!Settings.UsePublicIp)
-            {
-                SERVER_IP = Utils.GetLocalIPAddress();
-            }
-            else
-            {
-                if (string.IsNullOrWhiteSpace(Settings.PublicIpOverride))
-                    SERVER_IP = IPAddress.Parse(Utils.GetPublicIPAddress());
-                else
-                    SERVER_IP = IPAddress.Parse(Settings.PublicIpOverride);
-            }
+            return Task.CompletedTask;
         }
 
         public static string GenerateSessionKey()
@@ -356,12 +941,13 @@ namespace Server.Medius
             }
         }
 
+        #region Text Filter
         private static string GetTextFilterRegexExpression(TextFilterContext context)
         {
-            if (Settings.TextBlacklistFilters.TryGetValue(context, out var rExp) && !String.IsNullOrEmpty(rExp))
+            if (Settings.TextBlacklistFilters.TryGetValue(context, out var rExp) && !string.IsNullOrEmpty(rExp))
                 return rExp;
 
-            if (Settings.TextBlacklistFilters.TryGetValue(TextFilterContext.DEFAULT, out rExp) && !String.IsNullOrEmpty(rExp))
+            if (Settings.TextBlacklistFilters.TryGetValue(TextFilterContext.DEFAULT, out rExp) && !string.IsNullOrEmpty(rExp))
                 return rExp;
 
             return null;
@@ -370,7 +956,7 @@ namespace Server.Medius
         public static bool PassTextFilter(TextFilterContext context, string text)
         {
             var rExp = GetTextFilterRegexExpression(context);
-            if (String.IsNullOrEmpty(rExp))
+            if (string.IsNullOrEmpty(rExp))
                 return true;
 
             Regex r = new Regex(rExp, RegexOptions.IgnoreCase | RegexOptions.Multiline);
@@ -380,11 +966,110 @@ namespace Server.Medius
         public static string FilterTextFilter(TextFilterContext context, string text)
         {
             var rExp = GetTextFilterRegexExpression(context);
-            if (String.IsNullOrEmpty(rExp))
+            if (string.IsNullOrEmpty(rExp))
                 return text;
 
             Regex r = new Regex(rExp, RegexOptions.IgnoreCase | RegexOptions.Multiline);
             return r.Replace(text, "");
+        }
+        #endregion
+
+        public static string GetFileSystemPath(string filename)
+        {
+            if (!Settings.AllowMediusFileServices)
+                return null;
+            if (string.IsNullOrEmpty(Settings.MediusFileServerRootPath))
+                return null;
+            if (string.IsNullOrEmpty(filename))
+                return null;
+
+            var rootPath = Path.GetFullPath(Settings.MediusFileServerRootPath);
+            var path = Path.GetFullPath(Path.Combine(Settings.MediusFileServerRootPath, filename));
+
+            // prevent filename from moving up directories
+            if (!path.StartsWith(rootPath))
+                return null;
+
+            return path;
+        }
+
+        #region System Time
+        public static DateTime GetLinkerTime(Assembly assembly)
+        {
+            const string BuildVersionMetadataPrefix = "+build";
+
+            var attribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+            if (attribute?.InformationalVersion != null)
+            {
+                var value = attribute.InformationalVersion;
+                var index = value.IndexOf(BuildVersionMetadataPrefix);
+                if (index > 0)
+                {
+                    value = value[(index + BuildVersionMetadataPrefix.Length)..];
+                    return DateTime.ParseExact(value, "yyyy-MM-ddTHH:mm:ss:fffZ", CultureInfo.InvariantCulture);
+                }
+            }
+
+            return default;
+        }
+
+        public static TimeSpan GetUptime()
+        {
+            ManagementObject mo = new ManagementObject(@"\\.\root\cimv2:Win32_OperatingSystem=@");
+            DateTime lastBootUp = ManagementDateTimeConverter.ToDateTime(mo["LastBootUpTime"].ToString());
+            return DateTime.Now.ToUniversalTime() - lastBootUp.ToUniversalTime();
+        }
+        #endregion
+
+        #region DoGetHost
+        public static void DoGetHostNameEntry(string hostName)
+        {
+            IPHostEntry host = Dns.GetHostEntry(hostName);
+            try
+            {
+                Logger.Info($"NAT Service HostName: {hostName} \n      NAT Service IP: {host.AddressList.First()}");
+                //Logger.Info($"GetHostEntry({address}) returns HostName: {host.HostName}");
+            }
+            catch (SocketException ex)
+            {
+                //unknown host or
+                //not every IP has a name
+                //log exception (manage it)
+                Logger.Error($"Unable to resolve NAT service IP: {host.AddressList.First()}  Exiting with exception: {ex}");
+            }
+        }
+
+        public static void DoGetHostAddressEntry(IPAddress address)
+        {
+            IPHostEntry host = Dns.GetHostEntry(address);
+            try
+            {
+                Logger.Info($"NAT Service IP: {host.AddressList.First()}");
+                //Logger.Info($"GetHostEntry({address}) returns HostName: {host.HostName}");
+            }
+            catch (SocketException ex)
+            {
+                //unknown host or
+                //not every IP has a name
+                //log exception (manage it)
+            }
+        }
+        #endregion
+
+        public static void MFS_transferInit()
+        {
+
+            Logger.Info($"Initializing MFS_transfer with url {Settings.MFSTransferURI} "); //numThreads{}"
+        }
+
+        public static void DMEServerResetMetrics()
+        {
+            //rt_msg_server_reset_connect_metrics
+            //rt_msg_server_reset_data_metrics
+            //rt_msg_server_reset_message_metrics
+            //rt_msg_server_reset_frame_time_metrics
+
+            //ERROR: Could not reset DME Svr metrics[%d]
         }
     }
 }

@@ -1,18 +1,12 @@
 ﻿using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
-    [MediusMessage(NetMessageTypes.MessageClassLobbyExt, MediusLobbyExtMessageIds.TokenRequest)]
+    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.TokenRequest)]
     public class MediusTokenRequest : BaseLobbyExtMessage, IMediusRequest
     {
         public override byte PacketType => (byte)MediusLobbyExtMessageIds.TokenRequest;
-
-
 
         public MessageId MessageID { get; set; }
         public MediusTokenActionType TokenAction;
@@ -53,16 +47,15 @@ namespace RT.Models
             writer.Write(new byte[3]);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID}" + " " +
-                $"TokenAction:{TokenAction}" + " " +
-                $"TokenCategory:{TokenCategory}" + " " +
-                $"EntityID:{EntityID}" + " " +
-                $"TokenToReplace:{TokenToReplace}" + " " +
-                $"Token:{Token}";
+                $"MessageID: {MessageID}" + " " +
+                $"TokenAction: {TokenAction}" + " " +
+                $"TokenCategory: {TokenCategory}" + " " +
+                $"EntityID: {EntityID}" + " " +
+                $"TokenToReplace: {TokenToReplace}" + " " +
+                $"Token: {Token}";
         }
     }
 }

@@ -1,42 +1,50 @@
-﻿using RT.Cryptography;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net.Sockets;
-using System.Runtime.CompilerServices;
-using RT.Common;
+﻿using RT.Common;
 using Server.Common;
 using Server.Common.Logging;
+using System;
+using System.Collections.Generic;
 
 namespace RT.Models
 {
     [AttributeUsage(AttributeTargets.Class)]
     public class MediusMessageAttribute : Attribute
     {
-        public NetMessageTypes MessageClass;
+        public NetMessageClass MessageClass;
         public byte MessageType;
 
-        public MediusMessageAttribute(NetMessageTypes msgClass, MediusDmeMessageIds msgType)
+        public MediusMessageAttribute(NetMessageClass msgClass, MediusDmeMessageIds msgType)
         {
             MessageClass = msgClass;
             MessageType = (byte)msgType;
         }
 
-        public MediusMessageAttribute(NetMessageTypes msgClass, MediusMGCLMessageIds msgType)
+        public MediusMessageAttribute(NetMessageClass msgClass, MediusMGCLMessageIds msgType)
         {
             MessageClass = msgClass;
             MessageType = (byte)msgType;
         }
 
-        public MediusMessageAttribute(NetMessageTypes msgClass, MediusLobbyMessageIds msgType)
+        public MediusMessageAttribute(NetMessageClass msgClass, MediusLobbyMessageIds msgType)
         {
             MessageClass = msgClass;
             MessageType = (byte)msgType;
         }
 
-        public MediusMessageAttribute(NetMessageTypes msgClass, MediusLobbyExtMessageIds msgType)
+        public MediusMessageAttribute(NetMessageClass msgClass, MediusLobbyExtMessageIds msgType)
         {
             MessageClass = msgClass;
+            MessageType = (byte)msgType;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Class)]
+    public class MediusPluginMessage : Attribute
+    {
+        //public NetMessageClass MessageClass;
+        public byte MessageType;
+
+        public MediusPluginMessage(NetMessageTypeIds msgType)
+        {
             MessageType = (byte)msgType;
         }
     }
@@ -46,7 +54,7 @@ namespace RT.Models
         /// <summary>
         /// Message class.
         /// </summary>
-        public abstract NetMessageTypes PacketClass { get; }
+        public abstract NetMessageClass PacketClass { get; }
 
         /// <summary>
         /// Message type.
@@ -93,10 +101,10 @@ namespace RT.Models
         {
             switch (this.PacketClass)
             {
-                case NetMessageTypes.MessageClassDME: return LogSettings.Singleton?.IsLog((MediusDmeMessageIds)this.PacketType) ?? false;
-                case NetMessageTypes.MessageClassLobby: return LogSettings.Singleton?.IsLog((MediusLobbyMessageIds)this.PacketType) ?? false;
-                case NetMessageTypes.MessageClassLobbyReport: return LogSettings.Singleton?.IsLog((MediusMGCLMessageIds)this.PacketType) ?? false;
-                case NetMessageTypes.MessageClassLobbyExt: return LogSettings.Singleton?.IsLog((MediusLobbyExtMessageIds)this.PacketType) ?? false;
+                case NetMessageClass.MessageClassDME: return LogSettings.Singleton?.IsLog((MediusDmeMessageIds)this.PacketType) ?? false;
+                case NetMessageClass.MessageClassLobby: return LogSettings.Singleton?.IsLog((MediusLobbyMessageIds)this.PacketType) ?? false;
+                case NetMessageClass.MessageClassLobbyReport: return LogSettings.Singleton?.IsLog((MediusMGCLMessageIds)this.PacketType) ?? false;
+                case NetMessageClass.MessageClassLobbyExt: return LogSettings.Singleton?.IsLog((MediusLobbyExtMessageIds)this.PacketType) ?? false;
                 default: return true;
             }
         }
@@ -137,22 +145,22 @@ namespace RT.Models
                     {
                         switch (attrs[0].MessageClass)
                         {
-                            case NetMessageTypes.MessageClassDME:
+                            case NetMessageClass.MessageClassDME:
                                 {
                                     _dmeMessageClassById.Add((MediusDmeMessageIds)attrs[0].MessageType, classType);
                                     break;
                                 }
-                            case NetMessageTypes.MessageClassLobbyReport:
+                            case NetMessageClass.MessageClassLobbyReport:
                                 {
                                     _mgclMessageClassById.Add((MediusMGCLMessageIds)attrs[0].MessageType, classType);
                                     break;
                                 }
-                            case NetMessageTypes.MessageClassLobby:
+                            case NetMessageClass.MessageClassLobby:
                                 {
                                     _lobbyMessageClassById.Add((MediusLobbyMessageIds)attrs[0].MessageType, classType);
                                     break;
                                 }
-                            case NetMessageTypes.MessageClassLobbyExt:
+                            case NetMessageClass.MessageClassLobbyExt:
                                 {
                                     _lobbyExtMessageClassById.Add((MediusLobbyExtMessageIds)attrs[0].MessageType, classType);
                                     break;
@@ -171,30 +179,30 @@ namespace RT.Models
             // Init
             Initialize();
 
-            NetMessageTypes msgClass = reader.Read<NetMessageTypes>();
+            NetMessageClass msgClass = reader.Read<NetMessageClass>();
             var msgType = reader.ReadByte();
 
             switch (msgClass)
             {
-                case NetMessageTypes.MessageClassDME:
+                case NetMessageClass.MessageClassDME:
                     {
                         if (!_dmeMessageClassById.TryGetValue((MediusDmeMessageIds)msgType, out classType))
                             classType = null;
                         break;
                     }
-                case NetMessageTypes.MessageClassLobbyReport:
+                case NetMessageClass.MessageClassLobbyReport:
                     {
                         if (!_mgclMessageClassById.TryGetValue((MediusMGCLMessageIds)msgType, out classType))
                             classType = null;
                         break;
                     }
-                case NetMessageTypes.MessageClassLobby:
+                case NetMessageClass.MessageClassLobby:
                     {
                         if (!_lobbyMessageClassById.TryGetValue((MediusLobbyMessageIds)msgType, out classType))
                             classType = null;
                         break;
                     }
-                case NetMessageTypes.MessageClassLobbyExt:
+                case NetMessageClass.MessageClassLobbyExt:
                     {
                         if (!_lobbyExtMessageClassById.TryGetValue((MediusLobbyExtMessageIds)msgType, out classType))
                             classType = null;
@@ -207,6 +215,162 @@ namespace RT.Models
                 msg = new RawMediusMessage(msgClass, msgType);
             else
                 msg = (BaseMediusMessage)Activator.CreateInstance(classType);
+
+            // Deserialize
+            msg.Deserialize(reader);
+            return msg;
+        }
+
+        #endregion
+
+    }
+
+    public abstract class BaseMediusPluginMessage
+    {
+        /// <summary>
+        /// Message class.
+        /// </summary>
+        public abstract NetMessageClass PacketClass { get; }
+
+        /// <summary>
+        /// Message type.
+        /// </summary>
+        public abstract NetMessageTypeIds PacketType { get; }
+
+        /// <summary>
+        /// When true, skips encryption when sending this particular message instance.
+        /// </summary>
+        public virtual bool SkipEncryption { get; set; } = false;
+
+        public BaseMediusPluginMessage()
+        {
+
+        }
+
+        #region Serialization
+
+        /// <summary>
+        /// Deserializes the message from plaintext.
+        /// </summary>
+        /// <param name="reader"></param>
+        public virtual void Deserialize(Server.Common.Stream.MessageReader reader)
+        {
+
+        }
+
+        /// <summary>
+        /// Serialize contents of the message.
+        /// </summary>
+        public virtual void Serialize(Server.Common.Stream.MessageWriter writer)
+        {
+
+        }
+
+        #endregion
+
+        #region Logging
+
+        /// <summary>
+        /// Whether or not this message passes the log filter.
+        /// </summary>
+        public virtual bool CanLog()
+        {
+
+            switch (PacketType)
+            {
+                case NetMessageTypeIds.NetMessageProtocolInfo: return LogSettings.Singleton?.IsLogPlugin(PacketType) ?? false;
+                default: return true;
+            }
+
+        }
+
+        #endregion
+
+        #region Dynamic Instantiation
+
+        private static Dictionary<MediusDmeMessageIds, Type> _dmeMessageClassById = null;
+        private static Dictionary<MediusMGCLMessageIds, Type> _mgclMessageClassById = null;
+        private static Dictionary<MediusLobbyMessageIds, Type> _lobbyMessageClassById = null;
+        private static Dictionary<MediusLobbyExtMessageIds, Type> _lobbyExtMessageClassById = null;
+        private static Dictionary<NetMessageTypeIds, Type> _netPluginClassById = null;
+        private static int _messageClassByIdLockValue = 0;
+        private static object _messageClassByIdLockObject = _messageClassByIdLockValue;
+
+
+        private static void Initialize()
+        {
+            lock (_messageClassByIdLockObject)
+            {
+                if (_dmeMessageClassById != null)
+                    return;
+
+                _dmeMessageClassById = new Dictionary<MediusDmeMessageIds, Type>();
+                _mgclMessageClassById = new Dictionary<MediusMGCLMessageIds, Type>();
+                _lobbyMessageClassById = new Dictionary<MediusLobbyMessageIds, Type>();
+                _lobbyExtMessageClassById = new Dictionary<MediusLobbyExtMessageIds, Type>();
+                _netPluginClassById = new Dictionary<NetMessageTypeIds, Type>();
+
+                // Populate
+                var assembly = System.Reflection.Assembly.GetAssembly(typeof(BaseMediusPluginMessage));
+                var types = assembly.GetTypes();
+
+
+                foreach (Type classType in types)
+                {
+                    // Objects by Id
+                    var attrs = (MediusMessageAttribute[])classType.GetCustomAttributes(typeof(MediusMessageAttribute), true);
+                    if (attrs != null && attrs.Length > 0)
+                    {
+                        switch (attrs[0].MessageClass)
+                        {
+                            case NetMessageClass.MessageClassDME:
+                                {
+                                    _dmeMessageClassById.Add((MediusDmeMessageIds)attrs[0].MessageType, classType);
+                                    break;
+                                }
+                            case NetMessageClass.MessageClassLobbyReport:
+                                {
+                                    _mgclMessageClassById.Add((MediusMGCLMessageIds)attrs[0].MessageType, classType);
+                                    break;
+                                }
+                            case NetMessageClass.MessageClassLobby:
+                                {
+                                    _lobbyMessageClassById.Add((MediusLobbyMessageIds)attrs[0].MessageType, classType);
+                                    break;
+                                }
+                            case NetMessageClass.MessageClassLobbyExt:
+                                {
+                                    _lobbyExtMessageClassById.Add((MediusLobbyExtMessageIds)attrs[0].MessageType, classType);
+                                    break;
+                                }
+
+                        }
+
+                    }
+                }
+            }
+        }
+
+        public static BaseMediusPluginMessage Instantiate(Server.Common.Stream.MessageReader reader)
+        {
+            BaseMediusPluginMessage msg;
+
+            Type classType = null;
+
+            //NetMessageClass msgClass = reader.Read<NetMessageClass>();
+            var msgType = reader.Read<NetMessageTypeIds>();
+
+            // Init
+            Initialize();
+
+            if (!_netPluginClassById.TryGetValue(msgType, out classType))
+                classType = null;
+
+            // Instantiate
+            if (classType == null)
+                msg = new RawMediusMessage0((byte)msgType);
+            else
+                msg = (BaseMediusPluginMessage)Activator.CreateInstance(classType);
 
             // Deserialize
             msg.Deserialize(reader);

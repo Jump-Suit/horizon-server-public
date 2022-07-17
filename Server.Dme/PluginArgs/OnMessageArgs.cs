@@ -1,9 +1,6 @@
 ﻿using DotNetty.Transport.Channels;
 using RT.Models;
 using Server.Dme.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Server.Dme.PluginArgs
 {
@@ -28,10 +25,10 @@ namespace Server.Dme.PluginArgs
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"Player:{Player} " +
-                $"Channel:{Channel} " +
-                $"Message:{Message} " +
-                $"Ignore:{Ignore}";
+                $"Player: {Player} " +
+                $"Channel: {Channel} " +
+                $"Message: {Message} " +
+                $"Ignore: {Ignore}";
         }
     }
 }

@@ -1,19 +1,34 @@
 ﻿using RT.Common;
 using Server.Common;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace RT.Models
 {
     public class MediusFileAttributes : IStreamSerializer
     {
+        /// <summary>
+        /// Client provided text description of file
+        /// </summary>
         public byte[] Description = new byte[Constants.MEDIUS_FILE_MAX_DESCRIPTION_LENGTH];
+        /// <summary>
+        /// Read only date/time when file was last changed
+        /// </summary>
         public uint LastChangedTimeStamp;
+        /// <summary>
+        /// Read only ID of user that last changed the file
+        /// </summary>
         public uint LastChangedByUserID;
+        /// <summary>
+        /// Read only number of accesses requested for the file
+        /// </summary>
         public uint NumberAccesses;
+        /// <summary>
+        /// Flag specifying if the file is streamable
+        /// </summary>
         public uint StreamableFlag;
+        /// <summary>
+        /// The desired data rate to stream the file data to/from the client
+        /// </summary>
         public uint StreamingDataRate;
 
         public virtual void Deserialize(BinaryReader reader)
@@ -38,16 +53,15 @@ namespace RT.Models
             writer.Write(StreamingDataRate);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"Description:{Description} " +
-                $"LastChangedTimeStamp:{LastChangedTimeStamp} " +
-                $"LastChangedByUserID:{LastChangedByUserID} " +
-                $"NumberAccesses:{NumberAccesses} " +
-                $"StreamableFlag:{StreamableFlag} " +
-                $"StreamingDataRate:{StreamingDataRate}";
+                $"Description: {Description} " +
+                $"LastChangedTimeStamp: {LastChangedTimeStamp} " +
+                $"LastChangedByUserID: {LastChangedByUserID} " +
+                $"NumberAccesses: {NumberAccesses} " +
+                $"StreamableFlag: {StreamableFlag} " +
+                $"StreamingDataRate: {StreamingDataRate}";
         }
     }
 }
