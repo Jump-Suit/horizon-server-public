@@ -426,7 +426,7 @@ namespace Server.Medius
             }
             catch (Exception e)
             {
-                Logger.Error(e);
+                Logger.Error("No DME Game Server available", e);
             }
 
             return null;

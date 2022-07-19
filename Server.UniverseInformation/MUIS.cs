@@ -96,7 +96,7 @@ namespace Server.UniverseInformation
                 .Option(ChannelOption.SoBacklog, 100)
                 .Handler(new LoggingHandler(LogLevel.INFO))
                 .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
-                {
+                { 
                     IChannelPipeline pipeline = channel.Pipeline;
 
                     pipeline.AddLast(new WriteTimeoutHandler(15));
@@ -223,7 +223,8 @@ namespace Server.UniverseInformation
                             data.ApplicationId == 10211 ||
                             data.ApplicationId == 10984 ||
                             data.ApplicationId == 10550 ||
-                            data.ApplicationId == 10202)
+                            data.ApplicationId == 10202 ||
+                            data.ApplicationId == 21624)
                         {
                             // If this is NOT Arc the Lad, but Socom 2 continue
                             if (data.ApplicationId != 10984 || data.ApplicationId == 10202)
@@ -262,17 +263,26 @@ namespace Server.UniverseInformation
                                     IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address,
                                 }, clientChannel);
 
-                                Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { Key = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
-                                Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
+
+                                if(scertClient.CipherService.EnableEncryption == true )
+                                {
+                                    Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { Key = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
+                                }
+
+                                //If this isn't Motorstorm Pacific Rift then complete handshake
+                                if (data.ApplicationId != 21624)
+                                {
+                                    //Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
+                                }
                             }
                         }
                         break;
                     }
                 case RT_MSG_CLIENT_CONNECT_READY_REQUIRE clientConnectReadyRequire:
                     {
-                        if (scertClient.MediusVersion >= 109)
+                        if (scertClient.MediusVersion >= 109 && scertClient.CipherService.EnableEncryption == true)
                         {
-                            //Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { Key = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
+                            Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { Key = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
                         }
                         Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
                         {

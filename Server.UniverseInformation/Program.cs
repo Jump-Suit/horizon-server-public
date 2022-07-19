@@ -44,7 +44,10 @@ namespace Server.UniverseInformation
             var MediusBuildTimeStamp = GetLinkerTime(Assembly.GetEntryAssembly());
             Logger.Info($"* MediusBuildTimeStamp at {MediusBuildTimeStamp}");
             #endregion
-            Logger.Info("* Medius Universe Information Server Version 3.05.201109161400");
+
+            string gpszVersionString = "3.05.201109161400";
+
+            Logger.Info($"* Medius Universe Information Server Version {gpszVersionString}");
             Logger.Info($"* Launched on {datetime}");
 
             UniverseInfoServers = new MUIS[Settings.Ports.Length];

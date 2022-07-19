@@ -29,8 +29,9 @@ namespace RT.Models
             reader.ReadBytes(3);
             StatusCode = reader.Read<MediusCallbackStatus>();
             AnnouncementID = reader.ReadInt32();
-
-            if (reader.MediusVersion <= 112)
+            Announcement = reader.ReadString(Constants.ANNOUNCEMENT_MAXLEN);
+            /*
+            if (reader.MediusVersion <= 113)
             {
                 Announcement = reader.ReadString(Constants.ANNOUNCEMENT_MAXLEN);
             }
@@ -38,6 +39,8 @@ namespace RT.Models
             {
                 Announcement = reader.ReadString(Constants.ANNOUNCEMENT1_MAXLEN);
             }
+            */
+
 
             EndOfList = reader.ReadBoolean();
             reader.ReadBytes(3);
@@ -55,15 +58,17 @@ namespace RT.Models
             writer.Write(new byte[3]);
             writer.Write(StatusCode);
             writer.Write(AnnouncementID);
-
-            if (writer.MediusVersion <= 112)
-            {
-                writer.Write(Announcement, Constants.ANNOUNCEMENT_MAXLEN);
-            }
-            else if (writer.MediusVersion == 113)
-            {
-                writer.Write(Announcement, Constants.ANNOUNCEMENT1_MAXLEN);
-            }
+            writer.Write(Announcement, Constants.ANNOUNCEMENT_MAXLEN);
+            /*
+                if (writer.MediusVersion <= 112)
+                {
+                    writer.Write(Announcement, Constants.ANNOUNCEMENT_MAXLEN);
+                }
+                else if (writer.MediusVersion == 113)
+                {
+                    writer.Write(Announcement, Constants.ANNOUNCEMENT1_MAXLEN);
+                }
+            */
             writer.Write(EndOfList);
             writer.Write(new byte[3]);
         }

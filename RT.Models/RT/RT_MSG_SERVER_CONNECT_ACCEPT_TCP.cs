@@ -55,6 +55,11 @@ namespace RT.Models
                 writer.Write(PlayerId);
                 writer.Write(ScertId);
                 writer.Write(PlayerCount);
+
+                if (IP == null)
+                    writer.Write(IPAddress.Any);
+                else
+                    writer.Write(IP);
             }
         }
 

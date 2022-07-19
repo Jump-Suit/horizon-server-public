@@ -12,7 +12,7 @@ namespace Server.BWPS.Config
         /// <summary>
         /// Ports of the BWPS.
         /// </summary>
-        public int[] BWPSPorts { get; set; } = new int[] { 10071, 10080 };
+        public int BWPSPort { get; set; } = 50100;
 
         #region BWPS SCE-RT Service Location
         /// <summary>

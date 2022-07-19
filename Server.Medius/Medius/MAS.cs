@@ -560,8 +560,10 @@ namespace Server.Medius
                         if (data.ClientObject == null)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {setLocalizationParamsRequest} without a session.");
 
-                        data.ClientObject.Queue(new MediusStatusResponse0()
+                        data.ClientObject.Queue(new MediusStatusResponse()
                         {
+                            Type = 0xA4,
+                            Class = setLocalizationParamsRequest.PacketClass,
                             MessageID = setLocalizationParamsRequest.MessageID,
                             StatusCode = MediusCallbackStatus.MediusSuccess
                         });
@@ -573,8 +575,10 @@ namespace Server.Medius
                         if (data.ClientObject == null)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {setLocalizationParamsRequest} without a session.");
 
-                        data.ClientObject.Queue(new MediusStatusResponse0()
+                        data.ClientObject.Queue(new MediusStatusResponse()
                         {
+                            Type = 0xA4,
+                            Class = (NetMessageClass)1,
                             MessageID = setLocalizationParamsRequest.MessageID,
                             StatusCode = MediusCallbackStatus.MediusSuccess
                         });
@@ -585,8 +589,10 @@ namespace Server.Medius
                         if (data.ClientObject == null)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {setLocalizationParamsRequest} without a session.");
 
-                        data.ClientObject.Queue(new MediusStatusResponse0()
+                        data.ClientObject.Queue(new MediusStatusResponse()
                         {
+                            Type = 0x6E,
+                            Class = (NetMessageClass)4,
                             MessageID = setLocalizationParamsRequest.MessageID,
                             StatusCode = MediusCallbackStatus.MediusSuccess
                         });
@@ -631,7 +637,7 @@ namespace Server.Medius
                         {
                             MessageID = getAccessLevelInfoRequest.MessageID,
                             StatusCode = MediusCallbackStatus.MediusSuccess,
-                            AccessLevel = MediusAccessLevelType.MEDIUS_ACCESSLEVEL_ADMIN,
+                            AccessLevel = MediusAccessLevelType.MEDIUS_ACCESSLEVEL_DEFAULT,
                         });
                         break;
                     }
@@ -1760,8 +1766,15 @@ namespace Server.Medius
                         if (!data.ClientObject.IsLoggedIn)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {getServerTimeRequest} without being logged in.");
 
+                        //default
+                        data.ClientObject.Queue(new MediusGetServerTimeResponse()
+                        {
+                            MessageID = getServerTimeRequest.MessageID,
+                            StatusCode = MediusCallbackStatus.MediusSuccess,
+                            Local_server_timezone = MediusTimeZone.MediusTimeZone_GMT
+                        });
 
-
+                        /*
                         TimeZoneInfo localZone = TimeZoneInfo.Local;
 
                         if (localZone != null)
@@ -1800,7 +1813,7 @@ namespace Server.Medius
                                 Local_server_timezone = MediusTimeZone.MediusTimeZone_GMT
                             });
                         }
-
+                        */
                         break;
                     }
                 #endregion

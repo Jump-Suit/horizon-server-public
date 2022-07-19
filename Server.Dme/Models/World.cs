@@ -272,7 +272,7 @@ namespace Server.Dme.Models
 
                 client.Value.EnqueueTcp(new RT_MSG_SERVER_CONNECT_NOTIFY()
                 {
-                    PlayerIndex = (ushort)player.DmeId,
+                    PlayerIndex = (short)player.DmeId,
                     ScertId = (short)player.ScertId,
                     IP = player.RemoteUdpEndpoint?.Address
                 });

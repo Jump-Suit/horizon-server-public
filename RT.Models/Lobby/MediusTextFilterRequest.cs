@@ -48,10 +48,10 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"SessionKey:{SessionKey} " +
-$"TextFilterType:{TextFilterType} " +
-$"Text:{Text}";
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey} " +
+                $"TextFilterType: {TextFilterType} " +
+                $"Text: {Text}";
         }
     }
 }

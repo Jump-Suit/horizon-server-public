@@ -6,7 +6,7 @@ using Server.BWPS.Config;
 using Server.Common;
 using Server.Common.Logging;
 
-namespace Server.BWPS
+namespace Server.BWPServer
 {
     class Program
     {
@@ -15,6 +15,7 @@ namespace Server.BWPS
 
         public static ServerSettings Settings = new ServerSettings();
 
+        public static BWPServer BWPS = new BWPServer();
 
 
         private static FileLoggerProvider? _fileLogger;
@@ -24,15 +25,14 @@ namespace Server.BWPS
         {
             DateTime lastConfigRefresh = Utils.GetHighPrecisionUtcTime();
 
-
-
-            //Medius Universe Information Server Version 2.10.0003
-
             Logger.Info("**************************************************");
             string datetime = DateTime.Now.ToString("MMMM/dd/yyyy hh:mm:ss tt");
             Logger.Info($"* Launched on {datetime}");
 
-
+            Task.WaitAll(BWPS.Start());
+            //string gpszVersion = "rt_bwprobe ReleaseVersion 3.02.200704101920";
+            string gpszVersion2 = "3.02.200704101920";
+            Logger.Info($"* Bandwidth Probe Server Version {gpszVersion2}");
 
             //* Process ID: %d , Parent Process ID: %d
 
@@ -42,7 +42,7 @@ namespace Server.BWPS
 
             Logger.Info("**************************************************");
 
-            Logger.Info($"UDP BWPS started.");
+            Logger.Info($"UDP BWPS started on port {Settings.BWPSPort}.");
 
             try
             {

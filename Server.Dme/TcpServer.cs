@@ -321,9 +321,9 @@ namespace Server.Dme
                             }
                             Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
                             {
-                                UNK_00 = (ushort)data.ClientObject.DmeId,
-                                UNK_02 = data.ClientObject.ScertId,
-                                UNK_06 = (ushort)data.ClientObject.DmeWorld.Clients.Count,
+                                PlayerId = (ushort)data.ClientObject.DmeId,
+                                ScertId = data.ClientObject.ScertId,
+                                PlayerCount = (ushort)data.ClientObject.DmeWorld.Clients.Count,
                                 IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
                             }, clientChannel);
                             Queue(new RT_MSG_SERVER_CONNECT_COMPLETE()
@@ -346,9 +346,9 @@ namespace Server.Dme
                         }
                         Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
                         {
-                            UNK_00 = (ushort)data.ClientObject.DmeId,
-                            UNK_02 = data.ClientObject.ScertId,
-                            UNK_06 = (ushort)data.ClientObject.DmeWorld.Clients.Count,
+                            PlayerId = (ushort)data.ClientObject.DmeId,
+                            ScertId = data.ClientObject.ScertId,
+                            PlayerCount = (ushort)data.ClientObject.DmeWorld.Clients.Count,
                             IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
                         }, clientChannel);
                         break;

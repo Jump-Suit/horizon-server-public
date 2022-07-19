@@ -197,7 +197,7 @@ namespace RT.Common
         MediusInQueue = 5,
         MediusJoinAssignedGame = 6,
         MediusMatchTypeHostGame = 7,
-        MediusMatchTyoeReferral = 8,
+        MediusMatchTypeReferral = 8,
         MediusAlreadyInLeastPopulatedChannel = 9,
         MediusVulgarityFound = 10,
         MediusMatchingInProgress = 11,
@@ -1646,13 +1646,15 @@ namespace RT.Common
         BinaryFwdMessage1 = 0x5C,
         MatchGetSupersetListRequest = 0x5D,
         MatchGetSupersetListResponse = 0x5E,
+        MatchPartyResponse = 0x60,
         GetBuddyInvitationsSentResponse = 0x61,
         GetBuddyInvitationsSentResponse1 = 0x62,
         AddToBuddyListConfirmationRequest = 0x63,
         AddToBuddyListConfirmationResponse = 0x64,
         PartyCreateRequest = 0x65,
         PartyCreateResponse = 0x66,
-
+        PartyJoinRequest = 0x067,
+        PartyJoinResponse = 0x68,
         GameListRequest = 0x69,
         PartyListResponse = 0x6A,
         PlayerIgnoresMeRequest = 0x6B,
@@ -1669,8 +1671,8 @@ namespace RT.Common
         MediusTextFilterResponse1 = 0x76,
         GetMyClanMessagesResponse = 0x77,
         MatchPartyRequest = 0x78,
-        MatchSetGameStateRequest = 0x79, //MediusMatchCloseLateJoinRequest
-        MatchSetGameStateStatusResponse = 0x7A,
+        MatchCloseLateJoinRequest = 0x79, //MediusMatchSetGameStateRequestMarshal
+        MatchCloseLateJoinResponse = 0x7A, //MatchSetGameStateResponse
         SetLocalizationParamsRequest1 = 0x7B,
         ClanRenameRequest = 0x7C,
         ClanRenameStatusResponse = 0x7D,

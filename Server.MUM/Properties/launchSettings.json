@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Server.UniverseManager": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

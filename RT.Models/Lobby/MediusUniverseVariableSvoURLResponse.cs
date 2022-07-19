@@ -21,9 +21,9 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
-
+             
             // read URL
-            if (reader.MediusVersion >= 109)
+            if (reader.MediusVersion <= 109)
             {
                 // 1 byte length prefixed url
                 byte len = reader.ReadByte();
@@ -45,7 +45,7 @@ namespace RT.Models
             writer.Write(MessageID ?? MessageId.Empty);
 
             // Write URL
-            if (writer.MediusVersion >= 109)
+            if (writer.MediusVersion <= 109)
             {
                 // 1 byte length prefixed url
                 writer.Write((byte)(URL.Length + 1));

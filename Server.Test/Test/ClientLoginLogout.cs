@@ -3,9 +3,6 @@ using DotNetty.Transport.Channels;
 using RT.Cryptography;
 using RT.Models;
 using Server.Test.Medius;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Server.Test.Test
@@ -39,11 +36,6 @@ namespace Server.Test.Test
         protected override async Task ProcessMessage(BaseScertMessage message, IChannel channel)
         {
             await base.ProcessMessage(message, channel);
-
-            switch (message)
-            {
-
-            }
         }
     }
 }

@@ -130,43 +130,16 @@ namespace Server.Medius
                                 }
                             }
                             #endregion
-                            else if (scertClient.MediusVersion > 108 && scertClient.MediusVersion != 111)
+                            else if (scertClient.MediusVersion > 108 && scertClient.MediusVersion != 111 && scertClient.ApplicationID != 20624)
                             {
                                 Queue(new RT_MSG_SERVER_CONNECT_REQUIRE() { ReqServerPassword = 0x02, Contents = Utils.FromString("4802") }, clientChannel);
                             }
-
-                            //If Frequency, TMBO, Socom 1, ATV Offroad Fury 2,  My Street, or Field Commander Beta then
-                            if (data.ApplicationId == 10010 || data.ApplicationId == 10031 || data.ApplicationId == 10274 || data.ApplicationId == 10284 || data.ApplicationId == 20190)
-                            {
-                                //Do NOT send hereCryptKey Game
-                                Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
-                                {
-                                    PlayerId = 0,
-                                    ScertId = GenerateNewScertClientId(),
-                                    PlayerCount = 0x0001,
-                                    IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
-                                }, clientChannel);
-
-                                //If ATV Offroad Fury 2, complete connection
-                                if (data.ApplicationId == 10284)
-                                {
-                                    Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
-                                }
-                            }
                             else
                             {
-                                // If RFOM, Starhawk
-                                if (data.ApplicationId == 20174 || data.ApplicationId == 20043 || data.ApplicationId == 22920)
+                                //If Frequency, TMBO, Socom 1, ATV Offroad Fury 2,  My Street, or Field Commander Beta then
+                                if (data.ApplicationId == 10010 || data.ApplicationId == 10031 || data.ApplicationId == 10274 || data.ApplicationId == 10284 || data.ApplicationId == 20190)
                                 {
-                                    //Do Nothing
-                                }
-                                else
-                                {
-                                    //Older Medius titles do NOT use CRYPTKEY_GAME, newer ones have this.
-                                    if (scertClient.CipherService.EnableEncryption != false)
-                                    {
-                                        Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { Key = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
-                                    }
+                                    //Do NOT send hereCryptKey Game
                                     Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
                                     {
                                         PlayerId = 0,
@@ -174,9 +147,40 @@ namespace Server.Medius
                                         PlayerCount = 0x0001,
                                         IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
                                     }, clientChannel);
-                                    Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
-                                }
 
+                                    //If ATV Offroad Fury 2, complete connection
+                                    if (data.ApplicationId == 10284)
+                                    {
+                                        Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
+                                    }
+                                }
+                                else
+                                {
+                                    // If RFOM, Starhawk
+                                    if (data.ApplicationId == 20174 || data.ApplicationId == 20043 || data.ApplicationId == 22920)
+                                    {
+                                        //Do Nothing
+                                    }
+                                    else
+                                    {
+                                        //Older Medius titles do NOT use CRYPTKEY_GAME, newer ones have this.
+                                        if (scertClient.CipherService.EnableEncryption != false)
+                                        {
+                                            Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { Key = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
+                                        }
+                                        Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
+                                        {
+                                            PlayerId = 0,
+                                            ScertId = GenerateNewScertClientId(),
+                                            PlayerCount = 0x0001,
+                                            IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
+                                        }, clientChannel);
+                                        Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
+                                    }
+
+
+
+                                }
 
                             }
                         }
@@ -498,8 +502,10 @@ namespace Server.Medius
 
                         _ = Program.Database.PostNpId(mediusNpIdPostRequest.data, data.ApplicationId);
 
-                        data.ClientObject.Queue(new MediusStatusResponse0()
+                        data.ClientObject.Queue(new MediusStatusResponse()
                         {
+                            Type = 0x6E,
+                            Class = mediusNpIdPostRequest.PacketClass,
                             MessageID = mediusNpIdPostRequest.MessageID,
                             StatusCode = MediusCallbackStatus.MediusSuccess
                         });
@@ -556,10 +562,31 @@ namespace Server.Medius
                         // Success
                         data.ClientObject.Queue(new MediusMatchFindGameStatusResponse()
                         {
+
                             MessageID = matchFindGameRequest.MessageID,
                             StatusCode = MediusCallbackStatus.MediusSuccess,
                         });
 
+                        break;
+                    }
+
+                case MediusMatchPartyRequest mediusMatchPartyRequest:
+                    {
+                        // ERROR - Need a session
+                        if (data.ClientObject == null)
+                            throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {mediusMatchPartyRequest} without a session.");
+
+                        // ERROR -- Need to be logged in
+                        if (!data.ClientObject.IsLoggedIn)
+                            throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {mediusMatchPartyRequest} without being logged in.");
+
+                        // No Matches
+                        data.ClientObject.Queue(new MediusMatchPartyResponse()
+                        {
+                            MessageID = mediusMatchPartyRequest.MessageID,
+                            StatusCode = MediusCallbackStatus.MediusMatchServerNotFound,
+                            Unk1 = 0,
+                        });
                         break;
                     }
 
@@ -4867,6 +4894,13 @@ namespace Server.Medius
                         });
                         break;
                     }
+
+                    /*
+                case MediusFileUpdateMetaDataRequest fileUpdateMetaDataRequest: 
+                    {
+                        
+                    }
+                    */
 
                 case MediusFileCreateRequest fileCreateRequest:
                     {

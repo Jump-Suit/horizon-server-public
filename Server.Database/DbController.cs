@@ -111,6 +111,24 @@ namespace Server.Database
             {
                 if (_settings.SimulatedMode)
                 {
+                    /*
+                    //Simulated Resistance 2 beta Account for Matchmaking
+                    AccountDTO R2PuBeta;
+                    _simulatedAccounts.Add(R2PuBeta = new AccountDTO()
+                    {
+                        AccountId = 2,
+                        AccountName = "gameRecorder_r2_pubeta_master",
+                        AccountPassword = "",
+                        AccountWideStats = new int[Constants.LADDERSTATSWIDE_MAXLEN],
+                        AccountCustomWideStats = new int[1000],
+                        AppId = 21731,
+                        MachineId = "",
+                        MediusStats = "",
+                        Friends = new AccountRelationDTO[0],
+                        Ignored = new AccountRelationDTO[0],
+                        IsBanned = false
+                    });
+                    */
                     result = _simulatedAccounts.FirstOrDefault(x => x.AppId == appId && x.AccountName.ToLower() == name.ToLower());
                 }
                 else

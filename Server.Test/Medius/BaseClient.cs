@@ -2,24 +2,16 @@
 using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
+using RT.Common;
 using RT.Cryptography;
+using RT.Models;
+using Server.Common;
+using Server.Pipeline.Tcp;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using RT.Models;
-using RT.Common;
-using Server.Pipeline.Tcp;
-using DotNetty.Handlers.Logging;
-using DotNetty.Handlers.Timeout;
-using System.Data;
-using Server.Common;
 
 namespace Server.Test.Medius
 {

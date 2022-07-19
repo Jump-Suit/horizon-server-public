@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Server.BWPS": {
+      "commandName": "Project"
+    },
+    "Docker (1)": {
+      "commandName": "Docker"
+    }
+  }
+}

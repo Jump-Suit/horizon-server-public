@@ -51,7 +51,7 @@ namespace RT.Models
                 $"MessageID: {MessageID} " +
                 $"SessionKey: {SessionKey} " +
                 $"CharacterEncoding: {CharacterEncoding} " +
-                $"Language: {Language}";
+                $"Language: {Language} ";
         }
     }
 }
