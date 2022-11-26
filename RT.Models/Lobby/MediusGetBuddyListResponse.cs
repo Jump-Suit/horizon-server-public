@@ -10,12 +10,29 @@ namespace RT.Models
 
         public bool IsSuccess => StatusCode >= 0;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Response codefor the request to get your buddy list.
+        /// </summary>
         public MediusCallbackStatus StatusCode;
+        /// <summary>
+        /// The Account ID of the Buddy.
+        /// </summary>
         public int AccountID;
+        /// <summary>
+        /// The Account Name of the Buddy.
+        /// </summary>
         public string AccountName; // ACCOUNTNAME_MAXLEN
+        /// <summary>
+        /// The player's status
+        /// </summary>
         public MediusPlayerStatus PlayerStatus;
+        /// <summary>
+        /// Flag 0 or 1 to determine th end of list.
+        /// </summary>
         public bool EndOfList;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

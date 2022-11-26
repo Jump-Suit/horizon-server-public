@@ -1,5 +1,6 @@
 using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -16,7 +17,7 @@ namespace RT.Models
         public MediusCallbackStatus StatusCode;
         public int AccountID;
         public string AccountName; // ACCOUNTNAME_MAXLEN
-        public byte[] Stats = new byte[Constants.ACCOUNTSTATS_MAXLEN];
+        public byte[] Stats = new byte[Constants.ACCOUNTSTATS_MAXLEN]; // ACCOUNTSTATS_MAXLEN
         public MediusConnectionType ConnectionClass;
         public bool EndOfList;
 
@@ -62,13 +63,13 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"StatusCode:{StatusCode} " +
-$"AccountID:{AccountID} " +
-$"AccountName:{AccountName} " +
-$"Stats:{Stats} " +
-$"ConnectionClass:{ConnectionClass} " +
-$"EndOfList:{EndOfList}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
+                $"AccountID: {AccountID} " +
+                $"AccountName: {AccountName} " +
+                $"Stats: {string.Join("", Stats)} " +
+                $"ConnectionClass: {ConnectionClass} " +
+                $"EndOfList: {EndOfList}";
         }
     }
 }

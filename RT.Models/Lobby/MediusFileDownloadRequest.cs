@@ -9,8 +9,13 @@ namespace RT.Models
 
         public override byte PacketType => (byte)MediusLobbyMessageIds.FileDownload;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// MediusFile requested to download
+        /// </summary>
         public MediusFile MediusFileInfo;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

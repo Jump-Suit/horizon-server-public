@@ -22,11 +22,6 @@ namespace RT.Models
         public int GenericField1;
         public int GenericField2;
         public int GenericField3;
-        public int GenericField4;
-        public int GenericField5;
-        public int GenericField6;
-        public int GenericField7;
-        public int GenericField8;
         public MGCL_GAME_HOST_TYPE GameHostType;
         public NetAddressList AddressList;
         public int WorldID;

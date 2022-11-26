@@ -1,25 +1,32 @@
 ﻿using DotNetty.Common.Internal.Logging;
+using DotNetty.Common.Utilities;
 using DotNetty.Handlers.Logging;
 using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
+using Microsoft.VisualBasic.FileIO;
 using RT.Common;
+using RT.Cryptography;
 using RT.Models;
-using Server.Dme.Models;
-using Server.Dme.PluginArgs;
+using Server.Pipeline.Tcp;
 using Server.Pipeline.Udp;
+using Server.Dme.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
+using Server.Dme.PluginArgs;
+using Server.Plugins.Interface;
+using Server.Pipeline.Attribute;
 
 namespace Server.Dme
 {
     public class UdpServer
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<UdpServer>();
-
 
         public int Port { get; protected set; } = -1;
 
@@ -60,30 +67,42 @@ namespace Server.Dme
 
         public UdpServer(ClientObject clientObject)
         {
-            this.ClientObject = clientObject;
+            ClientObject = clientObject;
             RegisterPort();
         }
 
         /// <summary>
         /// Start the Dme Udp Client Server.
         /// </summary>
-        public virtual async void Start()
+        public virtual async Task Start()
         {
             //
             _workerGroup = new MultithreadEventLoopGroup();
             _scertHandler = new ScertDatagramHandler();
+
+            //
+            _scertHandler.OnChannelActive = channel =>
+            {
+                // get scert client
+                if (!channel.HasAttribute(Pipeline.Constants.SCERT_CLIENT))
+                    channel.GetAttribute(Pipeline.Constants.SCERT_CLIENT).Set(new ScertClientAttribute());
+                var scertClient = channel.GetAttribute(Pipeline.Constants.SCERT_CLIENT).Get();
+
+                // pass medius version
+                scertClient.MediusVersion = ClientObject.MediusVersion;
+            };
 
             // Queue all incoming messages
             _scertHandler.OnChannelMessage += async (channel, message) =>
             {
                 var pluginArgs = new OnUdpMsg()
                 {
-                    Player = this.ClientObject,
+                    Player = ClientObject,
                     Packet = message
                 };
 
                 // Plugin
-                await Program.Plugins.OnEvent(Plugins.PluginEvent.DME_GAME_ON_RECV_UDP, pluginArgs);
+                await Program.Plugins.OnEvent(PluginEvent.DME_GAME_ON_RECV_UDP, pluginArgs);
 
                 if (!pluginArgs.Ignore)
                     _recvQueue.Enqueue(message);
@@ -101,7 +120,6 @@ namespace Server.Dme
                     pipeline.AddLast(new ScertDatagramEncoder(Constants.MEDIUS_UDP_MESSAGE_MAXLEN));
                     pipeline.AddLast(new ScertDatagramIEnumerableEncoder(Constants.MEDIUS_UDP_MESSAGE_MAXLEN));
                     pipeline.AddLast(new ScertDatagramDecoder());
-
                     //pipeline.AddLast(new ScertDecoder());
                     pipeline.AddLast(new ScertDatagramMultiAppDecoder());
                     pipeline.AddLast(_scertHandler);
@@ -134,22 +152,22 @@ namespace Server.Dme
         {
             var message = packet.Message;
 
-            // 
+            //
             switch (message)
             {
                 case RT_MSG_CLIENT_CONNECT_AUX_UDP connectAuxUdp:
                     {
                         var clientObject = Program.TcpServer.GetClientByScertId(connectAuxUdp.ScertId);
-                        if (clientObject != ClientObject)
+                        if (clientObject != ClientObject && ClientObject.DmeId != connectAuxUdp.PlayerId)
                             break;
 
-                        // 
+                        //
                         AuthenticatedEndPoint = packet.Source;
 
                         ClientObject.RemoteUdpEndpoint = AuthenticatedEndPoint as IPEndPoint;
                         ClientObject.OnUdpConnected();
 
-                        // 
+                        //
                         var msg = new RT_MSG_SERVER_CONNECT_ACCEPT_AUX_UDP()
                         {
                             PlayerId = (ushort)ClientObject.DmeId,
@@ -170,10 +188,7 @@ namespace Server.Dme
                     }
                 case RT_MSG_CLIENT_ECHO clientEcho:
                     {
-                        SendTo(new RT_MSG_CLIENT_ECHO()
-                        {
-                            Value = 0xA5
-                        }, packet.Source);
+                        SendTo(new RT_MSG_CLIENT_ECHO() { Value = clientEcho.Value }, packet.Source);
                         break;
                     }
                 case RT_MSG_CLIENT_APP_BROADCAST clientAppBroadcast:
@@ -261,17 +276,30 @@ namespace Server.Dme
                 _sendQueue.Enqueue(new ScertDatagramPacket(message, AuthenticatedEndPoint));
         }
 
+        public Task SendImmediate(BaseScertMessage message)
+        {
+            if (AuthenticatedEndPoint == null || _boundChannel == null)
+                return Task.CompletedTask;
+
+            return _boundChannel.WriteAndFlushAsync(new ScertDatagramPacket(message, AuthenticatedEndPoint));
+        }
+
+        public Task SendImmediate(IEnumerable<BaseScertMessage> messages)
+        {
+            if (AuthenticatedEndPoint == null || _boundChannel == null)
+                return Task.CompletedTask;
+
+            return _boundChannel.WriteAndFlushAsync(messages.Select(x => new ScertDatagramPacket(x, AuthenticatedEndPoint)));
+        }
+
         #endregion
 
         #region Tick
 
-        public async Task Tick()
+        public async Task HandleIncomingMessages()
         {
             if (_boundChannel == null || !_boundChannel.Active)
                 return;
-
-            // 
-            List<ScertDatagramPacket> responses = new List<ScertDatagramPacket>();
 
             try
             {
@@ -288,14 +316,32 @@ namespace Server.Dme
                         Logger.Error(e);
                     }
                 }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+        }
 
+        public async Task HandleOutgoingMessages()
+        {
+            if (_boundChannel == null || !_boundChannel.Active)
+                return;
+
+            //
+            List<ScertDatagramPacket> responses = new List<ScertDatagramPacket>();
+
+            try
+            {
                 // Send if writeable
                 if (_boundChannel.IsWritable)
                 {
                     // Add send queue to responses
                     while (_sendQueue.TryDequeue(out var message))
-                        if (!await PassMessageToPlugins(_boundChannel, ClientObject, message.Message, true))
-                            ProcessMessage(message);
+                    {
+                        if (!await PassMessageToPlugins(_boundChannel, ClientObject, message.Message, false))
+                            responses.Add(message);
+                    }
 
                     //
                     if (responses.Count > 0)
@@ -320,7 +366,7 @@ namespace Server.Dme
             };
 
             // Send to plugins
-            await Program.Plugins.OnMessageEvent(message.Id, onMsg);
+            await Program .Plugins.OnMessageEvent(message.Id, onMsg);
             if (onMsg.Ignore)
                 return true;
 
@@ -335,7 +381,7 @@ namespace Server.Dme
                     Channel = clientChannel,
                     Message = clientApp.Message
                 };
-                await Program.Plugins.OnMediusMessageEvent(clientApp.Message.PacketClass, clientApp.Message.PacketType, onMediusMsg);
+                await Program .Plugins.OnMediusMessageEvent(clientApp.Message.PacketClass, clientApp.Message.PacketType, onMediusMsg);
                 if (onMediusMsg.Ignore)
                     return true;
             }
@@ -347,7 +393,7 @@ namespace Server.Dme
                     Channel = clientChannel,
                     Message = serverApp.Message
                 };
-                await Program.Plugins.OnMediusMessageEvent(serverApp.Message.PacketClass, serverApp.Message.PacketType, onMediusMsg);
+                await Program .Plugins.OnMediusMessageEvent(serverApp.Message.PacketClass, serverApp.Message.PacketType, onMediusMsg);
                 if (onMediusMsg.Ignore)
                     return true;
             }

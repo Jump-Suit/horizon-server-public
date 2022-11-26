@@ -9,8 +9,18 @@ namespace RT.Models
 
         public override byte PacketType => (byte)MediusMGCLMessageIds.ServerAuthenticationRequest;
 
+        /// <summary>
+        /// Message ID used for asynchronous request processing.
+        /// </summary>
         public MessageId MessageID { get; set; }
+        /// <summary>
+        /// Trust level for this game server.
+        /// </summary>
         public MGCL_TRUST_LEVEL TrustLevel;
+        /// <summary>
+        /// Server address or port for standalone GS;<Br></Br>
+        /// it is only populated internally by MGCL.
+        /// </summary>
         public NetAddressList AddressList;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

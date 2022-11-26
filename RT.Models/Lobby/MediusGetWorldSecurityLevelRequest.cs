@@ -8,11 +8,22 @@ namespace RT.Models
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.GetWorldSecurityLevel;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey; // SESSIONKEY_MAXLEN
+        /// <summary>
+        /// World ID to get the security level for.
+        /// </summary>
         public int MediusWorldID;
-        public MediusWorldSecurityLevelType SecurityLevel;
+        /// <summary>
+        /// Application Type:lobby chat channel or game world.  
+        /// </summary>
+        public MediusApplicationType AppType;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -21,12 +32,12 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
-
-            // 
             reader.ReadBytes(2);
+
+            //
             SessionKey = reader.ReadString();
             MediusWorldID = reader.ReadInt32();
-            SecurityLevel = reader.Read<MediusWorldSecurityLevelType>();
+            AppType = reader.Read<MediusApplicationType>();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -36,12 +47,13 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
+            writer.Write(new byte[2]);
+
 
             // 
-            writer.Write(new byte[2]);
             writer.Write(SessionKey);
             writer.Write(MediusWorldID);
-            writer.Write(SecurityLevel);
+            writer.Write(AppType);
         }
 
 
@@ -50,8 +62,8 @@ namespace RT.Models
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
                 $"SessionKey: {SessionKey} " +
-                $"CharacterEncoding: {MediusWorldID} " +
-                $"Language: {SecurityLevel}";
+                $"MediusWorldID: {MediusWorldID} " +
+                $"AppType: {AppType}";
         }
     }
 }

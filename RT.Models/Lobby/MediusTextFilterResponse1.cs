@@ -65,9 +65,9 @@ namespace RT.Models
         {
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
                 $"TextSize: {TextSize} " +
-                $"Text: {Text}" +
-                $"StatusCode: {StatusCode}";
+                $"Text: {Text}";
         }
     }
 }

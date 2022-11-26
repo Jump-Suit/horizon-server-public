@@ -21,7 +21,7 @@ namespace RT.Models
             if (Message != null)
             {
                 writer.Write(Message.PacketType);
-                Message.Serialize(writer);
+                Message.SerializePlugin(writer);
             }
 
         }

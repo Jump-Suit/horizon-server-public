@@ -1,6 +1,9 @@
-﻿using RT.Common;
+﻿using Microsoft.Extensions.Logging;
+using RT.Common;
 using RT.Models;
+using RT.Models.Misc;
 using Server.Common;
+using Server.Database.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +22,7 @@ namespace Server.Medius.Models
         public static int IdCounter = 0;
 
         public List<ClientObject> Clients = new List<ClientObject>();
+        public List<Channel> Channels = new List<Channel>();
 
         public int Id = 0;
         public int ApplicationId = 0;
@@ -38,8 +42,9 @@ namespace Server.Medius.Models
         public uint GenericField4 = 0;
         public MediusWorldGenericFieldLevelType GenericFieldLevel = MediusWorldGenericFieldLevelType.MediusWorldGenericFieldLevel0;
         public MediusGameHostType GameHostType;
+        public MediusWorldStatus WorldStatus;
 
-        public virtual bool ReadyToDestroy => Type == ChannelType.Game && (_removeChannel || ((Utils.GetHighPrecisionUtcTime() - _timeCreated).TotalSeconds > Program.Settings.GameTimeoutSeconds) && GameCount == 0);
+        public virtual bool ReadyToDestroy => Type == ChannelType.Game && (_removeChannel || ((Utils.GetHighPrecisionUtcTime() - _timeCreated).TotalSeconds > Program.GetAppSettingsOrDefault(ApplicationId).GameTimeoutSeconds) && GameCount == 0);
         public virtual int PlayerCount => Clients.Count;
         public int GameCount => _games.Count;
 
@@ -86,6 +91,16 @@ namespace Server.Medius.Models
             GameHostType = request.GameHostType;
         }
 
+        public Channel(MediusCreateChannelRequest1 request)
+        {
+            Id = IdCounter++;
+
+            ApplicationId = request.ApplicationID;
+            MaxPlayers = request.MaxPlayers;
+            Name = request.LobbyName;
+            Password = request.LobbyPassword;
+        }
+
         public virtual Task Tick()
         {
             // Remove inactive clients
@@ -101,7 +116,12 @@ namespace Server.Medius.Models
             return Task.CompletedTask;
         }
 
-        public virtual void OnPlayerJoined(ClientObject client)
+        public virtual async Task OnChannelCreate(Channel channel)
+        {
+            Channels.Add(channel);
+        }
+
+        public virtual async Task OnPlayerJoined(ClientObject client)
         {
             Clients.Add(client);
         }
@@ -150,6 +170,77 @@ namespace Server.Medius.Models
         }
         #endregion
 
+        #region Buddies
+        /// <summary>
+        /// Add to buddy list confirmation for only them to appear on your friends list
+        /// </summary>
+        /// <param name="source">The client making the request for confirmation</param>
+        /// <param name="accountToAdd">The account to add as a buddy on the client</param>
+        /// <param name="msg"></param>
+        public void AddToBuddyListConfirmationSingleRequest(ClientObject source, ClientObject accountToAdd, MediusAddToBuddyListConfirmationRequest msg)
+        {
+            accountToAdd?.Queue(new MediusAddToBuddyListFwdConfirmationRequest()
+            {
+                MessageID = msg.MessageID,
+                OriginatorAccountID = source.AccountId,
+                OriginatorAccountName = source.AccountName,
+                AddType = MediusBuddyAddType.AddSingle,
+            });
+        }
+
+        /// <summary>
+        /// Add to buddy list confirmation for both you and them to appear on both clients friends list
+        /// </summary>
+        /// <param name="source">The client making the request for confirmation</param>
+        /// <param name="accountToAdd">The account to add as a buddy on the client</param>
+        /// <param name="msg"></param>
+        public void AddToBuddyListConfirmationSymmetricRequest(ClientObject source, ClientObject accountToAdd, MediusAddToBuddyListConfirmationRequest msg)
+        {
+            accountToAdd?.Queue(new MediusAddToBuddyListFwdConfirmationRequest()
+            {
+                MessageID = msg.MessageID,
+                OriginatorAccountID = source.AccountId,
+                OriginatorAccountName = source.AccountName,
+                AddType = MediusBuddyAddType.AddSymmetric,
+            });
+        }
+
+        /// <summary>
+        /// Add to buddy list confirmation for only them to appear on your friends list
+        /// </summary>
+        /// <param name="source">The client making the request for confirmation</param>
+        /// <param name="accountToAdd">The account to add as a buddy on the client</param>
+        /// <param name="msg"></param>
+        public void AddToBuddyListConfirmationSingleResponse(ClientObject source, ClientObject accountToAdd, MediusAddToBuddyListFwdConfirmationResponse msg)
+        {
+            accountToAdd?.Queue(new MediusAddToBuddyListConfirmationResponse()
+            {
+                MessageID = msg.MessageID,
+                StatusCode = msg.StatusCode,
+                TargetAccountID = source.AccountId,
+                TargetAccountName = source.AccountName,
+            });
+        }
+
+        /// <summary>
+        /// Add to buddy list confirmation for both you and them to appear on both clients friends list
+        /// </summary>
+        /// <param name="source">The client making the request for confirmation</param>
+        /// <param name="accountToAdd">The account to add as a buddy on the client</param>
+        /// <param name="msg"></param>
+        public void AddToBuddyListConfirmationSymmetricResponse(ClientObject source, ClientObject accountToAdd, MediusAddToBuddyListFwdConfirmationResponse msg)
+        {
+            accountToAdd?.Queue(new MediusAddToBuddyListConfirmationResponse()
+            {
+                MessageID = msg.MessageID,
+                StatusCode = msg.StatusCode,
+                TargetAccountID = source.AccountId,
+                TargetAccountName = source.AccountName,
+            });
+        }
+
+        #endregion
+
         #region Messages
         public void BroadcastBinaryMessage(ClientObject source, MediusBinaryMessage msg)
         {
@@ -177,6 +268,7 @@ namespace Server.Medius.Models
             }
         }
 
+        #region GenericChatMessages
         public void BroadcastChatMessage(IEnumerable<ClientObject> targets, ClientObject source, string message)
         {
             foreach (var target in targets)
@@ -235,6 +327,41 @@ namespace Server.Medius.Models
             }
         }
 
+        public void ClanChatMessage(IEnumerable<ClientObject> targets, ClientObject source, string message)
+        {
+            foreach (var target in targets)
+            {
+                if (target.MediusVersion >= 112)
+                {
+                    target?.Queue(new MediusGenericChatFwdMessage1()
+                    {
+                        OriginatorAccountID = source.AccountId,
+                        OriginatorAccountName = source.AccountName,
+                        Message = message,
+                        MessageType = MediusChatMessageType.Clan,
+                        TimeStamp = Utils.GetUnixTime()
+                    });
+                }
+                else
+                {
+                    target?.Queue(new MediusGenericChatFwdMessage()
+                    {
+                        OriginatorAccountID = source.AccountId,
+                        OriginatorAccountName = source.AccountName,
+                        Message = message,
+                        MessageType = MediusChatMessageType.Clan,
+                        TimeStamp = Utils.GetUnixTime()
+                    });
+                }
+            }
+        }
+        #endregion
+
+        /// <summary>
+        /// Send Server System Message 
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="message"></param>
         public void SendSystemMessage(ClientObject client, string message)
         {
             if (client.MediusVersion >= 112)
@@ -261,6 +388,11 @@ namespace Server.Medius.Models
             }
         }
 
+        /// <summary>
+        /// Send Server System Message 
+        /// </summary>
+        /// <param name="targets"></param>
+        /// <param name="message"></param>
         public void BroadcastSystemMessage(IEnumerable<ClientObject> targets, string message)
         {
             foreach (var target in targets)

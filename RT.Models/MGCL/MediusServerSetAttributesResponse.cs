@@ -3,12 +3,21 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Response structure for the request to set the game server attributes.
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobbyReport, MediusMGCLMessageIds.ServerSetAttributesResponse)]
     public class MediusServerSetAttributesResponse : BaseMGCLMessage, IMediusResponse
     {
         public override byte PacketType => (byte)MediusMGCLMessageIds.ServerSetAttributesResponse;
 
+        /// <summary>
+        /// Message ID used for asynchronous request processing.
+        /// </summary>
         public MessageId MessageID { get; set; }
+        /// <summary>
+        /// MGCL_SUCCESS or other value to indicate an error.
+        /// </summary>
         public MGCL_ERROR_CODE Confirmation;
 
         public bool IsSuccess => Confirmation >= 0;

@@ -1,5 +1,6 @@
 ﻿using RT.Common;
 using Server.Common;
+using System.Collections.Generic;
 
 namespace RT.Models
 {
@@ -12,7 +13,9 @@ namespace RT.Models
 
         public string SessionKey; // SESSIONKEY_MAXLEN
         public uint NumNames;
-        public byte[] AccountNames;
+        public string[] AccountNames;
+
+        public byte NAME_LEN;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -25,7 +28,14 @@ namespace RT.Models
             // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             NumNames = reader.ReadUInt32();
-            AccountNames = reader.ReadRest();
+
+            AccountNames = new string[NumNames];
+
+            for (int i = 0; i < NumNames; i++)
+            {
+                NAME_LEN = reader.ReadByte();
+                AccountNames[i] = reader.ReadString(NAME_LEN);
+            }
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -39,7 +49,11 @@ namespace RT.Models
             // 
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
             writer.Write(NumNames);
-            writer.Write(AccountNames);
+            for (int i = 0; i < NumNames; i++)
+            {
+                writer.Write(NAME_LEN);
+                writer.Write(AccountNames[i]);
+            }
         }
 
 
@@ -49,7 +63,7 @@ namespace RT.Models
                 $"MessageID: {MessageID} " +
                 $"SessionKey: {SessionKey} " +
                 $"NumNames: {NumNames} " +
-                $"AccountNames: {AccountNames}";
+                $"AccountNames: {string.Join(" ", AccountNames)}";
         }
     }
 }

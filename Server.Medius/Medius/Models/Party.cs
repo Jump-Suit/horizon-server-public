@@ -4,7 +4,7 @@ using RT.Models;
 using Server.Common;
 using Server.Database.Models;
 using Server.Medius.PluginArgs;
-using Server.Plugins;
+using Server.Plugins.Interface;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -32,7 +32,7 @@ namespace Server.Medius.Models
         public List<PartyClient> Clients = new List<PartyClient>();
         public string PartyName;
         public string PartyPassword;
-        public MediusGameHostType GameHostType;
+        public MediusGameHostType PartyHostType;
         public int MinPlayers;
         public int MaxPlayers;
         public string Metadata;
@@ -67,7 +67,7 @@ namespace Server.Medius.Models
 
         public int PlayerCount => Clients.Count(x => x != null && x.Client.IsConnected && x.InGame);
 
-        public Party(ClientObject client, IMediusRequest partyCreate, Channel chatChannel, DMEObject dmeServer)
+        public Party(ClientObject client, IMediusRequest partyCreate, Channel chatChannel)
         {
             if (partyCreate is MediusPartyCreateRequest r)
                 FromPartyCreateRequest(r);
@@ -76,7 +76,6 @@ namespace Server.Medius.Models
 
             utcTimeCreated = Utils.GetHighPrecisionUtcTime();
             utcTimeEmpty = null;
-            DMEServer = dmeServer;
             ChatChannel = chatChannel;
             ChatChannel?.RegisterParty(this);
             Host = client;
@@ -92,7 +91,7 @@ namespace Server.Medius.Models
                 PartyCreateDt = utcTimeCreated,
                 PartyEndDt = utcTimeEnded,
                 PartyStartDt = this.utcTimeStarted,
-                GameHostType = this.GameHostType.ToString(),
+                GameHostType = this.PartyHostType.ToString(),
                 PartyId = Id,
                 PartyName = PartyName,
                 PartyPassword = PartyPassword,
@@ -126,7 +125,7 @@ namespace Server.Medius.Models
             GenericField6 = partyCreate.GenericField6;
             GenericField7 = partyCreate.GenericField7;
             GenericField8 = partyCreate.GenericField8;
-            GameHostType = partyCreate.GameHostType;
+            PartyHostType = partyCreate.PartyHostType;
         }
 
         public string GetActivePlayerList()
@@ -149,7 +148,7 @@ namespace Server.Medius.Models
             }
 
             // Auto close when everyone leaves or if host fails to connect after timeout time
-            if (!utcTimeEmpty.HasValue && Clients.Count(x => x.InGame) == 0 && (hasHostJoined || (Utils.GetHighPrecisionUtcTime() - utcTimeCreated).TotalSeconds > Program.Settings.GameTimeoutSeconds))
+            if (!utcTimeEmpty.HasValue && Clients.Count(x => x.InGame) == 0 && (hasHostJoined || (Utils.GetHighPrecisionUtcTime() - utcTimeCreated).TotalSeconds > Program.GetAppSettingsOrDefault(ApplicationId).GameTimeoutSeconds))
             {
                 utcTimeEmpty = Utils.GetHighPrecisionUtcTime();
             }
@@ -176,7 +175,9 @@ namespace Server.Medius.Models
             }
         }
 
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         protected virtual async Task OnPlayerJoined(PartyClient player)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             player.InGame = true;
 
@@ -219,7 +220,9 @@ namespace Server.Medius.Models
             await RemovePlayer(player.Client);
         }
 
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         public virtual async Task RemovePlayer(ClientObject client)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             // 
             Logger.Info($"Party {Id}: {PartyName}: {client} removed.");

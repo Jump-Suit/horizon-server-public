@@ -3,18 +3,41 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Applies a lobby list filter to this session
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.SetLobbyWorldFilter1)]
     public class MediusSetLobbyWorldFilterRequest1 : BaseLobbyExtMessage, IMediusRequest
     {
         public override byte PacketType => (byte)MediusLobbyExtMessageIds.SetLobbyWorldFilter1;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Filter Mask 1
+        /// </summary>
         public uint FilterMask1;
+        /// <summary>
+        /// Filter Mask 2
+        /// </summary>
         public uint FilterMask2;
+        /// <summary>
+        /// Filter Mask 3
+        /// </summary>
         public uint FilterMask3;
+        /// <summary>
+        /// Filter Mask 4
+        /// </summary>
         public uint FilterMask4;
+        /// <summary>
+        /// Filter type = AND mask = mask; AND mask = lobby field
+        /// </summary>
         public MediusLobbyFilterType LobbyFilterType;
+        /// <summary>
+        /// Filter level, must correspond to the lobby world's filter level
+        /// </summary>
         public MediusLobbyFilterMaskLevelType FilterMaskLevel;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -57,13 +80,13 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"FilterMask1:{FilterMask1} " +
-$"FilterMask2:{FilterMask2} " +
-$"FilterMask3:{FilterMask3} " +
-$"FilterMask4:{FilterMask4} " +
-$"LobbyFilterType:{LobbyFilterType} " +
-$"FilterMaskLevel:{FilterMaskLevel}";
+                $"MessageID: {MessageID} " +
+                $"FilterMask1: {FilterMask1} " +
+                $"FilterMask2: {FilterMask2} " +
+                $"FilterMask3: {FilterMask3} " +
+                $"FilterMask4: {FilterMask4} " +
+                $"LobbyFilterType: {LobbyFilterType} " +
+                $"FilterMaskLevel: {FilterMaskLevel}";
         }
     }
 }

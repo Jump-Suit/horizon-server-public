@@ -36,17 +36,17 @@ namespace RT.Models
             //
             reader.ReadBytes(3);
             StatusCode = reader.Read<MediusCallbackStatus>();
-            UniverseName = reader.ReadString();
-            DNS = reader.ReadString();
+            UniverseName = reader.ReadString(Constants.UNIVERSENAME_MAXLEN);
+            DNS = reader.ReadString(Constants.UNIVERSEDNS_MAXLEN);
             Port = reader.ReadInt32();
-            UniverseDescription = reader.ReadString();
+            UniverseDescription = reader.ReadString(Constants.UNIVERSEDESCRIPTION_MAXLEN);
             Status = reader.ReadInt32();
             UserCount = reader.ReadInt32();
             MaxUsers = reader.ReadInt32();
-            UniverseBilling = reader.ReadString();
-            BillingSystemName = reader.ReadString();
+            UniverseBilling = reader.ReadString(Constants.UNIVERSE_BSP_MAXLEN);
+            BillingSystemName = reader.ReadString(Constants.UNIVERSE_BSP_NAME_MAXLEN);
             EndOfList = reader.ReadBoolean();
-            ExtendedInfo = reader.ReadString();
+            ExtendedInfo = reader.ReadString(Constants.UNIVERSE_EXTENDED_INFO_MAXLEN);
             reader.ReadBytes(3);
         }
 
@@ -61,14 +61,17 @@ namespace RT.Models
             //
             writer.Write(new byte[3]);
             writer.Write(StatusCode);
-            writer.Write(UniverseName);
-            writer.Write(DNS);
+            writer.Write(UniverseName, Constants.UNIVERSENAME_MAXLEN);
+            writer.Write(DNS, Constants.UNIVERSEDNS_MAXLEN);
             writer.Write(Port);
-            writer.Write(UniverseDescription);
+            writer.Write(UniverseDescription, Constants.UNIVERSEDESCRIPTION_MAXLEN);
             writer.Write(Status);
             writer.Write(UserCount);
             writer.Write(MaxUsers);
+            writer.Write(UniverseBilling, Constants.UNIVERSE_BSP_MAXLEN);
+            writer.Write(BillingSystemName, Constants.UNIVERSE_BSP_NAME_MAXLEN);
             writer.Write(EndOfList);
+            writer.Write(ExtendedInfo, Constants.UNIVERSE_EXTENDED_INFO_MAXLEN);
             writer.Write(new byte[3]);
         }
 
@@ -84,7 +87,10 @@ namespace RT.Models
                 $"Status: {Status} " +
                 $"UserCount: {UserCount} " +
                 $"MaxUsers: {MaxUsers} " +
-                $"EndOfList: {EndOfList}";
+                $"UniverseBilling: {UniverseBilling} " +
+                $"BillingSystemName: {BillingSystemName} " +
+                $"EndOfList: {EndOfList}" +
+                $"ExtendedInfo: {ExtendedInfo}";
         }
     }
 }

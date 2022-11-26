@@ -15,7 +15,7 @@ namespace RT.Models
         public MediusCallbackStatus StatusCode;
         public uint FilterID;
         public MediusGameListFilterField FilterField;
-        public uint Mask;
+        public int Mask;
         public MediusComparisonOperator ComparisonOperator;
         public int BaselineValue;
         public bool EndOfList;
@@ -33,7 +33,7 @@ namespace RT.Models
             StatusCode = reader.Read<MediusCallbackStatus>();
             FilterID = reader.ReadUInt32();
             FilterField = reader.Read<MediusGameListFilterField>();
-            Mask = reader.ReadUInt32();
+            Mask = reader.ReadInt32();
             ComparisonOperator = reader.Read<MediusComparisonOperator>();
             BaselineValue = reader.ReadInt32();
             EndOfList = reader.ReadBoolean();

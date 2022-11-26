@@ -9,6 +9,9 @@ namespace RT.Models
 
         public override byte PacketType => (byte)MediusLobbyMessageIds.FileUploadServerReq;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
 
         public int iReqStartByteIndex;

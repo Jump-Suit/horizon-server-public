@@ -50,10 +50,10 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID: {MessageID}" + " " +
-                $"LocationId: {LocationId}" + " " +
-                $"LocationName: {LocationName}" + " " +
-                $"StatusCode: {StatusCode}" + " " +
+                $"MessageID: {MessageID} " +
+                $"LocationId: {LocationId} " +
+                $"LocationName: {LocationName} " +
+                $"StatusCode: {StatusCode} " +
                 $"EndOfList: {EndOfList}";
         }
     }

@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Server.MediusHttpServuce": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

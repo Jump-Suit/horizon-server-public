@@ -18,7 +18,7 @@ namespace RT.Models
         public string GameName;
         public MediusWorldStatus WorldStatus;
         public MediusGameHostType GameHostType;
-        public ushort PlayerCount;
+        public int PlayerCount;
         public bool EndOfList;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -36,7 +36,7 @@ namespace RT.Models
             GameName = reader.ReadString(Constants.GAMENAME_MAXLEN);
             WorldStatus = reader.Read<MediusWorldStatus>();
             GameHostType = reader.Read<MediusGameHostType>();
-            PlayerCount = reader.ReadUInt16();
+            PlayerCount = reader.ReadInt32();
             EndOfList = reader.ReadBoolean();
             reader.ReadBytes(3);
         }

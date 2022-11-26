@@ -8,10 +8,21 @@ namespace RT.Models
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.GetTotalUsersResponse;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Total number of players on the system
+        /// </summary>
         public uint TotalInSystem;
+        /// <summary>
+        /// Total number of players in game
+        /// </summary>
         public uint TotalInGame;
+        /// <summary>
+        /// Response code for the request to get the total number of players.
+        /// </summary>
         public MediusCallbackStatus StatusCode;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -21,7 +32,6 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
-
             reader.ReadBytes(3);
 
             // 
@@ -37,7 +47,6 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
-
             writer.Write(new byte[3]);
 
             // 
@@ -46,14 +55,13 @@ namespace RT.Models
             writer.Write(StatusCode);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
-             $"TotalInSystem: {TotalInSystem} " +
-             $"TotalInGame: {TotalInGame} " +
-             $"StatusCode: {StatusCode}";
+                $"TotalInSystem: {TotalInSystem} " +
+                $"TotalInGame: {TotalInGame} " +
+                $"StatusCode: {StatusCode}";
         }
     }
 }

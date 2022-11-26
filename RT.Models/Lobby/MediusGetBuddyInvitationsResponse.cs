@@ -25,13 +25,15 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
+            reader.ReadBytes(3);
 
             // 
             StatusCode = reader.Read<MediusCallbackStatus>();
             AccountID = reader.ReadInt32();
-            AccountName = reader.ReadString();
+            AccountName = reader.ReadString(Constants.ACCOUNTNAME_MAXLEN);
             AddType = reader.Read<MediusBuddyAddType>();
             EndOfList = reader.Read<bool>();
+            reader.ReadBytes(3);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -41,13 +43,15 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
+            writer.Write(new byte[3]);
 
             // 
             writer.Write(StatusCode);
             writer.Write(AccountID);
-            writer.Write(AccountName);
+            writer.Write(AccountName, Constants.ACCOUNTNAME_MAXLEN);
             writer.Write(AddType);
             writer.Write(EndOfList);
+            writer.Write(new byte[3]);
         }
 
         public override string ToString()

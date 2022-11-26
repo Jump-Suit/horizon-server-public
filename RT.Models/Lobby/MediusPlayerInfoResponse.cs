@@ -56,17 +56,16 @@ namespace RT.Models
             writer.Write(Stats, Constants.ACCOUNTSTATS_MAXLEN);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"StatusCode:{StatusCode} " +
-$"AccountName:{AccountName} " +
-$"ApplicationID:{ApplicationID} " +
-$"PlayerStatus:{PlayerStatus} " +
-$"ConnectionClass:{ConnectionClass} " +
-$"Stats:{BitConverter.ToString(Stats)}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
+                $"AccountName: {AccountName} " +
+                $"ApplicationID: {ApplicationID} " +
+                $"PlayerStatus: {PlayerStatus} " +
+                $"ConnectionClass: {ConnectionClass} " +
+                $"Stats: {string.Join("", Convert.ToBase64String(Stats))}";
         }
     }
 }

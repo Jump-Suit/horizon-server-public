@@ -3,6 +3,9 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Response(s) to MediusFindPlayerRequest
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.FindPlayerResponse)]
     public class MediusFindPlayerResponse : BaseLobbyMessage, IMediusResponse
     {
@@ -11,15 +14,41 @@ namespace RT.Models
 
         public bool IsSuccess => StatusCode >= 0;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Response code for the request to find a user.
+        /// </summary>
         public MediusCallbackStatus StatusCode;
+        /// <summary>
+        /// Application ID of the user
+        /// </summary>
         public int ApplicationID;
+        /// <summary>
+        /// Application name of the user.
+        /// </summary>
         public string ApplicationName; // APPNAME_MAXLEN
+        /// <summary>
+        /// In a lobby chat channel or game world.
+        /// </summary>
         public MediusApplicationType ApplicationType;
+        /// <summary>
+        /// World ID
+        /// </summary>
         public int MediusWorldID;
+        /// <summary>
+        /// Account ID
+        /// </summary>
         public int AccountID;
+        /// <summary>
+        /// Accoutn Name
+        /// </summary>
         public string AccountName; // ACCOUNTNAME_MAXLEN
+        /// <summary>
+        /// Flag 0 or 1 to determine the end of list.
+        /// </summary>
         public bool EndOfList;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

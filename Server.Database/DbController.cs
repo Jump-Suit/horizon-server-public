@@ -1,6 +1,7 @@
 ﻿using DotNetty.Common.Internal.Logging;
 using Newtonsoft.Json;
 using RT.Common;
+using RT.Models;
 using Server.Common;
 using Server.Database.Config;
 using Server.Database.Models;
@@ -10,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -26,8 +28,16 @@ namespace Server.Database
         private int _simulatedClanMessageIdCounter = 1;
         private int _simulatedClanInvitationIdCounter = 1;
         private string _dbAccessToken = null;
+        private string _dbAccountName = null;
+
         private List<AccountDTO> _simulatedAccounts = new List<AccountDTO>();
+        private List<AccountRelationInviteDTO> _simulatedBuddyInvitations = new List<AccountRelationInviteDTO>();
+        private List<NpIdDTO> _simulatedNpIdAccounts = new List<NpIdDTO>();
         private List<ClanDTO> _simulatedClans = new List<ClanDTO>();
+        private List<MatchmakingSupersetDTO> _simulatedMatchmakingSupersets = new List<MatchmakingSupersetDTO>();
+        private List<FileDTO> _simulatedMediusFiles = new List<FileDTO>();
+        private List<FileMetaDataDTO> _simulatedFileMetaData = new List<FileMetaDataDTO>();
+        private List<FileAttributesDTO> _simulatedFileAttributes = new List<FileAttributesDTO>();
 
         public DbController(string configFile)
         {
@@ -90,10 +100,27 @@ namespace Server.Database
                 return false;
 
             // 
+            _dbAccountName = response.AccountName;
             _dbAccessToken = response.Token;
 
             // 
             return !string.IsNullOrEmpty(_dbAccessToken);
+        }
+
+        public async Task<bool> AmIAuthenticated()
+        {
+            if (_settings.SimulatedMode)
+                return true;
+
+            return !string.IsNullOrEmpty(_dbAccessToken);
+        }
+
+        public string GetUsername()
+        {
+            if (_settings.SimulatedMode)
+                return _settings.DatabaseUsername;
+
+            return _dbAccountName;
         }
 
         #region Account
@@ -134,34 +161,6 @@ namespace Server.Database
                 else
                 {
                     result = await GetDbAsync<AccountDTO>($"Account/searchAccountByName?AccountName={name}&AppId={appId}");
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e);
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Get account by name.
-        /// </summary>
-        /// <param name="name">Case insensitive name of player.</param>
-        /// <returns>Returns account.</returns>
-        public async Task<AccountDTO> GetAccountByName(string name)
-        {
-            AccountDTO result = null;
-
-            try
-            {
-                if (_settings.SimulatedMode)
-                {
-                    result = _simulatedAccounts.FirstOrDefault(x => x.AccountName.ToLower() == name.ToLower());
-                }
-                else
-                {
-                    result = await GetDbAsync<AccountDTO>($"Account/searchAccountByName?AccountName={name}");
                 }
             }
             catch (Exception e)
@@ -424,7 +423,8 @@ namespace Server.Database
             {
                 if (_settings.SimulatedMode)
                 {
-                    result = null;
+                    var account = _simulatedAccounts.FirstOrDefault(x => x.AccountId == accountId);
+                    result = account?.Metadata;
                 }
                 else
                 {
@@ -453,7 +453,16 @@ namespace Server.Database
             {
                 if (_settings.SimulatedMode)
                 {
-                    result = false;
+                    var account = _simulatedAccounts.FirstOrDefault(x => x.AccountId == accountId);
+                    if (account != null)
+                    {
+                        account.Metadata = metadata;
+                        result = true;
+                    }
+                    else
+                    {
+                        result = false;
+                    }
                 }
                 else
                 {
@@ -654,6 +663,98 @@ namespace Server.Database
         #endregion
 
         #region Buddy / Ignored
+
+        /// <summary>
+        /// Add buddy to buddy list.
+        /// </summary>
+        /// <param name="addBuddy">Add buddy parameters.</param>
+        /// <returns>Success or failure.</returns>
+        public async Task<bool> addBuddyInvitation(AccountRelationInviteDTO addBuddyInvite)
+        {
+            bool result = false;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    _simulatedBuddyInvitations.Add(addBuddyInvite);
+
+                    result = true;
+                }
+                else
+                {
+                    result = (await PostDbAsync($"Buddy/addBuddyInvitation", JsonConvert.SerializeObject(addBuddyInvite))).IsSuccessStatusCode;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Add buddy to buddy list.
+        /// </summary>
+        /// <param name="addBuddy">Add buddy parameters.</param>
+        /// <returns>Success or failure.</returns>
+        public async Task<bool> deleteBuddyInvitation(AccountRelationInviteDTO addBuddyInvite)
+        {
+            bool result = false;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    _simulatedBuddyInvitations.Remove(addBuddyInvite);
+
+                    result = true;
+                }
+                else
+                {
+                    result = (await PostDbAsync($"Buddy/deleteBuddyInvitation", JsonConvert.SerializeObject(addBuddyInvite))).IsSuccessStatusCode;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Retrieve pending buddy invites to buddy list.
+        /// </summary>
+        /// <param name="addBuddy">Add buddy parameters.</param>
+        /// <returns>Success or failure.</returns>
+        public async Task<List<AccountRelationInviteDTO>> retrieveBuddyInvitations(int appId, int accountId)
+        {
+            List<AccountRelationInviteDTO> result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    var account = await GetAccountById(accountId);
+                    if (account != null)
+                    {
+                        result = _simulatedBuddyInvitations.Where(x => x.AppId == appId).ToList();
+                    }
+                }
+                else
+                {
+                    result = await GetDbAsync<List<AccountRelationInviteDTO>>($"Buddy/retrieveBuddyInvitations?appId={appId}&accountId={accountId}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
 
         /// <summary>
         /// Add buddy to buddy list.
@@ -872,7 +973,7 @@ namespace Server.Database
         /// <param name="accountId">Account id of player.</param>
         /// <param name="statId">Index of stat. Starts at 1.</param>
         /// <returns>Leaderboard result for player.</returns>
-        public async Task<LeaderboardDTO> GetPlayerLeaderboardIndex(int accountId, int statId)
+        public async Task<LeaderboardDTO> GetPlayerLeaderboardIndex(int accountId, int statId, int appId)
         {
             LeaderboardDTO result = null;
 
@@ -896,7 +997,7 @@ namespace Server.Database
                 }
                 else
                 {
-                    result = await GetDbAsync<LeaderboardDTO>($"Stats/getPlayerLeaderboardIndex?AccountId={accountId}&StatId={statId}");
+                    result = await GetDbAsync<LeaderboardDTO>($"Stats/getPlayerLeaderboardIndex?AccountId={accountId}&StatId={statId}&AppId={appId}");
                 }
             }
             catch (Exception e)
@@ -913,7 +1014,7 @@ namespace Server.Database
         /// <param name="clanId">Clan id of clan.</param>
         /// <param name="statId">Index of stat. Starts at 1.</param>
         /// <returns>Leaderboard result for clan.</returns>
-        public async Task<ClanLeaderboardDTO> GetClanLeaderboardIndex(int clanId, int statId)
+        public async Task<ClanLeaderboardDTO> GetClanLeaderboardIndex(int clanId, int statId, int appId)
         {
             ClanLeaderboardDTO result = null;
 
@@ -921,7 +1022,7 @@ namespace Server.Database
             {
                 if (_settings.SimulatedMode)
                 {
-                    var clan = await GetClanById(clanId);
+                    var clan = await GetClanById(clanId, appId);
                     if (clan == null)
                         return null;
 
@@ -938,7 +1039,7 @@ namespace Server.Database
                 }
                 else
                 {
-                    result = await GetDbAsync<ClanLeaderboardDTO>($"Stats/getClanLeaderboardIndex?ClanId={clanId}&StatId={statId + 1}");
+                    result = await GetDbAsync<ClanLeaderboardDTO>($"Stats/getClanLeaderboardIndex?ClanId={clanId}&StatId={statId + 1}&AppId={appId}");
                 }
             }
             catch (Exception e)
@@ -1135,7 +1236,7 @@ namespace Server.Database
         /// </summary>
         /// <param name="statPost">Model containing clan id and ladder stats collection.</param>
         /// <returns>Success or failure.</returns>
-        public async Task<bool> PostClanLadderStats(int accountId, int? clanId, int[] stats)
+        public async Task<bool> PostClanLadderStats(int accountId, int? clanId, int[] stats, int appId)
         {
             bool result = false;
             if (!clanId.HasValue)
@@ -1149,7 +1250,7 @@ namespace Server.Database
                     if (account.ClanId != clanId)
                         return false;
 
-                    var clan = await GetClanById(account.ClanId.Value);
+                    var clan = await GetClanById(account.ClanId.Value, appId);
                     if (clan == null)
                         return false;
 
@@ -1177,7 +1278,7 @@ namespace Server.Database
         /// Posts custom ladder stats to clan id.
         /// </summary>
         /// <returns>Success or failure.</returns>
-        public async Task<bool> PostClanLadderCustomStats(int accountId, int? clanId, int[] stats)
+        public async Task<bool> PostClanLadderCustomStats(int accountId, int? clanId, int[] stats, int appId)
         {
             bool result = false;
             if (!clanId.HasValue)
@@ -1191,7 +1292,7 @@ namespace Server.Database
                     if (account.ClanId != clanId)
                         return false;
 
-                    var clan = await GetClanById(account.ClanId.Value);
+                    var clan = await GetClanById(account.ClanId.Value, appId);
                     if (clan == null)
                         return false;
 
@@ -1255,7 +1356,7 @@ namespace Server.Database
         /// <param name="clanId">Clan id to post stats to.</param>
         /// <param name="stats">Stats to post encoded as a Base64 string.</param>
         /// <returns>Success or failure.</returns>
-        public async Task<bool> PostClanMediusStats(int clanId, string stats)
+        public async Task<bool> PostClanMediusStats(int clanId, string stats, int appId)
         {
             bool result = false;
 
@@ -1263,7 +1364,7 @@ namespace Server.Database
             {
                 if (_settings.SimulatedMode)
                 {
-                    var clan = await GetClanById(clanId);
+                    var clan = await GetClanById(clanId, appId);
                     if (clan == null)
                         return false;
 
@@ -1320,7 +1421,7 @@ namespace Server.Database
         /// </summary>
         /// <param name="id">Id of clan.</param>
         /// <returns>Returns clan.</returns>
-        public async Task<ClanDTO> GetClanById(int id)
+        public async Task<ClanDTO> GetClanById(int id, int appId)
         {
             ClanDTO result = null;
 
@@ -1328,11 +1429,73 @@ namespace Server.Database
             {
                 if (_settings.SimulatedMode)
                 {
-                    result = _simulatedClans.FirstOrDefault(x => x.ClanId == id);
+                    result = _simulatedClans.FirstOrDefault(x => x.AppId == appId && x.ClanId == id);
+                    /*
+                    _simulatedClans.Add(result = new ClanDTO()
+                    {
+                        ClanId = _simulatedClanIdCounter++,
+                        ClanName = "RTIME GROUP",
+                        ClanLeaderAccount = creatorAccount,
+                        ClanMemberAccounts = new List<AccountDTO>(new AccountDTO[] { creatorAccount }),
+                        ClanMemberInvitations = new List<ClanInvitationDTO>(),
+                        ClanMessages = new List<ClanMessageDTO>(),
+                        ClanMediusStats = Convert.ToBase64String(new byte[Constants.CLANSTATS_MAXLEN]),
+                        ClanWideStats = new int[Constants.LADDERSTATSWIDE_MAXLEN],
+                        AppId = 1
+                    });
+                    result.ClanMediusStats = "1:2:3";
+                    creatorAccount.ClanId = result.ClanId;
+                    */
+
                 }
                 else
                 {
                     result = await GetDbAsync<ClanDTO>($"Clan/getClan?clanId={id}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Get clan by id.
+        /// </summary>
+        /// <param name="id">Id of clan.</param>
+        /// <returns>Returns clan.</returns>
+        public async Task<List<ClanDTO>> GetClans(int appId)
+        {
+            List<ClanDTO> result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    result = _simulatedClans.Where(x => x.AppId == appId).ToList();
+                    /*
+                    _simulatedClans.Add(result = new ClanDTO()
+                    {
+                        ClanId = _simulatedClanIdCounter++,
+                        ClanName = "RTIME GROUP",
+                        ClanLeaderAccount = creatorAccount,
+                        ClanMemberAccounts = new List<AccountDTO>(new AccountDTO[] { creatorAccount }),
+                        ClanMemberInvitations = new List<ClanInvitationDTO>(),
+                        ClanMessages = new List<ClanMessageDTO>(),
+                        ClanMediusStats = Convert.ToBase64String(new byte[Constants.CLANSTATS_MAXLEN]),
+                        ClanWideStats = new int[Constants.LADDERSTATSWIDE_MAXLEN],
+                        AppId = 1
+                    });
+                    result.ClanMediusStats = "1:2:3";
+                    creatorAccount.ClanId = result.ClanId;
+                    */
+
+                }
+                else
+                {
+                    result = await GetDbAsync<List<ClanDTO>>($"Clan/getClans?appId={appId}");
                 }
             }
             catch (Exception e)
@@ -1402,7 +1565,7 @@ namespace Server.Database
         /// </summary>
         /// <param name="clanId">Id of clan.</param>
         /// <returns>Success or failure.</returns>
-        public async Task<bool> DeleteClan(int accountId, int clanId)
+        public async Task<bool> DeleteClan(int accountId, int clanId, int appId)
         {
             bool result = false;
 
@@ -1411,7 +1574,7 @@ namespace Server.Database
                 if (_settings.SimulatedMode)
                 {
                     // 
-                    var clan = await GetClanById(clanId);
+                    var clan = await GetClanById(clanId, appId);
                     if (clan == null || clan.ClanLeaderAccount.AccountId != accountId)
                         return false;
 
@@ -1446,7 +1609,7 @@ namespace Server.Database
         /// <param name="clanId">Id of clan.</param>
         /// <param name="newLeaderAccountId">Account id of new leader.</param>
         /// <returns>Returns created clan.</returns>
-        public async Task<bool> ClanTransferLeadership(int leaderAccountId, int clanId, int newLeaderAccountId)
+        public async Task<bool> ClanTransferLeadership(int leaderAccountId, int clanId, int newLeaderAccountId, int appId)
         {
             bool result = false;
 
@@ -1454,7 +1617,7 @@ namespace Server.Database
             {
                 if (_settings.SimulatedMode)
                 {
-                    var clan = await GetClanById(clanId);
+                    var clan = await GetClanById(clanId, appId);
                     if (clan == null || clan.ClanLeaderAccount.AccountId != leaderAccountId)
                         return false;
 
@@ -1494,7 +1657,7 @@ namespace Server.Database
         /// <param name="clanId">Id of clan.</param>
         /// <param name="newLeaderAccountId">Account id of new leader.</param>
         /// <returns>Returns created clan.</returns>
-        public async Task<bool> ClanLeave(int fromAccountId, int clanId, int accountId)
+        public async Task<bool> ClanLeave(int fromAccountId, int clanId, int accountId, int appId)
         {
             bool result = false;
 
@@ -1502,7 +1665,7 @@ namespace Server.Database
             {
                 if (_settings.SimulatedMode)
                 {
-                    var clan = await GetClanById(clanId);
+                    var clan = await GetClanById(clanId, appId);
                     if (clan == null)
                         return false;
 
@@ -1772,7 +1935,7 @@ namespace Server.Database
         /// </summary>
         /// <param name="accountId">Id of target player.</param>
         /// <returns>Success or failure.</returns>
-        public async Task<List<ClanMessageDTO>> GetClanMessages(int accountId, int clanId, int startIndex, int pageSize)
+        public async Task<List<ClanMessageDTO>> GetClanMessages(int accountId, int clanId, int startIndex, int pageSize, int appId)
         {
             List<ClanMessageDTO> result = null;
 
@@ -1781,7 +1944,7 @@ namespace Server.Database
                 if (_settings.SimulatedMode)
                 {
                     // get clan
-                    var clan = await GetClanById(clanId);
+                    var clan = await GetClanById(clanId, appId);
                     if (clan != null)
                     {
                         // 
@@ -1811,7 +1974,7 @@ namespace Server.Database
         /// <param name="clanId">Id of clan.</param>
         /// <param name="message">Message to add.</param>
         /// <returns>Success or failure.</returns>
-        public async Task<bool> ClanAddMessage(int accountId, int clanId, string message)
+        public async Task<bool> ClanAddMessage(int accountId, int clanId, string message, int appId)
         {
             bool result = false;
 
@@ -1820,7 +1983,7 @@ namespace Server.Database
                 if (_settings.SimulatedMode)
                 {
                     // get clan
-                    var clan = await GetClanById(clanId);
+                    var clan = await GetClanById(clanId, appId);
                     if (clan == null)
                         return false;
 
@@ -1861,7 +2024,7 @@ namespace Server.Database
         /// <param name="messageId">Id of clan message to edit.</param>
         /// <param name="message">Message to add.</param>
         /// <returns>Success or failure.</returns>
-        public async Task<bool> ClanEditMessage(int accountId, int clanId, int messageId, string message)
+        public async Task<bool> ClanEditMessage(int accountId, int clanId, int messageId, string message, int appId)
         {
             bool result = false;
 
@@ -1870,7 +2033,7 @@ namespace Server.Database
                 if (_settings.SimulatedMode)
                 {
                     // get clan
-                    var clan = await GetClanById(clanId);
+                    var clan = await GetClanById(clanId, appId);
                     if (clan == null)
                         return false;
 
@@ -1905,6 +2068,60 @@ namespace Server.Database
             return result;
         }
 
+        #endregion
+
+        #region DebugInfo
+        /*
+        /// <summary>
+        /// Post the NpId to the database
+        /// </summary>
+        public async Task<bool> PostDebugInfo(PostDebugInfo NpId)
+        {
+            bool result = false;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    _simulatedNpIdAccounts.Add(new NpIdDTO()
+                    {
+                        AppId = NpId.AppId,
+                        data = NpId.data,
+                        term = NpId.term,
+                        dummy = NpId.dummy,
+
+                        opt = NpId.opt,
+                        reserved = NpId.reserved,
+                        CreateDt = DateTime.UtcNow
+                    });
+
+                    result = true;
+
+                    return result;
+                }
+                else
+                {
+                    result = (await PostDbAsync($"Account/postNpId?&AppId={NpId.AppId}&SceNpId={NpId}&createDt={DateTime.UtcNow}", JsonConvert.SerializeObject(new NpIdDTO
+                    {
+                        AppId = NpId.AppId,
+                        data = NpId.data,
+                        term = NpId.term,
+                        dummy = NpId.dummy,
+
+                        opt = NpId.opt,
+                        reserved = NpId.reserved,
+                        CreateDt = DateTime.UtcNow
+                    }))).IsSuccessStatusCode;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+        */
         #endregion
 
         #region Announcements / Policy
@@ -1978,9 +2195,9 @@ namespace Server.Database
         }
 
         /// <summary>
-        /// Gets the usage policy.
+        /// Gets the Usage/Privacy policy.
         /// </summary>
-        public async Task<DimEula> GetUsagePolicy()
+        public async Task<DimEula> GetPolicy(int policyType, int appId)
         {
             DimEula result = null;
 
@@ -1990,7 +2207,9 @@ namespace Server.Database
                 {
                     return new DimEula()
                     {
-
+                        Id = 1,
+                        AppId = 0,
+                        PolicyType = policyType,
                         EulaTitle = "Eula Test",
                         EulaBody = "Eula Body",
 
@@ -1998,38 +2217,7 @@ namespace Server.Database
                 }
                 else
                 {
-                    result = await GetDbAsync<DimEula>($"api/Keys/getEULA?fromDt={DateTime.UtcNow}");
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e);
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// [TODO]
-        /// Gets the privacy policy.
-        /// </summary>
-        public async Task<DimEula> GetPrivacyPolicy()
-        {
-            DimEula result = null;
-
-            try
-            {
-                if (_settings.SimulatedMode)
-                {
-                    return new DimEula()
-                    {
-                        EulaTitle = "Eula Test",
-                        EulaBody = "Eula Body",
-                    };
-                }
-                else
-                {
-                    result = await GetDbAsync<DimEula>($"api/getEULA?fromDt={DateTime.UtcNow.AddDays(-1)}");
+                    result = await GetDbAsync<DimEula>($"api/Keys/getEULA?policyType={policyType}&appId={appId}&fromDt={DateTime.UtcNow}");
                 }
             }
             catch (Exception e)
@@ -2078,27 +2266,59 @@ namespace Server.Database
 
         #endregion
 
-        #region NpIdGetByAccountNames 
+        #region Medius File Services
 
-        /// <summary>
-        /// Gets the NpIds by Account Name
-        /// </summary>
-        public async Task<DimNpByAccountNames> GetNpIdByAccountNames(int appId)
+        #region createFile
+        public async Task<bool> createFile(FileDTO createFile)
         {
-            DimNpByAccountNames result = null;
+            bool result = false;
 
             try
             {
                 if (_settings.SimulatedMode)
                 {
-                    return new DimNpByAccountNames()
+                    _simulatedMediusFiles.Add(createFile);
+                    _simulatedFileAttributes.Add(new FileAttributesDTO
                     {
-                        Id = 1,
-                    };
+                        AppId = createFile.AppId,
+                        FileID = createFile.FileID,
+                        LastChangedByUserID = createFile.fileAttributesDTO.LastChangedByUserID,
+                        LastChangedTimeStamp = createFile.fileAttributesDTO.LastChangedTimeStamp,
+                        Description = createFile.fileAttributesDTO.Description,
+                        StreamableFlag = createFile.fileAttributesDTO.StreamableFlag,
+                        StreamingDataRate = createFile.fileAttributesDTO.StreamingDataRate,
+                    });
+
+                    result = true;
                 }
                 else
                 {
-                    result = await GetDbAsync<DimNpByAccountNames>($"Account/NpIds/getNpIdByAccountNames?fromDt={DateTime.UtcNow}&AppId={appId}");
+                    result = (await PostDbAsync($"FileServices/addFile?AppId={createFile.AppId}&File={createFile}", JsonConvert.SerializeObject(new FileDTO
+                    {
+                        AppId = createFile.AppId,
+                        FileName = createFile.FileName,
+                        ServerChecksum = createFile.ServerChecksum,
+                        FileID = createFile.FileID,
+                        FileSize = createFile.FileSize,
+                        CreationTimeStamp = createFile.CreationTimeStamp,
+                        OwnerID = createFile.OwnerID,
+                        GroupID = createFile.GroupID,
+                        OwnerPermissionRWX = createFile.OwnerPermissionRWX,
+                        GroupPermissionRWX = createFile.GroupPermissionRWX,
+                        GlobalPermissionRWX = createFile.GlobalPermissionRWX,
+                        ServerOperationID = createFile.ServerOperationID,
+                        fileAttributesDTO = new FileAttributesDTO()
+                        {
+                            AppId = createFile.AppId,
+                            FileID = createFile.FileID,
+                            FileName = createFile.FileName,
+                            LastChangedByUserID = createFile.fileAttributesDTO.LastChangedByUserID,
+                            LastChangedTimeStamp = createFile.fileAttributesDTO.LastChangedTimeStamp,
+                            Description = createFile.fileAttributesDTO.Description,
+                            StreamableFlag = createFile.fileAttributesDTO.StreamableFlag,
+                            StreamingDataRate = createFile.fileAttributesDTO.StreamingDataRate,
+                        }
+                    }))).IsSuccessStatusCode;
                 }
             }
             catch (Exception e)
@@ -2108,31 +2328,360 @@ namespace Server.Database
 
             return result;
         }
+        #endregion
+
+        #region deleteFile
+        public async Task<bool> deleteFile(FileDTO file)
+        {
+            bool result = false;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    _simulatedMediusFiles.Remove(file);
+
+                    result = true;
+                }
+                else
+                {
+                    result = (await PostDbAsync($"FileServices/deleteFile", file)).IsSuccessStatusCode;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+        #endregion
+
+        #region getFileList
+        public async Task<List<FileDTO>> getFileList(int appId, string FileNameBeginsWith, uint OwnerByID)
+        {
+            List<FileDTO> result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    if (FileNameBeginsWith == "*")
+                    {
+                        _simulatedMediusFiles.Find(x => x.AppId == appId && x.OwnerID == OwnerByID);
+
+                        result = _simulatedMediusFiles;
+                    }
+                    else
+                    {
+                        _simulatedMediusFiles.Find(x => x.AppId == appId && x.OwnerID == OwnerByID && x.FileName.StartsWith(FileNameBeginsWith));
+
+                        result = _simulatedMediusFiles;
+                    }
+                }
+                else
+                {
+                    Logger.Warn($"FileNameBeginsWith: {FileNameBeginsWith} OwnerByID: {OwnerByID}");
+                    result = await GetDbAsync<List<FileDTO>>($"FileServices/getFileList?AppId={appId}&FileNameBeginsWith={FileNameBeginsWith}&OwnerByID={OwnerByID}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+        #endregion
+
+        #region getFileListExt
+        public async Task<List<FileDTO>> getFileListExt(int appId, string FileNameBeginsWith, int OwnerByID, MediusFileMetaData fileMetaData)
+        {
+            List<FileDTO> result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    if(FileNameBeginsWith == "*")
+                    {
+
+                        FileMetaDataDTO fileMetaDataDTO = new FileMetaDataDTO()
+                        {
+                            AppId = appId,
+                            Key = fileMetaData.Key,
+                            Value = fileMetaData.Value,
+                        };
+                        _simulatedMediusFiles.Find(x => x.AppId == appId && x.OwnerID == OwnerByID && x.fileMetaDataDTO == _simulatedFileMetaData.Find(x => x == fileMetaDataDTO));
+
+                        result = _simulatedMediusFiles;
+                    } else {
+                        FileMetaDataDTO fileMetaDataDTO = new FileMetaDataDTO()
+                        {
+                            AppId = appId,
+                            Key = fileMetaData.Key,
+                            Value = fileMetaData.Value,
+                        };
+                        _simulatedMediusFiles.Find(x => x.AppId == appId && x.OwnerID == OwnerByID && x.FileName.StartsWith(FileNameBeginsWith) && x.fileMetaDataDTO == _simulatedFileMetaData.Find(x => x == fileMetaDataDTO));
+
+                        result = _simulatedMediusFiles;
+                    }
+                }
+                else
+                {
+                    Logger.Warn($"FileNameBeginsWith: {FileNameBeginsWith.Remove(FileNameBeginsWith.Length - 1)} OwnerByID: {OwnerByID} metaKey: {fileMetaData.Key}");
+                    result = await GetDbAsync<List<FileDTO>>($"FileServices/getFileListExt?AppId={appId}&FileNameBeginsWith={FileNameBeginsWith.Remove(FileNameBeginsWith.Length - 1)}&OwnerByID={OwnerByID}&metaKey={fileMetaData.Key}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+        #endregion
+
+        #region UpdateFileAttributes
+        /// <summary>
+        /// Posts the given key and value to the database for that given file
+        /// </summary>
+        /// <param name="appId">appId for MFS</param>
+        /// <param name="mediusFile">MediusFile specified by UpdateFileMetaRequest</param>
+        /// <param name="mediusFileAttributes">mediusFileAttributes specified by Game Developer.</param>
+        public async Task<List<FileAttributesDTO>> UpdateFileAttributes(FileDTO file)
+        {
+            List<FileAttributesDTO> result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    if (_simulatedFileMetaData == null)
+                        return result;
+
+                    _simulatedMediusFiles.Add(file);
+                    _simulatedFileAttributes.Add(new FileAttributesDTO
+                    {
+                        AppId = file.AppId,
+                        FileID = file.FileID,
+                        FileName = file.FileName,
+                        LastChangedByUserID = file.fileAttributesDTO.LastChangedByUserID,
+                        LastChangedTimeStamp = file.fileAttributesDTO.LastChangedTimeStamp,
+                        Description = file.fileAttributesDTO.Description,
+                        StreamableFlag = file.fileAttributesDTO.StreamableFlag,
+                        StreamingDataRate = file.fileAttributesDTO.StreamingDataRate,
+                    });
+
+
+                    result = _simulatedFileAttributes;
+                }
+                else
+                {
+                    result = await PostDbAsync<List<FileAttributesDTO>>($"FileServices/updateFileAttributes?File={file}", file);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+        #endregion
+
+        #region GetFileAttributes
+        /// <summary>
+        /// Posts the given key and value to the database for that given file
+        /// </summary>
+        /// <param name="appId">appId for MFS</param>
+        /// <param name="mediusFile">MediusFile specified by UpdateFileMetaRequest</param>
+        public async Task<List<FileAttributesDTO>> GetFileAttributes(FileDTO mediusFile)
+        {
+            List<FileAttributesDTO> result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    if (_simulatedFileMetaData == null)
+                        return result;
+
+                    _simulatedMediusFiles.Contains(mediusFile);
+                    _simulatedFileAttributes.Find(x => x.FileID == mediusFile.FileID);
+
+
+                    result = _simulatedFileAttributes;
+                }
+                else
+                {
+                    result = await GetDbAsync<List<FileAttributesDTO>>($"FileServices/getFileAttributes?AppId={mediusFile.AppId}&File={mediusFile}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+        #endregion
+
+        #region UpdateFileMetaData
+        /// <summary>
+        /// Posts the given key and value to the database for that given file
+        /// </summary>
+        /// <param name="appId">appId for MFS</param>
+        /// <param name="mediusFile">MediusFile specified by UpdateFileMetaRequest</param>
+        /// <param name="mediusFileMetaData">MediusFileMetaData specified by Game Developer.</param>
+        public async Task<bool> UpdateFileMetaData(FileDTO file)
+        {
+            bool result = false;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    if (!_simulatedMediusFiles.Contains(file))
+                    {
+                        _simulatedMediusFiles.Add(file);
+                        _simulatedFileMetaData.Add(file.fileMetaDataDTO);
+                    }
+
+                    result = true;
+                }
+                else
+                {
+                    result = (await PostDbAsync($"FileServices/updateFileMetaData?AppId={file.AppId}", JsonConvert.SerializeObject(new FileMetaDataDTO
+                    {
+                        AppId = file.AppId,
+                        FileID = file.FileID,
+                        FileName = file.FileName,
+                        Key = file.fileMetaDataDTO.Key,
+                        Value = file.fileMetaDataDTO.Value,
+                        CreateDt = DateTime.Now,
+                    }))).IsSuccessStatusCode;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+        #endregion
+
+        #region GetFileMetaData
+        /// <summary>
+        /// Posts the given key and value to the database for that given file
+        /// </summary>
+        /// <param name="appId">appId for MFS</param>
+        /// <param name="mediusFile">MediusFile specified by UpdateFileMetaRequest</param>
+        /// <param name="mediusFileMetaData">MediusFileMetaData specified by Game Developer.</param>
+        public async Task<List<FileMetaDataDTO>> GetFileMetaData(FileDTO file)
+        {
+            List<FileMetaDataDTO> result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    if (_simulatedFileMetaData == null)
+                        return result;
+
+                    _simulatedMediusFiles.Contains(file);
+                    _simulatedFileMetaData.Contains(file.fileMetaDataDTO);
+
+
+                    result = _simulatedFileMetaData;
+                }
+                else
+                {
+                    result = await PostDbAsync<List<FileMetaDataDTO>>($"FileServices/getFileMetaData", file);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+        #endregion
 
         #endregion
 
-        #region NpIdPost
+        #region NpIds
+        /// <summary>
+        /// Post the NpId to the database
+        /// </summary>
+        public async Task<bool> PostNpId(NpIdDTO NpId)
+        {
+            bool result = false;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    _simulatedNpIdAccounts.Add(new NpIdDTO() {
+                        AppId = NpId.AppId,
+                        data = NpId.data,
+                        term = NpId.term,
+                        dummy = NpId.dummy,
+
+                        opt = NpId.opt,
+                        reserved = NpId.reserved,
+                        CreateDt = DateTime.UtcNow
+                    });
+
+                    result = true;
+
+                    return result;
+                }
+                else
+                {
+                    result = (await PostDbAsync($"Account/postNpId?&AppId={NpId.AppId}&SceNpId={NpId}&createDt={DateTime.UtcNow}", JsonConvert.SerializeObject(new NpIdDTO
+                    {
+                        AppId = NpId.AppId,
+                        data = NpId.data,
+                        term = NpId.term,
+                        dummy = NpId.dummy,
+
+                        opt = NpId.opt,
+                        reserved = NpId.reserved,
+                        CreateDt = DateTime.UtcNow
+                    }))).IsSuccessStatusCode;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
 
         /// <summary>
         /// Post the NpId to the database
         /// </summary>
-        public async Task<DimNpIdPost> PostNpId(byte[] data, int appId)
+        public async Task<List<NpIdDTO>> NpIdSearchByAccountNames(NpIdDTO NpId, int appId)
         {
-            DimNpIdPost result = null;
+            List<NpIdDTO> result = null;
 
             try
             {
                 if (_settings.SimulatedMode)
                 {
-                    return new DimNpIdPost()
-                    {
-                        Id = 1,
-                        data = data,
-                    };
+                    _simulatedNpIdAccounts.FirstOrDefault(simulatedNpId => simulatedNpId == NpId && simulatedNpId.AppId == appId);
+
+                    result = _simulatedNpIdAccounts.ToList();
+
+                    return result;
                 }
                 else
                 {
-                    result = await GetDbAsync<DimNpIdPost>($"Account/NpIds/postNpId?data={data}&fromDt={DateTime.UtcNow}&AppId={appId}");
+                    result = await GetDbAsync<List<NpIdDTO>>($"Account/searchNpIdByAccountName?SceNpId={NpId}&AppId={appId}");
                 }
             }
             catch (Exception e)
@@ -2142,11 +2691,9 @@ namespace Server.Database
 
             return result;
         }
-
         #endregion
 
         #region Game
-
         /// <summary>
         /// 
         /// </summary>
@@ -2274,6 +2821,176 @@ namespace Server.Database
                 else
                 {
                     result = (await DeleteDbAsync($"api/Game/clear")).IsSuccessStatusCode;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        #endregion
+
+        #region World
+
+        public async Task<ChannelDTO[]> GetChannels()
+        {
+            ChannelDTO[] results = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    return new ChannelDTO[]
+                    {
+                        /*
+                        new ChannelDTO()
+                        {
+                            AppId = 24180,
+                            Id = 1,
+                            Name = "Default",
+                            MaxPlayers = 256,
+                            GenericFieldFilter = 32,
+                            GenericField1 = 1,
+                            GenericField2 = 1,
+
+                        }
+                        */
+                            /*
+                            new ChannelDTO()
+                            {
+                                AppId = 20770,
+                                Id = 1,
+                                Name = "Default",
+                                MaxPlayers = 256,
+                                GenericFieldFilter = 32,
+                                GenericField1 = 1,
+                                GenericField2 = 1,
+                            }, 
+                            */
+                    };
+                }
+                else
+                {
+                    results = await GetDbAsync<ChannelDTO[]>($"api/World/getChannels");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return results;
+        }
+
+        public async Task<LocationDTO[]> GetLocations()
+        {
+            LocationDTO[] results = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    return new LocationDTO[]
+                    {
+                        new LocationDTO()
+                        {
+                            AppId = 0,
+                            Id = 0,
+                            Name = "Location 1"
+                        },
+                        new LocationDTO()
+                        {
+                            AppId = 24000,
+                            Id = 0,
+                            Name = "Aquatos"
+                        },
+                        new LocationDTO()
+                        {
+                            AppId = 23044,
+                            Id = 0,
+                            Name = "US"
+                        }
+                    };
+                }
+                else
+                {
+                    results = await GetDbAsync<LocationDTO[]>($"api/World/getLocations");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return results;
+        }
+
+        public async Task<LocationDTO[]> GetLocations(int appId)
+        {
+            LocationDTO[] results = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    return new LocationDTO[]
+                    {
+                        new LocationDTO()
+                        {
+                            AppId = appId,
+                            Id = 0,
+                            Name = "Location 1"
+                        },
+                    };
+                }
+                else
+                {
+                    results = await GetDbAsync<LocationDTO[]>($"api/World/getLocations/{appId}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return results;
+        }
+
+        #endregion
+
+        #region Matchmaking 
+
+        /// <summary>
+        /// Returns all clan invitations for the given player.
+        /// </summary>
+        /// <param name="accountId">Id of target player.</param>
+        /// <returns>Success or failure.</returns>
+        public async Task<List<MatchmakingSupersetDTO>> GetMatchmakingSupersets(int appId)
+        {
+            List<MatchmakingSupersetDTO> result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    // get clans
+                    var supersets = _simulatedMatchmakingSupersets.Where(x => x.AppId == appId);
+
+                    // 
+                    result = supersets.Select(x => new MatchmakingSupersetDTO()
+                    {
+                        SupersetID = 1,
+                        SupersetName = "Casual",
+                        SupersetDescription = "M:PR Matchmaking",
+                        AppId = 21624
+                    }).Where(x => x.SupersetID != 0).ToList();
+                }
+                else
+                {
+                    result = (await GetDbAsync<List<MatchmakingSupersetDTO>>($"Matchmaking/supersets?appId={appId}"));
                 }
             }
             catch (Exception e)
@@ -2427,7 +3144,137 @@ namespace Server.Database
 
         #endregion
 
+        #region Universes
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="appId">appid of that universe to find</param>
+        /// <returns></returns>
+        public async Task<List<UniverseDTO>> GetUniverses(int appId)
+        {
+            List<UniverseDTO> result = null;
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    result = null;
+                }
+                else
+                {
+                    result = await GetDbAsync<List<UniverseDTO>>($"Universes/getUniverses?appId={appId}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="appId">appid of that universe to find</param>
+        /// <returns></returns>
+        public async Task<List<UniverseNewsDTO>> GetUniverseNews(int appId)
+        {
+            List<UniverseNewsDTO> result = null;
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    result = null;
+                }
+                else
+                {
+                    result = await GetDbAsync<List<UniverseNewsDTO>>($"Universes/getUniverseNews?appId={appId}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        #endregion
+
         #region Key
+
+        public async Task<AppIdDTO[]> GetAppIds()
+        {
+            AppIdDTO[] results = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    return new AppIdDTO[]
+                    {
+                        new AppIdDTO()
+                        {
+                            Name = "All",
+                            AppIds = Enumerable.Range(0, 100000).ToList()
+                        }
+                    };
+                }
+                else
+                {
+                    results = await GetDbAsync<AppIdDTO[]>($"api/Keys/getAppIds");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return results;
+        }
+
+        public async Task<Dictionary<string, string>> GetServerSettings(int appId)
+        {
+            Dictionary<string, string> result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    return new Dictionary<string, string>();
+                }
+                else
+                {
+                    result = await GetDbAsync<Dictionary<string, string>>($"api/Keys/getSettings?appId={appId}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        public async Task SetServerSettings(int appId, Dictionary<string, string> settings)
+        {
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+
+                }
+                else
+                {
+                    await PostDbAsync($"api/Keys/setSettings?appId={appId}", settings);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+        }
 
         public async Task<ServerFlagsDTO> GetServerFlags()
         {

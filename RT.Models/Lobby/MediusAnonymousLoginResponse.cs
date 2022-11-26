@@ -11,8 +11,10 @@ namespace RT.Models
 
         public bool IsSuccess => StatusCode >= 0;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
 
         public MediusCallbackStatus StatusCode;
         public int AccountID;

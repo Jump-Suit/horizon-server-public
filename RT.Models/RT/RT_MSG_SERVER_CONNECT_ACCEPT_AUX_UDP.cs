@@ -19,7 +19,7 @@ namespace RT.Models
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
-            if (reader.MediusVersion <= 108)
+            if (reader.MediusVersion == 108)
             {
                 // unk
                 reader.ReadBytes(3);
@@ -39,7 +39,7 @@ namespace RT.Models
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
         {
-            if (writer.MediusVersion <= 108)
+            if (writer.MediusVersion == 108)
             {
                 // unk
                 writer.Write(new byte[] { 0x01, 0x08, 0x10 });

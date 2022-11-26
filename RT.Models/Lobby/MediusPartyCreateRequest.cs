@@ -8,14 +8,34 @@ namespace RT.Models
     {
         public override byte PacketType => (byte)MediusLobbyExtMessageIds.PartyCreateRequest;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
 
-        //
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey; // SESSIONKEY_MAXLEN
+        /// <summary>
+        /// Application ID of this party to create on
+        /// </summary>
         public int ApplicationID;
+        /// <summary>
+        /// Minimum amount of players allowed in a party
+        /// </summary>
         public int MinPlayers;
+        /// <summary>
+        /// Maximum amount of players allowed in a party
+        /// </summary>
         public int MaxPlayers;
+        /// <summary>
+        /// Party Name set in the request
+        /// </summary>
         public string PartyName; // PARTYNAME_MAXLEN
+        /// <summary>
+        /// Party Password set in the request
+        /// </summary>
         public string PartyPassword; // PARTYPASSWORD_MAXLEN
         public int GenericField1;
         public int GenericField2;
@@ -25,7 +45,10 @@ namespace RT.Models
         public int GenericField6;
         public int GenericField7;
         public int GenericField8;
-        public MediusGameHostType GameHostType;
+        /// <summary>
+        /// PartyHostType of this party
+        /// </summary>
+        public MediusGameHostType PartyHostType;
         public string ServerSessionKey; //SESSIONKEY_MAXLEN
 
 
@@ -40,6 +63,8 @@ namespace RT.Models
             // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             reader.ReadBytes(2);
+
+            //
             ApplicationID = reader.ReadInt32();
             MinPlayers = reader.ReadInt32();
             MaxPlayers = reader.ReadInt32();
@@ -53,8 +78,10 @@ namespace RT.Models
             GenericField6 = reader.ReadInt32();
             GenericField7 = reader.ReadInt32();
             GenericField8 = reader.ReadInt32();
-            GameHostType = reader.Read<MediusGameHostType>();
-            ServerSessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
+            PartyHostType = reader.Read<MediusGameHostType>();
+
+            //ServerSessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
+            //reader.ReadBytes(3);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -67,12 +94,14 @@ namespace RT.Models
 
             // 
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
-            writer.Write(2);
-            writer.Write((short)ApplicationID);
+            writer.Write(new byte[2]);
+
+            //
+            writer.Write(ApplicationID);
             writer.Write(MinPlayers);
             writer.Write(MaxPlayers);
-            writer.Write(PartyName);
-            writer.Write(PartyPassword);
+            writer.Write(PartyName, Constants.PARTYNAME_MAXLEN);
+            writer.Write(PartyPassword, Constants.PARTYPASSWORD_MAXLEN);
             writer.Write(GenericField1);
             writer.Write(GenericField2);
             writer.Write(GenericField3);
@@ -81,8 +110,10 @@ namespace RT.Models
             writer.Write(GenericField6);
             writer.Write(GenericField7);
             writer.Write(GenericField8);
-            writer.Write(GameHostType);
-            writer.Write(ServerSessionKey);
+            writer.Write(PartyHostType);
+
+            //writer.Write(ServerSessionKey, Constants.SESSIONKEY_MAXLEN);
+            //writer.Write(new byte[3]);
         }
 
         public override string ToString()
@@ -103,7 +134,7 @@ namespace RT.Models
                 $"GenericField6: {GenericField6} " +
                 $"GenericField7: {GenericField7} " +
                 $"GenericField8: {GenericField8} " +
-                $"GameHostType: {GameHostType} " +
+                $"PartyHostType: {PartyHostType} " +
                 $"ServerSessionKey: {ServerSessionKey} ";
         }
     }

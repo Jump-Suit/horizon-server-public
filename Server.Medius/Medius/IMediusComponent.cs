@@ -4,11 +4,11 @@ namespace Server.Medius
 {
     public interface IMediusComponent
     {
-        int Port { get; }
+        int TCPPort { get; }
+        int UDPPort { get; }
 
         void Start();
         Task Stop();
-
         Task Tick();
     }
 }

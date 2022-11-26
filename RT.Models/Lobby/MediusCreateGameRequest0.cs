@@ -40,10 +40,10 @@ namespace RT.Models
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             reader.ReadBytes(2);
             ApplicationID = reader.ReadInt32();
-            GameName = reader.ReadString(Constants.GAMENAME_MAXLEN);
             MinPlayers = reader.ReadInt32();
             MaxPlayers = reader.ReadInt32();
             GameLevel = reader.ReadInt32();
+            GameName = reader.ReadString(Constants.GAMENAME_MAXLEN);
             GamePassword = reader.ReadString(Constants.GAMEPASSWORD_MAXLEN);
             PlayerSkillLevel = reader.ReadInt32();
             RulesSet = reader.ReadInt32();
@@ -65,10 +65,10 @@ namespace RT.Models
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
             writer.Write(new byte[2]);
             writer.Write(ApplicationID);
-            writer.Write(GameName, Constants.GAMENAME_MAXLEN);
             writer.Write(MinPlayers);
             writer.Write(MaxPlayers);
             writer.Write(GameLevel);
+            writer.Write(GameName, Constants.GAMENAME_MAXLEN);
             writer.Write(GamePassword, Constants.GAMEPASSWORD_MAXLEN);
             writer.Write(PlayerSkillLevel);
             writer.Write(RulesSet);

@@ -13,9 +13,7 @@ namespace RT.Models
         public override byte PacketType => (byte)MediusLobbyMessageIds.FileClose;
 
         public MessageId MessageID { get; set; }
-
-        public MediusFile MediusFileInfo;
-
+        public MediusFile MediusFileInfo = new MediusFile();
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
             // 

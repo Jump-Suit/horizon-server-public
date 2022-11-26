@@ -21,8 +21,8 @@ namespace Server.Pipeline.Udp
 
         public ScertDatagramDecoder(params ICipher[] ciphers)
         {
-            this._ciphers = ciphers;
-            this._getCipher = (id, ctx) =>
+            _ciphers = ciphers;
+            _getCipher = (id, ctx) =>
             {
                 return _ciphers?.FirstOrDefault(x => x.Context == ctx);
             };
@@ -66,7 +66,7 @@ namespace Server.Pipeline.Udp
             var scertClient = context.GetAttribute(Constants.SCERT_CLIENT).Get();
 
             if (frameLength <= 0)
-                return BaseScertMessage.Instantiate((RT_MSG_TYPE)(id & 0x7F), null, new byte[0], (int)scertClient.MediusVersion, scertClient.CipherService);
+                return BaseScertMessage.Instantiate((RT_MSG_TYPE)(id & 0x7F), null, new byte[0], (int)scertClient.MediusVersion, scertClient.ApplicationID, scertClient.CipherService);
 
             if (id >= 0x80)
             {
@@ -96,7 +96,7 @@ namespace Server.Pipeline.Udp
             // 
             int totalFrameLength = headerLength + frameLengthInt;
             input.Content.SetReaderIndex(input.Content.ReaderIndex + totalFrameLength);
-            return new ScertDatagramPacket(BaseScertMessage.Instantiate((RT_MSG_TYPE)id, hash, messageContents, (int)scertClient.MediusVersion, scertClient.CipherService), null, input.Sender);
+            return new ScertDatagramPacket(BaseScertMessage.Instantiate((RT_MSG_TYPE)id, hash, messageContents, (int)scertClient.MediusVersion, scertClient.ApplicationID, scertClient.CipherService), null, input.Sender);
         }
     }
 }

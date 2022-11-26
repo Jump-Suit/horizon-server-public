@@ -35,7 +35,10 @@ namespace Server.Medius
         }
 
         protected abstract IInternalLogger Logger { get; }
-        public abstract int Port { get; }
+
+        public abstract int TCPPort { get; }
+        public abstract int UDPPort { get; }
+
         public IPAddress IPAddress => Program.SERVER_IP;
 
         protected IEventLoopGroup _bossGroup = null;
@@ -64,9 +67,9 @@ namespace Server.Medius
 
 
             /// <summary>
-            /// Timesout client if they authenticated after a given number of seconds.
+            /// Timesout client if they haven't authenticated after a given number of seconds.
             /// </summary>
-            public bool ShouldDestroy => ClientObject == null && (Utils.GetHighPrecisionUtcTime() - TimeConnected).TotalSeconds > Program.Settings.ClientTimeoutSeconds;
+            public bool ShouldDestroy => ClientObject == null && (Utils.GetHighPrecisionUtcTime() - TimeConnected).TotalSeconds > Program.GetAppSettingsOrDefault(ApplicationId).ClientTimeoutSeconds;
         }
 
         protected ConcurrentQueue<IChannel> _forceDisconnectQueue = new ConcurrentQueue<IChannel>();
@@ -91,7 +94,7 @@ namespace Server.Medius
                 string key = channel.Id.AsLongText();
                 var data = new ChannelData()
                 {
-                    State = ClientState.CONNECTED
+                    State  = ClientState.CONNECTED
                 };
                 _channelDatas.TryAdd(key, data);
 
@@ -139,13 +142,17 @@ namespace Server.Medius
 
                             if (message is RT_MSG_SERVER_ECHO serverEcho)
                                 data.ClientObject?.OnRecvServerEcho(serverEcho);
+                            else if (message is RT_MSG_CLIENT_ECHO clientEcho)
+                                data.ClientObject?.OnRecvClientEcho(clientEcho);
                         }
                     }
                 }
 
                 // Log if id is set
                 if (message.CanLog())
+                {
                     Logger.Info($"RECV {data?.ClientObject},{channel}: {message}");
+                }
             };
 
             try
@@ -160,7 +167,7 @@ namespace Server.Medius
                     {
                         IChannelPipeline pipeline = channel.Pipeline;
 
-                        pipeline.AddLast(new WriteTimeoutHandler(Program.Settings.ClientTimeoutSeconds));
+                        pipeline.AddLast(new WriteTimeoutHandler(30));
                         pipeline.AddLast(new ScertEncoder());
                         pipeline.AddLast(new ScertIEnumerableEncoder());
                         pipeline.AddLast(new ScertTcpFrameDecoder(DotNetty.Buffers.ByteOrder.LittleEndian, 2048, 1, 2, 0, 0, false));
@@ -169,7 +176,8 @@ namespace Server.Medius
                         pipeline.AddLast(_scertHandler);
                     }));
 
-                _boundChannel = await bootstrap.BindAsync(Port);
+                _boundChannel = await bootstrap.BindAsync(TCPPort);
+                _boundChannel = await bootstrap.BindAsync(UDPPort);
             }
             finally
             {
@@ -297,16 +305,9 @@ namespace Server.Medius
 
                         if (data.ClientObject != null)
                         {
-                            if (Program.Settings.ServerEchoUnsupported == true)
-                            {
-                                // Do NOT send Echo
-                            }
-                            else
-                            {
-                                // Echo
-                                if ((Utils.GetHighPrecisionUtcTime() - data.ClientObject.UtcLastServerEchoSent).TotalSeconds > Program.Settings.ServerEchoInterval)
-                                    data.ClientObject.QueueServerEcho();
-                            }
+                            // Echo
+                            if (data.ClientObject.MediusVersion > 108 && (Utils.GetHighPrecisionUtcTime() - data.ClientObject.UtcLastServerEchoSent).TotalSeconds > Program.GetAppSettingsOrDefault(data.ClientObject.ApplicationId).ServerEchoIntervalSeconds)
+                                data.ClientObject.QueueServerEcho();
 
                             // Add client object's send queue to responses
                             while (data.ClientObject.SendMessageQueue.TryDequeue(out var message))
@@ -341,7 +342,7 @@ namespace Server.Medius
             // Send ban message
             data.SendQueue.Enqueue(new RT_MSG_SERVER_SYSTEM_MESSAGE()
             {
-                Severity = Program.Settings.BanSystemMessageSeverity,
+                Severity = (byte)Program.GetAppSettingsOrDefault(data.ApplicationId).BanSystemMessageSeverity,
                 EncodingType = 1,
                 LanguageType = 2,
                 EndOfMessage = true,
@@ -356,7 +357,7 @@ namespace Server.Medius
             // Send clan kick message
             data.SendQueue.Enqueue(new RT_MSG_SERVER_SYSTEM_MESSAGE()
             {
-                Severity = Program.Settings.BanSystemMessageSeverity,
+                Severity = (byte)Program.GetAppSettingsOrDefault(data.ApplicationId).BanSystemMessageSeverity,
                 EncodingType = 1,
                 LanguageType = 2,
                 EndOfMessage = true,

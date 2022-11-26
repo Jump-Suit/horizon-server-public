@@ -1,26 +1,26 @@
 ﻿using RT.Common;
 using Server.Common;
+using System;
+using System.Collections.Generic;
 
 namespace RT.Models
 {
-    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.MatchPartyRequest)]
+    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.MatchPartyRequest2)]
     public class MediusMatchPartyRequest : BaseLobbyExtMessage, IMediusRequest
     {
 
-        public override byte PacketType => (byte)MediusLobbyExtMessageIds.MatchPartyRequest;
+        public override byte PacketType => (byte)MediusLobbyExtMessageIds.MatchPartyRequest2;
 
         public MessageId MessageID { get; set; }
         public string SessionKey; // SESSIONKEY_MAXLEN
-        public int MediusJoinType;
-        public int Unk2;
-        public int Unk3;
-        public int Unk4;
-        public uint MinPlayers;
-        public uint MaxPlayers;
-        public int Unk7;
-        public int MatchType;
-        public int Unk9;
-        public int SearchId;
+        public int SupersetID;
+        public int PartySize;
+        public int MinGameSize;
+        public int MaxGameSize;
+        public MediusMatchOptions MatchOptions;
+        public int ApplicationDataSize;
+        public int[] PartyAccountIDList;
+        public char[] ApplicationData;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -31,17 +31,27 @@ namespace RT.Models
             MessageID = reader.Read<MessageId>();
 
             //
-            SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
-            MediusJoinType = reader.ReadInt32();
-            Unk2 = reader.ReadInt32();
-            Unk3 = reader.ReadInt32();
-            Unk4 = reader.ReadInt32();
-            MinPlayers = reader.ReadUInt32();
-            MaxPlayers = reader.ReadUInt32();
-            Unk7 = reader.ReadInt32();
-            MatchType = reader.ReadInt32();
-            Unk9 = reader.ReadInt32();
-            SearchId = reader.ReadInt32();
+            SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN); 
+
+            //reader.ReadBytes(2);
+
+            //
+            SupersetID = reader.ReadInt32();
+            PartySize = reader.ReadInt32();
+
+            MinGameSize = reader.ReadInt32();
+            MaxGameSize = reader.ReadInt32();
+            MatchOptions = reader.Read<MediusMatchOptions>();
+
+            ApplicationDataSize = reader.ReadInt32();
+
+            PartyAccountIDList = new int[PartySize];
+            for (int i = 0; i < PartySize; i++)
+            {
+                PartyAccountIDList[i] = reader.ReadInt32();
+            }
+
+            ApplicationData = reader.ReadChars(Constants.APPLICATIONDATA_MAXLEN);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -54,16 +64,22 @@ namespace RT.Models
 
             //
             writer.Write(SessionKey);
-            writer.Write(MediusJoinType);
-            writer.Write(Unk2);
-            writer.Write(Unk3);
-            writer.Write(Unk4);
-            writer.Write(MinPlayers);
-            writer.Write(MaxPlayers);
-            writer.Write(Unk7);
-            writer.Write(MatchType);
-            writer.Write(Unk9);
-            writer.Write(SearchId);
+
+            //writer.Write(new byte[2]);
+
+            //
+            writer.Write(SupersetID);
+            writer.Write(PartySize);
+
+
+            writer.Write(MinGameSize);
+            writer.Write(MaxGameSize);
+            writer.Write(MatchOptions);
+
+
+            writer.Write(ApplicationDataSize);
+            writer.Write(PartyAccountIDList);
+            writer.Write(ApplicationData);
         }
 
 
@@ -72,16 +88,14 @@ namespace RT.Models
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
                 $"SessionKey: {SessionKey} " +
-                $"MediusJoinType : {MediusJoinType} " +
-                $"Unk2: {Unk2} " +
-                $"Unk3: {Unk3} " +
-                $"Unk4: {Unk4} " +
-                $"MinPlayers: {MinPlayers} " +
-                $"MaxPlayers: {MaxPlayers} " +
-                $"Unk7: {Unk7} " +
-                $"MatchType: {MatchType} " +
-                $"Unk9: {Unk9} " +
-                $"SearchId: {SearchId} ";
+                $"SupersetID: {SupersetID} " +
+                $"PartySize: {PartySize} " +
+                $"MinGameSize: {MinGameSize} " +
+                $"MaxGameSize: {MaxGameSize} " +
+                $"MatchOptions: {MatchOptions} " +
+                $"ApplicationDataSize: {ApplicationDataSize} " +
+                $"PartyAccountIDList: {string.Join(" ", PartyAccountIDList)} " +
+                $"ApplicationData:  {string.Join(" ", ApplicationData)} ";
         }
     }
 }

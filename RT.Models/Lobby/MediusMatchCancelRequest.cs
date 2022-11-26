@@ -8,10 +8,18 @@ namespace RT.Models
     {
         public override byte PacketType => (byte)MediusLobbyExtMessageIds.MatchCancelRequest;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey; // SESSIONKEY_MAXLEN
-        public int Unk1;
+        /// <summary>
+        /// SupersetID to cancel
+        /// </summary>
+        public int SupersetID;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -20,10 +28,11 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
-
-            // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
-            Unk1 = reader.ReadInt32();
+            reader.ReadBytes(2);
+
+            //
+            SupersetID = reader.ReadInt32();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -33,10 +42,11 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
-
-            // 
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
-            writer.Write(Unk1);
+            writer.Write(new byte[2]);
+
+            //
+            writer.Write(SupersetID);
         }
 
         public override string ToString()
@@ -44,7 +54,7 @@ namespace RT.Models
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
                 $"SessionKey: {SessionKey} " +
-                $"Unk1: {Unk1}";
+                $"SupersetID: {SupersetID}";
         }
     }
 }

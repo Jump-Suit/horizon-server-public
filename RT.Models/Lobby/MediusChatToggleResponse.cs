@@ -6,7 +6,6 @@ namespace RT.Models
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.ChatToggleResponse)]
     public class MediusChatToggleResponse : BaseLobbyMessage, IMediusResponse
     {
-
         public override byte PacketType => (byte)MediusLobbyMessageIds.ChatToggleResponse;
 
         public bool IsSuccess => StatusCode >= 0;
@@ -40,7 +39,6 @@ namespace RT.Models
             writer.Write(new byte[3]);
             writer.Write(StatusCode);
         }
-
 
         public override string ToString()
         {

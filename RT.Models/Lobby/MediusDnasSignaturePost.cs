@@ -57,7 +57,7 @@ namespace RT.Models
                 $"MessageID: {MessageID} " +
                 $"SessionKey: {SessionKey} " +
                 $"DnasSignatureType: {DnasSignatureType} " +
-                $"DnasSignatureLength: {DnasSignatureLength} " +
+                $"SignatureLength: {DnasSignatureLength} " +
                 $"DnasSignature: {BitConverter.ToString(DnasSignature)}";
         }
     }

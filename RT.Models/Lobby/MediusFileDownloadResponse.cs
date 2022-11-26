@@ -1,5 +1,6 @@
 using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -22,6 +23,10 @@ namespace RT.Models
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
+
+            // 
+            base.Deserialize(reader);
+
             // 
             Data = reader.ReadBytes(Constants.MEDIUS_FILE_MAX_DOWNLOAD_DATA_SIZE);
             iStartByteIndex = reader.ReadInt32();
@@ -29,9 +34,6 @@ namespace RT.Models
             iPacketNumber = reader.ReadInt32();
             iXferStatus = reader.Read<MediusFileXferStatus>();
             StatusCode = reader.Read<MediusCallbackStatus>();
-
-            // 
-            base.Deserialize(reader);
 
             //
             MessageID = reader.Read<MessageId>();
@@ -41,15 +43,15 @@ namespace RT.Models
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
         {
             // 
+            base.Serialize(writer);
+
+            // 
             writer.Write(Data, Constants.MEDIUS_FILE_MAX_DOWNLOAD_DATA_SIZE);
             writer.Write(iStartByteIndex);
             writer.Write(iDataSize);
             writer.Write(iPacketNumber);
             writer.Write(iXferStatus);
             writer.Write(StatusCode);
-
-            // 
-            base.Serialize(writer);
 
             //
             writer.Write(MessageID ?? MessageId.Empty);

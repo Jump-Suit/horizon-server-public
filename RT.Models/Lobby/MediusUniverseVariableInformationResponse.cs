@@ -36,9 +36,19 @@ namespace RT.Models
             //
             MessageID = reader.Read<MessageId>();
 
+            if(reader.MediusVersion >= 110 && reader.MediusVersion < 111)
+            {
+                reader.ReadBytes(3);
+            }
+
             // 
             StatusCode = reader.Read<MediusCallbackStatus>();
             InfoFilter = reader.Read<MediusUniverseVariableInformationInfoFilter>();
+            
+            if (reader.MediusVersion > 108 && reader.MediusVersion != 112 && reader.MediusVersion == 113)
+            {
+                reader.ReadBytes(3);
+            }
 
             if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_ID))
                 UniverseID = reader.ReadUInt32();
@@ -76,6 +86,11 @@ namespace RT.Models
                 SvoURL = reader.ReadString(Constants.UNIVERSE_SVO_URL_MAXLEN);
 
             EndOfList = reader.ReadBoolean();
+
+            if (reader.MediusVersion >= 110 && reader.MediusVersion > 111)
+            {
+                reader.ReadBytes(3);
+            }
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -85,10 +100,19 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
+            if (writer.MediusVersion == 110 && writer.MediusVersion > 111)
+            {
+                writer.Write(new byte[3]);
+            }
 
             // 
             writer.Write(StatusCode);
             writer.Write(InfoFilter);
+
+            if (writer.MediusVersion > 108 && writer.MediusVersion < 112 && writer.MediusVersion == 113)
+            {
+                writer.Write(new byte[3]);
+            }
 
             if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_ID))
                 writer.Write(UniverseID);
@@ -125,6 +149,11 @@ namespace RT.Models
                 writer.Write(SvoURL, Constants.UNIVERSE_SVO_URL_MAXLEN);
 
             writer.Write(EndOfList);
+
+            if (writer.MediusVersion >= 110 && writer.MediusVersion > 111)
+            {
+                writer.Write(new byte[3]);
+            }
         }
 
         public override string ToString()
@@ -133,18 +162,27 @@ namespace RT.Models
                 $"MessageID: {MessageID} " +
                 $"StatusCode: {StatusCode} " +
                 $"InfoFilter: {InfoFilter} " +
+
                 $"UniverseID: {UniverseID} " +
+
                 $"UniverseName: {UniverseName} " +
+
                 $"DNS: {DNS} " +
                 $"Port: {Port} " +
+
                 $"UniverseDescription: {UniverseDescription} " +
-                $"Status :{Status} " +
+
+                $"Status: {Status} " +
                 $"UserCount: {UserCount} " +
                 $"MaxUsers: {MaxUsers} " +
+
                 $"UniverseBilling: {UniverseBilling} " +
                 $"BillingSystemName: {BillingSystemName} " +
+
                 $"ExtendedInfo: {ExtendedInfo} " +
+
                 $"SvoURL: {SvoURL} " +
+
                 $"EndOfList: {EndOfList}";
         }
     }

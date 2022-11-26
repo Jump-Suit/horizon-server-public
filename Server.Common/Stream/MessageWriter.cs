@@ -6,7 +6,6 @@ namespace Server.Common.Stream
     public class MessageWriter : BinaryWriter
     {
         public int MediusVersion { get; set; }
-
         public int AppId { get; set; }
 
         public MessageWriter() : base() { }

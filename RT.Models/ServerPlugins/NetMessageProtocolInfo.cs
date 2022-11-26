@@ -1,27 +1,26 @@
 ﻿using RT.Common;
 using Server.Common;
+using Server.Common.Stream;
 using System.IO;
 
-namespace RT.Models.ServerPlugins
+namespace RT.Models
 {
-    [MediusPluginMessage(NetMessageTypeIds.NetMessageProtocolInfo)]
-    public class NetMessageProtocolInfo : BaseMediusPluginMessage
+    [MediusMessage(NetMessageClass.MessageClassApplication, NetMessageTypeIds.NetMessageTypeProtocolInfo)]
+    public class NetMessageProtocolInfo : BaseApplicationMessage
     {
-        public override NetMessageTypeIds PacketType => NetMessageTypeIds.NetMessageProtocolInfo;
+        public override NetMessageTypeIds PacketType => NetMessageTypeIds.NetMessageTypeProtocolInfo;
 
-        public override NetMessageClass PacketClass => throw new System.NotImplementedException();
+        public long protocolInfo;
+        public long buildNumber;
 
-        public int protocolInfo;
-        public int buildNumber;
 
-        public void Deserialize(BinaryReader reader)
+        public override void DeserializePlugin(MessageReader reader)
         {
             protocolInfo = reader.ReadInt32();
-            buildNumber = reader.ReadInt32();
+            buildNumber = reader.ReadUInt32();
 
         }
-
-        public void Serialize(BinaryWriter writer)
+        public override void SerializePlugin(MessageWriter writer)
         {
             writer.Write(protocolInfo);
             writer.Write(buildNumber);

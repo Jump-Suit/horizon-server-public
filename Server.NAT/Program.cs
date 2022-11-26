@@ -1,6 +1,7 @@
 ﻿using DotNetty.Common.Internal.Logging;
 using Newtonsoft.Json;
 using Server.NAT.Config;
+using System;
 using System.IO;
 using System.Reflection;
 using System.Threading;
@@ -18,20 +19,42 @@ namespace Server.NAT
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<Program>();
 
 
-        static void Main(string[] args)
+        static async Task StartServerAsync()
         {
-            // 
-            Initialize();
 
             Logger.Info($"Starting NAT on port {NATServer.Port}.");
             Task.WaitAll(NATServer.Start());
             Logger.Info($"NAT started.");
 
-            while (NATServer.IsRunning)
-                Thread.Sleep(500);
+
+            try
+            {
+                while (true)
+                {
+                    await NATServer.Tick();
+
+                    await Task.Delay(100);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+            }
+            finally
+            {
+
+            }
         }
 
-        static void Initialize()
+        static async Task Main(string[] args)
+        {
+            await Initialize();
+
+            // 
+            await StartServerAsync();
+        }
+
+        static async Task Initialize()
         {
             // 
             var serializerSettings = new JsonSerializerSettings()

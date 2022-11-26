@@ -12,6 +12,7 @@ namespace Server.Medius.Models
         protected override IInternalLogger Logger => _logger;
 
         public int MaxWorlds { get; protected set; } = 0;
+        public int MaxPlayersPerWorld { get; protected set; } = 0;
         public int CurrentWorlds { get; protected set; } = 0;
         public int CurrentPlayers { get; protected set; } = 0;
 
@@ -23,37 +24,13 @@ namespace Server.Medius.Models
         public override bool IsLoggedIn => _hasActiveSession;
 
         #region DMEObjects
-        public DMEObject(MediusServerCreateGameOnSelfRequest request)
-        {
-            ApplicationId = request.ApplicationID;
 
-
-            // Generate new session key
-            SessionKey = Program.GenerateSessionKey();
-
-            // Generate new token
-            byte[] tokenBuf = new byte[12];
-            RNG.NextBytes(tokenBuf);
-            Token = Convert.ToBase64String(tokenBuf);
-        }
-
-        public DMEObject(MediusServerCreateGameOnSelfRequest0 request)
-        {
-            ApplicationId = request.ApplicationID;
-
-            // Generate new session key
-            SessionKey = Program.GenerateSessionKey();
-
-            // Generate new token
-            byte[] tokenBuf = new byte[12];
-            RNG.NextBytes(tokenBuf);
-            Token = Convert.ToBase64String(tokenBuf);
-        }
-
-        public DMEObject(MediusServerCreateGameOnMeRequest request)
+        #region Peer to Peer
+        public DMEObject(ClientObject client, MediusServerCreateGameOnSelfRequest request)
         {
             ApplicationId = request.ApplicationID;
             WorldId = request.WorldID;
+            IP = client.IP;
 
             // Generate new session key
             SessionKey = Program.GenerateSessionKey();
@@ -64,6 +41,36 @@ namespace Server.Medius.Models
             Token = Convert.ToBase64String(tokenBuf);
         }
 
+        public DMEObject(ClientObject client, MediusServerCreateGameOnSelfRequest0 request)
+        {
+            ApplicationId = request.ApplicationID;
+            WorldId = request.WorldID;
+            IP = client.IP;
+
+            // Generate new session key
+            SessionKey = Program.GenerateSessionKey();
+
+            // Generate new token
+            byte[] tokenBuf = new byte[12];
+            RNG.NextBytes(tokenBuf);
+            Token = Convert.ToBase64String(tokenBuf);
+        }
+
+        public DMEObject(ClientObject client, MediusServerCreateGameOnMeRequest request)
+        {
+            ApplicationId = request.ApplicationID;
+            WorldId = request.WorldID;
+            IP = client.IP;
+
+            // Generate new session key
+            SessionKey = Program.GenerateSessionKey();
+
+            // Generate new token
+            byte[] tokenBuf = new byte[12];
+            RNG.NextBytes(tokenBuf);
+            Token = Convert.ToBase64String(tokenBuf);
+        }
+        #endregion
         public DMEObject(MediusServerSetAttributesRequest request)
         {
             Port = (int)request.ListenServerAddress.Port;
@@ -107,9 +114,10 @@ namespace Server.Medius.Models
         }
         #endregion
 
-        public void OnWorldReport(MediusServerReport report)
+        public void OnServerReport(MediusServerReport report)
         {
             MaxWorlds = report.MaxWorlds;
+            MaxPlayersPerWorld = report.MaxPlayersPerWorld;
             CurrentWorlds = report.ActiveWorldCount;
             CurrentPlayers = report.TotalActivePlayers;
 

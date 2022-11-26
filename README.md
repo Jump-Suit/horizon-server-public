@@ -1,12 +1,6 @@
 # horizon-server
-This repository contains a Medius server emulator stack that works for a variety of games.
-Originally built to revive the Ratchet: Deadlocked PS2 online servers.
+This repository contains a Medius server emulator that works for a variety of games. Originally built to revive the Ratchet: Deadlocked PS2 online servers.
 
-Horizons consists of 4 components:
-MUIS - Server.UniverseInformation 
-MAS/MLS/MPS - Server.Medius
-NAT - Server.NAT
-BWPS - Server.BWPS
 
 Todo	## Running with Docker
 1. Set up the configs in the `docker/` container. You can change the ports, `PublicIpOverride` (if developing locally), or MUIS information if using MUIS

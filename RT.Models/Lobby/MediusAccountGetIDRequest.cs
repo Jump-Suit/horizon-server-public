@@ -9,9 +9,17 @@ namespace RT.Models
 
         public override byte PacketType => (byte)MediusLobbyMessageIds.AccountGetID;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey; // SESSIONKEY_MAXLEN
+        /// <summary>
+        /// Account Name
+        /// </summary>
         public string AccountName; // ACCOUNTNAME_MAXLEN
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

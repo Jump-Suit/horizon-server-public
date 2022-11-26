@@ -15,7 +15,7 @@ namespace RT.Models
         public string SessionKey; // SESSIONKEY_MAXLEN
         public MediusTextFilterType TextFilter;
         public uint TextSize;
-        public char[] Text; // variable len
+        public string Text; // variable len
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -29,7 +29,7 @@ namespace RT.Models
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             TextFilter = reader.Read<MediusTextFilterType>();
             TextSize = reader.ReadUInt32();
-            Text = reader.ReadChars(Convert.ToInt32(TextSize));
+            Text = reader.ReadString(Constants.CHATMESSAGE_MAXLEN);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -44,7 +44,7 @@ namespace RT.Models
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
             writer.Write(TextFilter);
             writer.Write(TextSize);
-            writer.Write(Text);
+            writer.Write(Text, Constants.CHATMESSAGE_MAXLEN);
         }
 
         public override string ToString()
@@ -54,7 +54,7 @@ namespace RT.Models
                 $"SessionKey: {SessionKey} " +
                 $"TextFilter: {TextFilter} " +
                 $"TextSize: {TextSize} " +
-                $"Text:{Convert.ToString(Text)}";
+                $"Text: {Text}";
         }
     }
 }

@@ -8,19 +8,61 @@ namespace RT.Models
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.WorldReport0;
 
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey;
+        /// <summary>
+        /// MediusWorldID
+        /// </summary>
         public int MediusWorldID;
+        /// <summary>
+        /// PlayerCount
+        /// </summary>
         public int PlayerCount;
+        /// <summary>
+        /// GameName
+        /// </summary>
         public string GameName; // GAMENAME_MAXLEN
+        /// <summary>
+        /// GameStats
+        /// </summary>
         public byte[] GameStats = new byte[Constants.GAMESTATS_MAXLEN];
+        /// <summary>
+        /// Minimum Players
+        /// </summary>
         public int MinPlayers;
+        /// <summary>
+        /// Maximum Players
+        /// </summary>
         public int MaxPlayers;
+        /// <summary>
+        /// Game Level
+        /// </summary>
         public int GameLevel;
+        /// <summary>
+        /// Player Skill Level
+        /// </summary>
         public int PlayerSkillLevel;
+        /// <summary>
+        /// RulesSet
+        /// </summary>
         public int RulesSet;
+        /// <summary>
+        /// GenericField1
+        /// </summary>
         public int GenericField1;
+        /// <summary>
+        /// GenericField2
+        /// </summary>
         public int GenericField2;
+        /// <summary>
+        /// GenericField3
+        /// </summary>
         public int GenericField3;
+        /// <summary>
+        /// WorldStatus
+        /// </summary>
         public MediusWorldStatus WorldStatus;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -31,6 +73,8 @@ namespace RT.Models
             // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             reader.ReadBytes(3);
+
+            //
             MediusWorldID = reader.ReadInt32();
             PlayerCount = reader.ReadInt32();
             GameName = reader.ReadString(Constants.GAMENAME_MAXLEN);
@@ -54,6 +98,8 @@ namespace RT.Models
             // 
             writer.Write(SessionKey);
             writer.Write(new byte[3]);
+
+            //
             writer.Write(MediusWorldID);
             writer.Write(PlayerCount);
             writer.Write(GameName, Constants.GAMENAME_MAXLEN);
@@ -77,7 +123,7 @@ namespace RT.Models
                 $"MediusWorldID: {MediusWorldID} " +
                 $"PlayerCount: {PlayerCount} " +
                 $"GameName: {GameName} " +
-                $"GameStats: {GameStats} " +
+                $"GameStats: {string.Join("", GameStats)} " +
                 $"MinPlayers: {MinPlayers} " +
                 $"MaxPlayers: {MaxPlayers} " +
                 $"GameLevel: {GameLevel} " +

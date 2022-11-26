@@ -1,5 +1,6 @@
 using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -49,7 +50,7 @@ namespace RT.Models
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
                 $"StatusCode: {StatusCode} " +
-                $"Stats: {Stats}";
+                $"Stats: {Convert.ToString(Stats)}";
         }
     }
 }

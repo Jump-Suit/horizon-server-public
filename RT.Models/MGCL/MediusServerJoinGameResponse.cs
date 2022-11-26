@@ -9,13 +9,13 @@ namespace RT.Models
 
         public override byte PacketType => (byte)MediusMGCLMessageIds.ServerJoinGameResponse;
 
+        public bool IsSuccess => Confirmation >= 0;
+
         public MessageId MessageID { get; set; }
         public MGCL_ERROR_CODE Confirmation;
         public string AccessKey;
         public RSA_KEY pubKey;
         public int DmeClientIndex;
-
-        public bool IsSuccess => Confirmation >= 0;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -28,7 +28,10 @@ namespace RT.Models
             AccessKey = reader.ReadString(Constants.MGCL_ACCESSKEY_MAXLEN);
             reader.ReadBytes(1);
             pubKey = reader.Read<RSA_KEY>();
-            DmeClientIndex = reader.ReadInt32();
+            if(DmeClientIndex != 0)
+            {
+                DmeClientIndex = reader.ReadInt32();
+            }
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -42,7 +45,10 @@ namespace RT.Models
             writer.Write(AccessKey, Constants.MGCL_ACCESSKEY_MAXLEN);
             writer.Write(new byte[1]);
             writer.Write(pubKey ?? RSA_KEY.Empty);
-            writer.Write(DmeClientIndex);
+            if(DmeClientIndex != 0)
+            {
+                writer.Write(DmeClientIndex);
+            }
         }
 
         public override string ToString()

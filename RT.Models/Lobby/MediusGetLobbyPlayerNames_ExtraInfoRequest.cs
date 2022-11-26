@@ -8,8 +8,13 @@ namespace RT.Models
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.GetLobbyPlayerNames_ExtraInfo;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// MediusWorldID
+        /// </summary>
         public int MediusWorldID;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

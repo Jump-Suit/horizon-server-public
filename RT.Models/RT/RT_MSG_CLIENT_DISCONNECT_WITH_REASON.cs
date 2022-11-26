@@ -19,7 +19,6 @@ namespace RT.Models
         {
             writer.Write(disconnectReason);
         }
-
         public override string ToString()
         {
             return base.ToString() + " " +

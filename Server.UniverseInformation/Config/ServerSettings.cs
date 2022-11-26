@@ -18,6 +18,8 @@ namespace Server.UniverseInformation.Config
         /// </summary>
         public int[] Ports { get; set; } = new int[] { 10071, 10080 };
 
+        public List<int> CompatibleApplicationIds { get; set; } = new List<int>();
+
         #region NAT SCE-RT Service Location
         /// <summary>
         /// Ip address of the NAT server.
@@ -31,6 +33,10 @@ namespace Server.UniverseInformation.Config
         /// </summary>
         public int NATPort { get; set; } = 10070;
         #endregion
+
+        public bool MediusServerVersionOverride { get; set; } = false;
+
+        public string MUISVersion { get; set; } = "Medius Universe Information Server Version 3.05.0000";
 
         #region Remote Log Viewer Port To Listen
         /// <summary>
@@ -57,7 +63,7 @@ namespace Server.UniverseInformation.Config
         /// <summary>
         /// Universes.
         /// </summary>
-        public Dictionary<int, UniverseInfo> Universes { get; set; } = new Dictionary<int, UniverseInfo>();
+        public Dictionary<int, UniverseInfo[]> Universes { get; set; } = new Dictionary<int, UniverseInfo[]>();
 
         /// <summary>
         /// Logging settings.

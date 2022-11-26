@@ -23,9 +23,9 @@ namespace Server.Test.Test
 
         }
 
-        protected override async Task OnDisconnected(IChannel channel)
+        protected override Task OnDisconnected(IChannel channel)
         {
-
+            return Task.CompletedTask;
         }
 
         protected override async Task OnConnected(IChannel channel)

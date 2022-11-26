@@ -8,8 +8,6 @@ namespace RT.Models
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.InvitePlayerToClan;
 
-
-
         public MessageId MessageID { get; set; }
         public string SessionKey; // SESSIONKEY_MAXLEN
         public int PlayerAccountID;
@@ -41,14 +39,13 @@ namespace RT.Models
             writer.Write(InviteMessage, Constants.CLANMSG_MAXLEN);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID}" + " " +
-                $"SessionKey:{SessionKey}" + " " +
-                $"PlayerAccountID:{PlayerAccountID}" + " " +
-                $"InviteMessage:{InviteMessage}";
+                $"MessageID: {MessageID}" + " " +
+                $"SessionKey: {SessionKey}" + " " +
+                $"PlayerAccountID: {PlayerAccountID}" + " " +
+                $"InviteMessage: {InviteMessage}";
         }
     }
 }

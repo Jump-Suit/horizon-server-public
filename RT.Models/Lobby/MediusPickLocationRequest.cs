@@ -4,14 +4,25 @@ using System;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Request to choose a co-location region
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.PickLocation)]
     public class MediusPickLocationRequest : BaseLobbyMessage, IMediusRequest
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.PickLocation;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey; // SESSIONKEY_MAXLEN
+        /// <summary>
+        /// Location ID to select
+        /// </summary>
         public int LocationID;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -40,13 +51,12 @@ namespace RT.Models
             writer.Write(LocationID);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
                 $"SessionKey: {SessionKey} " +
-                $"LocationID: {Convert.ToInt32(LocationID)}";
+                $"LocationID: {LocationID}";
         }
     }
 }

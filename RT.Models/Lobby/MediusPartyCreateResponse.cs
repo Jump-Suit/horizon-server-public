@@ -3,6 +3,9 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Response to the request on creating a party on this MediusWorldID
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.PartyCreateResponse)]
     public class MediusPartyCreateResponse : BaseLobbyExtMessage, IMediusResponse
     {
@@ -10,10 +13,17 @@ namespace RT.Models
 
         public bool IsSuccess => StatusCode >= 0;
 
-
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Response code to the request on creating a Party
+        /// </summary>
         public MediusCallbackStatus StatusCode;
+        /// <summary>
+        /// MediusWorldID to make this Party in
+        /// </summary>
         public int MediusWorldID;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -23,9 +33,9 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
+            reader.ReadBytes(3);
 
             // 
-            reader.ReadBytes(3);
             StatusCode = reader.Read<MediusCallbackStatus>();
             MediusWorldID = reader.ReadInt32();
         }
@@ -37,20 +47,19 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
+            writer.Write(new byte[3]);
 
             // 
-            writer.Write(new byte[3]);
             writer.Write(StatusCode);
             writer.Write(MediusWorldID);
         }
-
 
         public override string ToString()
         {
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
                 $"StatusCode: {StatusCode} " +
-                $"AccountID: {MediusWorldID}";
+                $"MediusWorldID: {MediusWorldID}";
         }
     }
 }

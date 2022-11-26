@@ -4,20 +4,21 @@ using Server.Common;
 namespace RT.Models
 {
     [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.PartyPlayerReport)]
-    public class MediusPartyPlayerReport : BaseLobbyExtMessage, IMediusResponse
+    public class MediusPartyPlayerReport : BaseLobbyExtMessage
     {
         public override byte PacketType => (byte)MediusLobbyExtMessageIds.PartyPlayerReport;
 
-        public bool IsSuccess => StatusCode >= 0;
-
-        // Not Used
-        public MessageId MessageID { get; set; }
-        public MediusCallbackStatus StatusCode;
-        //
-
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey; // SESSIONKEY_MAXLEN
-
+        /// <summary>
+        /// Medius World ID of the party
+        /// </summary>
         public int MediusWorldID;
+        /// <summary>
+        /// Party ID
+        /// </summary>
         public int PartyIndex;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -27,6 +28,7 @@ namespace RT.Models
 
             //
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
+            reader.ReadBytes(3);
 
             // 
             MediusWorldID = reader.ReadInt32();
@@ -40,6 +42,7 @@ namespace RT.Models
 
             //
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
+            writer.Write(new byte[3]);
 
             // 
             writer.Write(MediusWorldID);

@@ -9,19 +9,18 @@ namespace RT.Models
         public override RT_MSG_TYPE Id => RT_MSG_TYPE.RT_MSG_SERVER_CRYPTKEY_GAME;
 
         // 
-        public byte[] Key = null;
-
+        public byte[] GameKey = null;
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
-            Key = reader.ReadBytes(0x40);
+            GameKey = reader.ReadBytes(0x40);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
         {
-            if (Key == null || Key.Length != 0x40)
-                throw new InvalidOperationException("Unable to serialize SERVER_SET_SERVER_SESSION_KEY key because key is either null or not 64 bytes long!");
+            if (GameKey == null || GameKey.Length != 0x40)
+                throw new InvalidOperationException("Unable to serialize SERVER_SET_SERVER_GAME_KEY because key is either null or not 64 bytes long!");
 
-            writer.Write(Key);
+            writer.Write(GameKey);
         }
     }
 }

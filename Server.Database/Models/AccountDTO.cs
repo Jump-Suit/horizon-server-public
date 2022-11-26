@@ -1,4 +1,7 @@
-﻿namespace Server.Database.Models
+﻿using RT.Common;
+using System.Collections.Generic;
+
+namespace Server.Database.Models
 {
     public class AccountDTO
     {
@@ -16,6 +19,8 @@
         /// SHA-256 hash of password.
         /// </summary>
         public string AccountPassword { get; set; }
+
+        public List<string> FriendsListPS3 { get; set; }
 
         /// <summary>
         /// Collection of account ids representing friends.
@@ -103,6 +108,34 @@
         public int AppId { get; set; }
     }
 
+    public class AccountRelationInviteDTO
+    {
+        /// <summary>
+        /// Unique id of account.
+        /// </summary>
+        public int AccountId { get; set; }
+
+        /// <summary>
+        /// Unique name of account.
+        /// </summary>
+        public string AccountName { get; set; }
+
+        /// <summary>
+        /// Unique id of buddy account.
+        /// </summary>
+        public int BuddyAccountId { get; set; }
+
+        /// <summary>
+        /// App id of the account.
+        /// </summary>
+        public int AppId { get; set; }
+
+        /// <summary>
+        /// Add to only you or both buddy lists
+        /// </summary>
+        public int addType { get; set; }
+    }
+
     public class AccountRelationDTO
     {
         /// <summary>
@@ -127,6 +160,11 @@
         /// Unique id of account.
         /// </summary>
         public int AccountId { get; set; }
+
+        /// <summary>
+        /// App id of the account.
+        /// </summary>
+        public int AppId { get; set; }
 
         /// <summary>
         /// Whether or not the user is logged in.

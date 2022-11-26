@@ -12,7 +12,7 @@ namespace RT.Models
         public string FileNameBeginsWith;
         public uint FilesizeGreaterThan;
         public uint FilesizeLessThan;
-        public int OwnerByID;
+        public uint OwnerByID;
         public uint NewerThanTimestamp;
         public uint StartingEntryNumber;
         public uint PageSize;
@@ -27,13 +27,13 @@ namespace RT.Models
             FileNameBeginsWith = reader.ReadString(Constants.MEDIUS_FILE_MAX_FILENAME_LENGTH);
             FilesizeGreaterThan = reader.ReadUInt32();
             FilesizeLessThan = reader.ReadUInt32();
-            OwnerByID = reader.ReadInt32();
+            OwnerByID = reader.ReadUInt32();
             NewerThanTimestamp = reader.ReadUInt32();
             StartingEntryNumber = reader.ReadUInt32();
             PageSize = reader.ReadUInt32();
             //
             MessageID = reader.Read<MessageId>();
-            reader.ReadBytes(2);
+            reader.ReadBytes(3);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -52,7 +52,7 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
-            writer.Write(2);
+            writer.Write(3);
         }
 
 

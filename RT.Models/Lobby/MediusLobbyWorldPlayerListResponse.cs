@@ -1,5 +1,6 @@
 using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -54,12 +55,12 @@ namespace RT.Models
             writer.Write(PlayerStatus);
             writer.Write(AccountID);
             writer.Write(AccountName, Constants.ACCOUNTNAME_MAXLEN);
+
             writer.Write(Stats, Constants.ACCOUNTSTATS_MAXLEN);
             writer.Write(ConnectionClass);
             writer.Write(EndOfList);
             writer.Write(new byte[3]);
         }
-
 
         public override string ToString()
         {
@@ -68,8 +69,8 @@ namespace RT.Models
                 $"StatusCode: {StatusCode} " +
                 $"PlayerStatus: {PlayerStatus} " +
                 $"AccountID: {AccountID} " +
-                $"AccountNam e: {AccountName} " +
-                $"Stats: {Stats} " +
+                $"AccountName: {AccountName} " +
+                $"Stats: {string.Join("", Stats)} " +
                 $"ConnectionClass: {ConnectionClass} " +
                 $"EndOfList: {EndOfList}";
         }

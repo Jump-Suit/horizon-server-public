@@ -3,13 +3,31 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// A Medius server is telling this host to end a game. It is invoked through <br></br>
+    /// the callback defined at MGCL initialization time. Peer-to-peer clients <br></br>
+    /// usually do not need to consider this request.<br></br>
+    /// The BrutalFlag is either 0 or 1. Under normal circumstances, <Br></Br>
+    /// the game should end when the client count for the game world reaches <br></br>
+    /// zero. If the brutal flag is True, then the world should be destroyed <Br></Br>
+    /// immediately, and all of the clients forcefully disconnected.
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobbyReport, MediusMGCLMessageIds.ServerEndGameRequest)]
     public class MediusServerEndGameRequest : BaseMGCLMessage, IMediusRequest
     {
         public override byte PacketType => (byte)MediusMGCLMessageIds.ServerEndGameRequest;
 
+        /// <summary>
+        /// Message ID used for asynchronous request processing.
+        /// </summary>
         public MessageId MessageID { get; set; }
+        /// <summary>
+        /// World ID of the game to kill.
+        /// </summary>
         public int WorldID;
+        /// <summary>
+        /// Boolean, to either Kill now, or allow the game to finish and then destroy the game world.
+        /// </summary>
         public bool BrutalFlag;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

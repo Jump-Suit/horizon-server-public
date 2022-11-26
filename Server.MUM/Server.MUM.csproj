@@ -26,7 +26,6 @@
 	  <ProjectReference Include="..\RT.Models\RT.Models.csproj" />
 	  <ProjectReference Include="..\Server.Pipeline\Server.Pipeline.csproj" />
 	  <ProjectReference Include="..\Server.Common\Server.Common.csproj" />
-	  <ProjectReference Include="..\Server.Medius\Server.Medius.csproj" />
 	  <ProjectReference Include="..\Server.Plugins\Server.Plugins.csproj" />
   </ItemGroup>
 

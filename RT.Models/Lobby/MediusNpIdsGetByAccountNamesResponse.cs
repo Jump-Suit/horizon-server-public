@@ -13,6 +13,14 @@ namespace RT.Models
         public MediusCallbackStatus StatusCode;
         public string AccountName; //ACCOUNTNAME_MAXLEN
         public string SceNpId; //SCE_NPID_MAXLEN
+
+        public byte[] data;
+        public byte term;
+        public byte[] dummy;
+
+        public byte[] opt;
+        public byte[] reserved;
+
         public bool EndOfList;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -28,6 +36,15 @@ namespace RT.Models
             // 
             AccountName = reader.ReadString(Constants.ACCOUNTNAME_MAXLEN);
             //SceNpId = reader.ReadString(Constants.SCE_NPID_MAXLEN);
+
+            data = reader.ReadBytes(16);
+            term = reader.ReadByte();
+            dummy = reader.ReadBytes(3);
+
+            //
+            opt = reader.ReadBytes(8);
+            reserved = reader.ReadBytes(8);
+
             EndOfList = reader.ReadBoolean();
         }
 
@@ -42,7 +59,16 @@ namespace RT.Models
             // 
             writer.Write(StatusCode);
             writer.Write(AccountName);
-            writer.Write(SceNpId);
+            //writer.Write(SceNpId);
+
+            writer.Write(data);
+            writer.Write(term);
+            writer.Write(dummy);
+
+            //
+            writer.Write(opt);
+            writer.Write(reserved);
+
             writer.Write(EndOfList);
         }
 

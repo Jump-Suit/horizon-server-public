@@ -13,7 +13,7 @@ namespace RT.Models
         public MessageId MessageID { get; set; }
 
         public string SessionKey; // SESSIONKEY_MAXLEN
-        public byte[] Stats = new byte[Constants.ACCOUNTSTATS_MAXLEN];
+        public string Stats; // ACCOUNTSTATS_MAXLEN
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -25,7 +25,7 @@ namespace RT.Models
 
             // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
-            Stats = reader.ReadBytes(Constants.ACCOUNTSTATS_MAXLEN);
+            Stats = reader.ReadString(Constants.ACCOUNTSTATS_MAXLEN);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -46,7 +46,7 @@ namespace RT.Models
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
                 $"SessionKey: {SessionKey} " +
-                $"Stats: {BitConverter.ToString(Stats)}";
+                $"Stats: {string.Join("", Stats)}";
         }
     }
 }

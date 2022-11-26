@@ -4,7 +4,7 @@ using RT.Models;
 using Server.Common;
 using Server.Database.Models;
 using Server.Medius.PluginArgs;
-using Server.Plugins;
+using Server.Plugins.Interface;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -67,7 +67,7 @@ namespace Server.Medius.Models
         public DateTime? UtcTimeEnded => utcTimeEnded;
 
         protected MediusWorldStatus _worldStatus = MediusWorldStatus.WorldPendingCreation;
-        protected bool hasHostJoined = false;
+        public bool hasHostJoined = false;
         protected string accountIdsAtStart;
         protected DateTime utcTimeCreated;
         protected DateTime? utcTimeStarted;
@@ -77,7 +77,7 @@ namespace Server.Medius.Models
 
         public uint Time => (uint)(Utils.GetHighPrecisionUtcTime() - utcTimeCreated).TotalMilliseconds;
 
-        public int PlayerCount => Clients.Count(x => x != null && x.Client.IsConnected && x.InGame);
+        public int PlayerCount => Clients.Count(x => x != null && x.Client.IsConnected || x.InGame);
 
         public virtual bool ReadyToDestroy => WorldStatus == MediusWorldStatus.WorldClosed && utcTimeEmpty.HasValue && (Utils.GetHighPrecisionUtcTime() - utcTimeEmpty)?.TotalSeconds > 1f;
 
@@ -106,7 +106,7 @@ namespace Server.Medius.Models
             Host = client;
             SetWorldStatus(MediusWorldStatus.WorldPendingCreation).Wait();
 
-            Logger.Info($"Game {Id}: {GameName}: Created by {client}");
+            Logger.Info($"Game {Id}: {GameName}: Created by {client} | Host: {Host}");
         }
 
         public GameDTO ToGameDTO()
@@ -195,11 +195,6 @@ namespace Server.Medius.Models
             GenericField1 = createGame.GenericField1;
             GenericField2 = createGame.GenericField2;
             GenericField3 = createGame.GenericField3;
-            GenericField4 = 0;
-            GenericField5 = 0;
-            GenericField6 = 0;
-            GenericField7 = 0;
-            GenericField8 = 0;
             GamePassword = createGame.GamePassword;
             SpectatorPassword = createGame.SpectatorPassword;
             GameHostType = createGame.GameHostType;
@@ -208,6 +203,8 @@ namespace Server.Medius.Models
 
         private void FromCreateGameOnMeRequest(MediusServerCreateGameOnMeRequest serverCreateGameOnMe)
         {
+            GameHostType = MediusGameHostType.MediusGameHostPeerToPeer;
+
             GameName = serverCreateGameOnMe.GameName;
             GameStats = serverCreateGameOnMe.GameStats;
             GamePassword = serverCreateGameOnMe.GamePassword;
@@ -270,19 +267,25 @@ namespace Server.Medius.Models
             GenericField1 = serverCreateGameOnSelf0.GenericField1;
             GenericField2 = serverCreateGameOnSelf0.GenericField2;
             GenericField3 = serverCreateGameOnSelf0.GenericField3;
-            GenericField4 = serverCreateGameOnSelf0.GenericField4;
-            GenericField5 = serverCreateGameOnSelf0.GenericField5;
-            GenericField6 = serverCreateGameOnSelf0.GenericField6;
-            GenericField7 = serverCreateGameOnSelf0.GenericField7;
-            GenericField8 = serverCreateGameOnSelf0.GenericField8;
             GAME_HOST_TYPE = serverCreateGameOnSelf0.GameHostType;
             netAddressList = serverCreateGameOnSelf0.AddressList;
             WorldID = serverCreateGameOnSelf0.WorldID;
         }
 
+        public virtual async Task<int> ReassignGameMediusWorldID(MediusReassignGameMediusWorldID reassignGameMediusWorldID)
+        {
+            // Ensure reassignedGame Old MediusWorldID matches current Game
+            if (reassignGameMediusWorldID.OldMediusWorldID != WorldID)
+                return 0;
+
+            WorldID = reassignGameMediusWorldID.NewMediusWorldID;
+
+            return WorldID;
+        }
+
         public string GetActivePlayerList()
         {
-            return String.Join(",", this.Clients?.Select(x => x.Client.AccountId.ToString()).Where(x => x != null));
+            return string.Join(",", Clients?.Select(x => x.Client.AccountId.ToString()).Where(x => x != null));
         }
 
         public virtual async Task Tick()
@@ -294,14 +297,19 @@ namespace Server.Medius.Models
 
                 if (client == null || client.Client == null || !client.Client.IsConnected || client.Client.CurrentGame?.Id != Id)
                 {
+                    //Logger.Warn($"REMOVING CLIENT: {client}\n IS: {client.Client}\n IS Connected?: {client.Client.IsConnected}\nClient CurrentGame ID: {client.Client.CurrentGame?.Id}\nGameId: {Id}\nMatch?: {client.Client.CurrentGame?.Id != Id}");
                     Clients.RemoveAt(i);
                     --i;
                 }
             }
 
             // Auto close when everyone leaves or if host fails to connect after timeout time
-            if (!utcTimeEmpty.HasValue && Clients.Count(x => x.InGame) == 0 && (hasHostJoined || (Utils.GetHighPrecisionUtcTime() - utcTimeCreated).TotalSeconds > Program.Settings.GameTimeoutSeconds))
+            if (!utcTimeEmpty.HasValue && Clients.Count(x => x.InGame) == 0 && (hasHostJoined || (Utils.GetHighPrecisionUtcTime() - utcTimeCreated).TotalSeconds > Program.GetAppSettingsOrDefault(ApplicationId).GameTimeoutSeconds))
             {
+                //Logger.Warn($"utcTimeEmpty: {utcTimeEmpty.HasValue}");
+                //Logger.Warn($"Clients.Count: {Clients.Count()} | utcTimeCreated TotalSeconds: {(Utils.GetHighPrecisionUtcTime() - utcTimeCreated).TotalSeconds}");
+                //Logger.Warn($"hasHostJoined: {hasHostJoined}");
+
                 utcTimeEmpty = Utils.GetHighPrecisionUtcTime();
                 await SetWorldStatus(MediusWorldStatus.WorldClosed);
             }
@@ -310,6 +318,10 @@ namespace Server.Medius.Models
         public virtual async Task OnMediusServerConnectNotification(MediusServerConnectNotification notification)
         {
             var player = Clients.FirstOrDefault(x => x.Client.SessionKey == notification.PlayerSessionKey);
+
+            //Logger.Warn($"CLIENTS LEN {Clients.Count()}");
+            //Logger.Warn($"player: {player} \n CHECK!!!!");
+
             if (player == null)
                 return;
 
@@ -328,18 +340,41 @@ namespace Server.Medius.Models
             }
         }
 
-        protected virtual async Task OnPlayerJoined(GameClient player)
+        public virtual async Task OnMediusJoinGameResponse(string Sessionkey)
+        {
+            GameClient player = Clients.FirstOrDefault(x => x.Client.SessionKey == Sessionkey);
+
+            if (player == null)
+                return;
+
+            await OnPlayerJoined(player);
+        }
+
+        public virtual async Task OnMediusServerCreateGameOnMeRequest(IMediusRequest createGameOnMeRequest)
+        {
+            GameClient player = Clients.FirstOrDefault(x => x != null && x.Client.IsConnected);
+            if (player == null)
+                return;
+
+            await OnPlayerJoined(player);
+        }
+
+        public virtual async Task OnPlayerJoined(GameClient player)
         {
             player.InGame = true;
+            Logger.Warn("Player joined!");
 
             if (player.Client == Host)
+            {
+                Logger.Warn("Player added as HOST!");
                 hasHostJoined = true;
+            }
 
             // Send to plugins
             await Program.Plugins.OnEvent(PluginEvent.MEDIUS_PLAYER_ON_JOINED_GAME, new OnPlayerGameArgs() { Player = player.Client, Game = this });
         }
 
-        public virtual async Task AddPlayer(ClientObject client)
+        public virtual void AddPlayer(ClientObject client)
         {
             // Don't add again
             if (Clients.Any(x => x.Client == client))
@@ -356,8 +391,8 @@ namespace Server.Medius.Models
 
             // Inform the client of any custom game mode
             //client.CurrentChannel?.SendSystemMessage(client, $"Gamemode is {CustomGamemode?.FullName ?? "default"}.");
-        }
-
+		}
+		
         protected virtual async Task OnPlayerLeft(GameClient player)
         {
             // 
@@ -397,14 +432,17 @@ namespace Server.Medius.Models
 
         public virtual async Task OnEndGameReport(MediusEndGameReport report)
         {
-            await SetWorldStatus(MediusWorldStatus.WorldClosed);
-        }
-
-        public virtual void OnPlayerReport(MediusPlayerReport report)
-        {
-            // Ensure report is for correct game world
-            if (report.MediusWorldID != Id)
-                return;
+            try
+            {
+                //Close world
+                await SetWorldStatus(MediusWorldStatus.WorldClosed);
+                ///Send database EndGameReport info
+                await EndGame();
+                Logger.Info($"Successfull local delete of game world [{report.MediusWorldID}]");
+            } catch (Exception e)
+            {
+                Logger.Warn($"Couldn't perform local delete of game world [{report.MediusWorldID}] with exception: {e}");
+            }
         }
 
         public virtual async Task OnWorldReport(MediusWorldReport report)
@@ -444,7 +482,7 @@ namespace Server.Medius.Models
             {
                 // Update db
                 if (!utcTimeEnded.HasValue)
-                    _ = Program.Database.UpdateGame(this.ToGameDTO());
+                    _ = Program.Database.UpdateGame(ToGameDTO());
             }
         }
 
@@ -478,7 +516,7 @@ namespace Server.Medius.Models
             {
                 // Update db
                 if (!utcTimeEnded.HasValue)
-                    _ = Program.Database.UpdateGame(this.ToGameDTO());
+                    _ = Program.Database.UpdateGame(ToGameDTO());
             }
         }
 
@@ -518,7 +556,7 @@ namespace Server.Medius.Models
             ChatChannel?.UnregisterGame(this);
 
             // Send end game
-            if (this.DMEWorldId > 0)
+            if (DMEWorldId > 0)
             {
                 DMEServer?.Queue(new MediusServerEndGameRequest()
                 {
@@ -531,11 +569,11 @@ namespace Server.Medius.Models
             // Otherwise do a final update
             if (!utcTimeStarted.HasValue)
             {
-                _ = Program.Database.DeleteGame(this.Id);
+                _ = Program.Database.DeleteGame(Id);
             }
             else
             {
-                _ = Program.Database.UpdateGame(this.ToGameDTO());
+                _ = Program.Database.UpdateGame(ToGameDTO());
             }
         }
 
@@ -570,7 +608,7 @@ namespace Server.Medius.Models
 
             // Update db
             if (!utcTimeEnded.HasValue)
-                _ = Program.Database.UpdateGame(this.ToGameDTO());
+                _ = Program.Database.UpdateGame(ToGameDTO());
         }
     }
 }

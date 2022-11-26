@@ -52,11 +52,11 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"SessionKey:{SessionKey} " +
-$"MessageType:{MessageType} " +
-$"TargetID:{TargetID} " +
-$"Message:{Message}";
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey} " +
+                $"MessageType: {MessageType} " +
+                $"TargetID: {TargetID} " +
+                $"Message: {Message}";
         }
     }
 }

@@ -86,7 +86,7 @@ namespace RT.Models
                 $"MediusWorldID: {MediusWorldID} " +
                 $"PlayerCount:{PlayerCount} " +
                 $"GameName: {GameName} " +
-                $"GameStats: {BitConverter.ToString(GameStats)} " +
+                $"GameStats: {string.Join("", GameStats)} " +
                 $"MinPlayers: {MinPlayers} " +
                 $"MaxPlayers: {MaxPlayers} " +
                 $"GameLevel: {GameLevel} " +

@@ -9,7 +9,10 @@ namespace RT.Models
         public override byte PacketType => (byte)MediusLobbyMessageIds.TextFilterResponse;
 
         public bool IsSuccess => StatusCode >= 0;
-
+        
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
 
         public string Text; // CHATMESSAGE_MAXLEN

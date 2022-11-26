@@ -1,13 +1,15 @@
-﻿using DotNetty.Handlers.Logging;
+﻿using DotNetty.Common.Internal.Logging;
+using DotNetty.Handlers.Logging;
 using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
 using Server.Pipeline.Udp;
+using LogLevel = DotNetty.Handlers.Logging.LogLevel;
 
 namespace Server.SVO
 {
     /// <summary>
-    /// implemented SVO.
+    /// Unimplemented SVO.
     /// </summary>
     public class SVO
     {
@@ -15,6 +17,8 @@ namespace Server.SVO
         public int HttpsPort => Program.Settings.SVOHttpsPort;
 
         public bool IsRunning => _boundChannel != null && _boundChannel.Active;
+
+        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<SVO>();
 
         protected IEventLoopGroup _workerGroup;
         protected IChannel _boundChannel;
@@ -26,9 +30,9 @@ namespace Server.SVO
         }
 
         /// <summary>
-        /// Start the SVO HTTP/HTTPS Server.
+        /// Start the SVO HTTP Server.
         /// </summary>
-        public async Task Start()
+        public virtual async Task Start()
         {
             //
             _workerGroup = new MultithreadEventLoopGroup();
@@ -52,7 +56,6 @@ namespace Server.SVO
 
                     pipeline.AddLast(_scertHandler);
                 }));
-
 
             _boundChannel = await bootstrap.BindAsync(HttpPort);
             _boundChannel = await bootstrap.BindAsync(HttpsPort);

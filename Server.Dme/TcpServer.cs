@@ -1,22 +1,24 @@
 ﻿using DotNetty.Common.Internal.Logging;
 using DotNetty.Handlers.Logging;
-using DotNetty.Handlers.Timeout;
 using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
 using RT.Common;
 using RT.Cryptography;
 using RT.Models;
+using Server.Pipeline.Tcp;
 using Server.Common;
 using Server.Dme.Models;
-using Server.Dme.PluginArgs;
-using Server.Pipeline.Tcp;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
+using DotNetty.Handlers.Timeout;
+using Server.Dme.PluginArgs;
+using Server.Plugins.Interface;
 
 namespace Server.Dme
 {
@@ -49,7 +51,7 @@ namespace Server.Dme
             /// <summary>
             /// Timesout client if they authenticated after a given number of seconds.
             /// </summary>
-            public bool ShouldDestroy => ClientObject == null && (Utils.GetHighPrecisionUtcTime() - TimeConnected).TotalSeconds > Program.Settings.ClientTimeoutSeconds;
+            public bool ShouldDestroy => ClientObject == null && (Utils.GetHighPrecisionUtcTime() - TimeConnected).TotalSeconds > Program.GetAppSettingsOrDefault(ApplicationId).ClientTimeoutSeconds;
         }
 
         protected ConcurrentQueue<IChannel> _forceDisconnectQueue = new ConcurrentQueue<IChannel>();
@@ -88,23 +90,35 @@ namespace Server.Dme
             };
 
             // Queue all incoming messages
-            _scertHandler.OnChannelMessage += (channel, message) =>
+            _scertHandler.OnChannelMessage += async (channel, message) =>
             {
                 string key = channel.Id.AsLongText();
                 if (_channelDatas.TryGetValue(key, out var data))
                 {
                     if (!data.Ignore && (data.ClientObject == null || !data.ClientObject.IsDestroyed))
                     {
+
+                        var pluginArgs = new OnTcpMsg()
+                        {
+                            Player = data.ClientObject,
+                            Packet = message
+                        };
+
+                        // Plugin
+                        await Program.Plugins.OnEvent(PluginEvent.DME_GAME_ON_RECV_TCP, pluginArgs);
+
                         data.RecvQueue.Enqueue(message);
 
                         if (message is RT_MSG_SERVER_ECHO serverEcho)
                             data.ClientObject?.OnRecvServerEcho(serverEcho);
+                        else if (message is RT_MSG_CLIENT_ECHO clientEcho)
+                            data.ClientObject?.OnRecvClientEcho(clientEcho);
                     }
                 }
 
                 // Log if id is set
                 if (message.CanLog())
-                    Logger.Info($"TCP RECV {data?.ClientObject},{channel}: {message}");
+                    Logger.Debug($"TCP RECV {data?.ClientObject},{channel}: {message}");
             };
 
             var bootstrap = new ServerBootstrap();
@@ -116,8 +130,8 @@ namespace Server.Dme
                 .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
                 {
                     IChannelPipeline pipeline = channel.Pipeline;
-
-                    pipeline.AddLast(new WriteTimeoutHandler(Program.Settings.ClientTimeoutSeconds));
+                    
+                    pipeline.AddLast(new WriteTimeoutHandler(30));
                     pipeline.AddLast(new ScertEncoder());
                     pipeline.AddLast(new ScertIEnumerableEncoder());
                     pipeline.AddLast(new ScertTcpFrameDecoder(DotNetty.Buffers.ByteOrder.LittleEndian, 2048, 1, 2, 0, 0, false));
@@ -147,14 +161,25 @@ namespace Server.Dme
         }
 
         /// <summary>
-        /// Process messages.
+        /// Process incoming messages.
         /// </summary>
-        public async Task Tick()
+        public async Task HandleIncomingMessages()
         {
             if (_scertHandler == null || _scertHandler.Group == null)
                 return;
 
-            await Task.WhenAll(_scertHandler.Group.Select(c => Tick(c)));
+            await Program.TimeAsync("tcp incoming", () => Task.WhenAll(_scertHandler.Group.Select(c => HandleIncomingMessages(c))));
+        }
+
+        /// <summary>
+        /// Process outgoing messages.
+        /// </summary>
+        public async Task HandleOutgoingMessages()
+        {
+            if (_scertHandler == null || _scertHandler.Group == null)
+                return;
+
+            await Task.WhenAll(_scertHandler.Group.Select(c => HandleOutgoingMessages(c)));
 
             // Disconnect and remove timedout unauthenticated channels
             while (_forceDisconnectQueue.TryDequeue(out var channel))
@@ -179,7 +204,42 @@ namespace Server.Dme
             }
         }
 
-        private async Task Tick(IChannel clientChannel)
+        private async Task HandleIncomingMessages(IChannel clientChannel)
+        {
+            if (clientChannel == null)
+                return;
+
+            // 
+            string key = clientChannel.Id.AsLongText();
+
+            try
+            {
+                // 
+                if (_channelDatas.TryGetValue(key, out var data))
+                {
+                    // Process all messages in queue
+                    while (data.RecvQueue.TryDequeue(out var message))
+                    {
+                        try
+                        {
+                            if (!await PassMessageToPlugins(clientChannel, data, message, true))
+                                await ProcessMessage(message, clientChannel, data);
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Error(e);
+                            _ = ForceDisconnectClient(clientChannel);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+        }
+
+        private async Task HandleOutgoingMessages(IChannel clientChannel)
         {
             if (clientChannel == null)
                 return;
@@ -207,33 +267,18 @@ namespace Server.Dme
                         return;
                     }
 
-                    // Process all messages in queue
-                    while (data.RecvQueue.TryDequeue(out var message))
-                    {
-                        try
-                        {
-                            if (!await PassMessageToPlugins(clientChannel, data, message, true))
-                                await ProcessMessage(message, clientChannel, data);
-                        }
-                        catch (Exception e)
-                        {
-                            Logger.Error(e);
-                            _ = ForceDisconnectClient(clientChannel);
-                        }
-                    }
-
                     // Send if writeable
                     if (clientChannel.IsWritable)
                     {
                         // Add send queue to responses
-                        while (data.SendQueue.TryDequeue(out var message) && !await PassMessageToPlugins(clientChannel, data, message, false))
+                        while (data.SendQueue.TryDequeue(out var message))
                             if (!await PassMessageToPlugins(clientChannel, data, message, false))
                                 responses.Add(message);
 
                         if (data.ClientObject != null)
                         {
                             // Echo
-                            if ((Utils.GetHighPrecisionUtcTime() - data.ClientObject.UtcLastServerEchoSent).TotalSeconds > Program.Settings.ServerEchoInterval)
+                            if (data.ClientObject.MediusVersion > 108 && (Utils.GetHighPrecisionUtcTime() - data.ClientObject.UtcLastServerEchoSent).TotalSeconds > Program.GetAppSettingsOrDefault(data.ClientObject.ApplicationId).ServerEchoIntervalSeconds)
                             {
                                 var message = new RT_MSG_SERVER_ECHO();
                                 if (!await PassMessageToPlugins(clientChannel, data, message, false))
@@ -267,7 +312,8 @@ namespace Server.Dme
         {
             // Get ScertClient data
             var scertClient = clientChannel.GetAttribute(Server.Pipeline.Constants.SCERT_CLIENT).Get();
-            scertClient.CipherService.EnableEncryption = Program.Settings.EncryptMessages;
+            var enableEncryption = Program.GetAppSettingsOrDefault(data.ApplicationId).EnableDmeEncryption;
+            scertClient.CipherService.EnableEncryption = enableEncryption;
 
             // 
             switch (message)
@@ -275,50 +321,66 @@ namespace Server.Dme
                 case RT_MSG_CLIENT_HELLO clientHello:
                     {
                         // send hello
-                        Queue(new RT_MSG_SERVER_HELLO() { RsaPublicKey = Program.Settings.EncryptMessages ? Program.Settings.DefaultKey.N : Org.BouncyCastle.Math.BigInteger.Zero }, clientChannel);
+                        Queue(new RT_MSG_SERVER_HELLO() { RsaPublicKey = enableEncryption ? Program.Settings.DefaultKey.N : Org.BouncyCastle.Math.BigInteger.Zero }, clientChannel);
                         break;
                     }
                 case RT_MSG_CLIENT_CRYPTKEY_PUBLIC clientCryptKeyPublic:
                     {
                         // generate new client session key
-                        scertClient.CipherService.GenerateCipher(CipherContext.RSA_AUTH, clientCryptKeyPublic.Key.Reverse().ToArray());
+                        scertClient.CipherService.GenerateCipher(CipherContext.RSA_AUTH, clientCryptKeyPublic.PublicKey.Reverse().ToArray());
                         scertClient.CipherService.GenerateCipher(CipherContext.RC_CLIENT_SESSION);
 
-                        Queue(new RT_MSG_SERVER_CRYPTKEY_PEER() { Key = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
+                        Queue(new RT_MSG_SERVER_CRYPTKEY_PEER() { SessionKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
                         break;
                     }
                 case RT_MSG_CLIENT_CONNECT_TCP_AUX_UDP clientConnectTcpAuxUdp:
                     {
+                        #region Check EnableAuxUDP
+                        if (Program.Settings.EnableAuxUDP != true)
+                        {
+                            Logger.Error("rt_msg_server_process_client_connect_aux_msg: AUX UDP not enabled");
+                            return;
+                        }
+                        #endregion
+
+                        if (clientConnectTcpAuxUdp.Key == null)
+                        {
+                            scertClient.CipherService.GenerateCipher(CipherContext.RC_CLIENT_SESSION);
+
+                            if (scertClient.CipherService.HasKey(CipherContext.RC_CLIENT_SESSION))
+                            {
+                                Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
+                            }
+                        } 
+
+
+
                         data.ApplicationId = clientConnectTcpAuxUdp.AppId;
-                        var manager = Program.GetManager(data.ApplicationId, true);
-                        data.ClientObject = manager.GetClientByAccessToken(clientConnectTcpAuxUdp.AccessToken);
+                        data.ClientObject = Program.GetClientByAccessToken(clientConnectTcpAuxUdp.AccessToken);
                         if (data.ClientObject == null || data.ClientObject.DmeWorld == null || data.ClientObject.DmeWorld.WorldId != clientConnectTcpAuxUdp.ARG1)
                             throw new Exception($"Client connected with invalid world id!");
 
                         data.ClientObject.ApplicationId = clientConnectTcpAuxUdp.AppId;
                         data.ClientObject.OnTcpConnected(clientChannel);
                         data.ClientObject.ScertId = GenerateNewScertClientId();
+                        data.ClientObject.MediusVersion = scertClient.MediusVersion;
                         if (!_scertIdToClient.TryAdd(data.ClientObject.ScertId, data.ClientObject))
                             throw new Exception($"Duplicate scert client id");
+
+                        // start udp server
+                        data.ClientObject.BeginUdp();
 
 
                         if (scertClient.IsPS3Client)
                         {
-                            Queue(new RT_MSG_SERVER_CONNECT_REQUIRE() { Contents = Utils.FromString("0648024802") }, clientChannel);
+                            Queue(new RT_MSG_SERVER_CONNECT_REQUIRE() { MaxPacketSize = 584, MaxUdpPacketSize = 584 }, clientChannel);
                         }
                         else if (scertClient.MediusVersion > 108)
                         {
-                            Queue(new RT_MSG_SERVER_CONNECT_REQUIRE() { Contents = Utils.FromString("0648024802") }, clientChannel);
+                            Queue(new RT_MSG_SERVER_CONNECT_REQUIRE() { MaxPacketSize = 584, MaxUdpPacketSize = 584 }, clientChannel);
                         }
                         else
                         {
-                            data.ClientObject?.OnConnectionCompleted();
-                            data.ClientObject?.DmeWorld.OnPlayerJoined(data.ClientObject);
-
-                            if (scertClient.CipherService.HasKey(CipherContext.RC_CLIENT_SESSION))
-                            {
-                                Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { Key = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
-                            }
                             Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
                             {
                                 PlayerId = (ushort)data.ClientObject.DmeId,
@@ -326,9 +388,10 @@ namespace Server.Dme
                                 PlayerCount = (ushort)data.ClientObject.DmeWorld.Clients.Count,
                                 IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
                             }, clientChannel);
-                            Queue(new RT_MSG_SERVER_CONNECT_COMPLETE()
+                            Queue(new RT_MSG_SERVER_INFO_AUX_UDP()
                             {
-                                ClientCountAtConnect = (ushort)data.ClientObject.DmeWorld.Clients.Count
+                                Ip = Program.SERVER_IP,
+                                Port = (ushort)data.ClientObject.UdpPort
                             }, clientChannel);
                         }
                         break;
@@ -336,14 +399,24 @@ namespace Server.Dme
                 case RT_MSG_CLIENT_CONNECT_TCP clientConnectTcp:
                     {
                         data.ApplicationId = clientConnectTcp.AppId;
+
+                        data.ClientObject = Program.GetClientByAccessToken(clientConnectTcp.AccessToken);
+
+                        if (!scertClient.IsPS3Client && scertClient.CipherService.HasKey(CipherContext.RC_CLIENT_SESSION))
+                        {
+                            Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
+                        }
+                        Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
+                        {
+                            PlayerId = (ushort)data.ClientObject.DmeId,
+                            ScertId = data.ClientObject.ScertId,
+                            PlayerCount = (ushort)data.ClientObject.DmeWorld.Clients.Count,
+                            IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
+                        }, clientChannel);
                         break;
                     }
                 case RT_MSG_CLIENT_CONNECT_READY_REQUIRE clientConnectReadyRequire:
                     {
-                        if (!scertClient.IsPS3Client && scertClient.CipherService.HasKey(CipherContext.RC_CLIENT_SESSION))
-                        {
-                            Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { Key = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
-                        }
                         Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
                         {
                             PlayerId = (ushort)data.ClientObject.DmeId,
@@ -357,13 +430,12 @@ namespace Server.Dme
                     {
                         // Update recv flag
                         data.ClientObject.RecvFlag = clientConnectReadyTcp.RecvFlag;
-                        /*
+
                         Queue(new RT_MSG_SERVER_STARTUP_INFO_NOTIFY()
                         {
                             GameHostType = (byte)MGCL_GAME_HOST_TYPE.MGCLGameHostClientServerAuxUDP,
-                            Timestamp = (uint)(Utils.GetHighPrecisionUtcTime() - data.ClientObject.DmeWorld.WorldCreatedTimeUtc).TotalMilliseconds
+                            Timestamp = (uint)data.ClientObject.DmeWorld.WorldTimer.ElapsedMilliseconds
                         }, clientChannel);
-                        */
                         Queue(new RT_MSG_SERVER_INFO_AUX_UDP()
                         {
                             Ip = Program.SERVER_IP,
@@ -374,24 +446,30 @@ namespace Server.Dme
                 case RT_MSG_CLIENT_CONNECT_READY_AUX_UDP connectReadyAuxUdp:
                     {
                         data.ClientObject?.OnConnectionCompleted();
-                        data.ClientObject?.DmeWorld.OnPlayerJoined(data.ClientObject);
 
                         Queue(new RT_MSG_SERVER_CONNECT_COMPLETE()
                         {
                             ClientCountAtConnect = (ushort)data.ClientObject.DmeWorld.Clients.Count
                         }, clientChannel);
 
-                        //UYA HD/DL HD
-                        if (data.ClientObject.ApplicationId == 24000 || data.ClientObject.ApplicationId == 24180)
+                        //MSPR doesn't need this packet sent
+                        if (scertClient.MediusVersion > 108
+                            && data.ApplicationId == 24000
+                            && data.ApplicationId == 20095
+                            && data.ApplicationId != 20364
+                            && data.ApplicationId != 20764
+                            && data.ApplicationId != 21624)
                         {
                             Queue(new RT_MSG_SERVER_APP()
                             {
-                                Message = new DMEServerVersion()
+                                Message = new TypeServerVersion()
                                 {
                                     Version = "2.10.0009"
                                 }
                             }, clientChannel);
                         }
+
+                        data.ClientObject?.DmeWorld.OnPlayerJoined(data.ClientObject);
                         break;
                     }
                 case RT_MSG_SERVER_ECHO serverEchoReply:
@@ -401,10 +479,7 @@ namespace Server.Dme
                     }
                 case RT_MSG_CLIENT_ECHO clientEcho:
                     {
-                        Queue(new RT_MSG_CLIENT_ECHO()
-                        {
-                            Value = 0xA5
-                        }, clientChannel);
+                        Queue(new RT_MSG_CLIENT_ECHO() { Value = clientEcho.Value }, clientChannel);
                         break;
                     }
                 case RT_MSG_CLIENT_SET_RECV_FLAG setRecvFlag:
@@ -414,16 +489,46 @@ namespace Server.Dme
                     }
                 case RT_MSG_CLIENT_SET_AGG_TIME setAggTime:
                     {
-                        data.ClientObject.AggTimeMs = setAggTime.AggTime;
+                        if (scertClient.MediusVersion >= 109) {
+                            Logger.Info($"rt_msg_server_process_client_set_agg_time_msg: new agg time = {setAggTime.AggTime}");
+                            data.ClientObject.AggTimeMs = setAggTime.AggTime;
+                        } // We don't set AggTime here YET, the client object isn't created! for Pre-108 clients
                         break;
                     }
+                case RT_MSG_CLIENT_FLUSH_ALL flushAll:
+                    {
+
+                        return;
+                    }
+
                 case RT_MSG_CLIENT_TIMEBASE_QUERY timebaseQuery:
                     {
-                        Queue(new RT_MSG_SERVER_TIMEBASE_QUERY_NOTIFY()
+                        var timebaseQueryNotifyMessage = new RT_MSG_SERVER_TIMEBASE_QUERY_NOTIFY()
                         {
                             ClientTime = timebaseQuery.Timestamp,
-                            ServerTime = (uint)(Utils.GetHighPrecisionUtcTime() - data.ClientObject.DmeWorld.WorldCreatedTimeUtc).TotalMilliseconds
-                        }, clientChannel);
+                            ServerTime = (uint)data.ClientObject.DmeWorld.WorldTimer.ElapsedMilliseconds
+                        };
+
+                        //if (data.ClientObject?.Udp != null && data.ClientObject.RemoteUdpEndpoint != null)
+                        //{
+                        //    await data.ClientObject.Udp.SendImmediate(timebaseQueryNotifyMessage);
+                        //}
+                        //else
+                        //{
+                        //    await clientChannel.WriteAndFlushAsync(timebaseQueryNotifyMessage);
+                        //}
+
+                        await clientChannel.WriteAndFlushAsync(timebaseQueryNotifyMessage);
+                        //await clientChannel.WriteAndFlushAsync(new RT_MSG_SERVER_TIMEBASE_QUERY_NOTIFY()
+                        //{
+                        //    ClientTime = timebaseQuery.Timestamp,
+                        //    ServerTime = (uint)data.ClientObject.DmeWorld.WorldTimer.ElapsedMilliseconds
+                        //});
+                        //Queue(new RT_MSG_SERVER_TIMEBASE_QUERY_NOTIFY()
+                        //{
+                        //    ClientTime = timebaseQuery.Timestamp,
+                        //    ServerTime = (uint)data.ClientObject.DmeWorld.WorldTimer.ElapsedMilliseconds
+                        //}, clientChannel);
                         break;
                     }
                 case RT_MSG_CLIENT_TOKEN_MESSAGE tokenMessage:
@@ -455,12 +560,12 @@ namespace Server.Dme
                 case RT_MSG_CLIENT_DISCONNECT _:
                 case RT_MSG_CLIENT_DISCONNECT_WITH_REASON _:
                     {
-                        _ = clientChannel.CloseAsync();
+                        //_ = clientChannel.CloseAsync();
                         break;
                     }
                 default:
                     {
-                        Logger.Warn($"UNHANDLED MESSAGE: {message}");
+                        Logger.Warn($"UNHANDLED RT MESSAGE: {message}");
 
                         break;
                     }
@@ -473,6 +578,33 @@ namespace Server.Dme
         {
             if (message == null)
                 return Task.CompletedTask;
+
+            switch (message)
+            {
+                case TypePing ping:
+                    {
+                        Logger.Info($"PingPacketHandler: client {data.ClientObject.DmeId} received \n");
+                        if (ping.RequestEcho == true)
+                        {
+                            Queue(new RT_MSG_CLIENT_ECHO()
+                            {
+                                Value = 0xA5
+                            }, clientChannel);
+                            break;
+                        }
+
+                        data.ClientObject?.EnqueueTcp(new TypePing()
+                        {
+                            TimeOfSend = Utils.GetUnixTime(),
+                            PingInstance = ping.PingInstance,
+                            RequestEcho = ping.RequestEcho
+                        });
+
+                        break;
+                    }
+
+
+            }
 
             return Task.CompletedTask;
         }
@@ -497,7 +629,7 @@ namespace Server.Dme
                 // close channel
                 await channel.CloseAsync();
             }
-            catch (Exception)
+            catch
             {
                 // Silence exception since the client probably just closed the socket before we could write to it
             }
@@ -508,7 +640,6 @@ namespace Server.Dme
         }
 
         #endregion
-
 
         #region Queue
 
@@ -542,6 +673,7 @@ namespace Server.Dme
         #endregion
 
         #region Plugins
+
 
         protected async Task<bool> PassMessageToPlugins(IChannel clientChannel, ChannelData data, BaseScertMessage message, bool isIncoming)
         {
@@ -589,6 +721,7 @@ namespace Server.Dme
         }
 
         #endregion
+
         public ClientObject GetClientByScertId(ushort scertId)
         {
             if (_scertIdToClient.TryGetValue(scertId, out var result))

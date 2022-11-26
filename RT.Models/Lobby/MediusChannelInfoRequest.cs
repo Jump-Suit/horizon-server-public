@@ -3,15 +3,25 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Sends request for inmoration about a specific chat channel
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.ChannelInfo)]
     public class MediusChannelInfoRequest : BaseLobbyMessage, IMediusRequest
     {
-
         public override byte PacketType => (byte)MediusLobbyMessageIds.ChannelInfo;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey; // SESSIONKEY_MAXLEN
+        /// <summary>
+        /// World ID of the channel to get information about.
+        /// </summary>
         public int MediusWorldID;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -25,6 +35,8 @@ namespace RT.Models
             // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             reader.ReadBytes(2);
+
+            //
             MediusWorldID = reader.ReadInt32();
         }
 
@@ -39,6 +51,8 @@ namespace RT.Models
             // 
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
             writer.Write(new byte[2]);
+
+            //
             writer.Write(MediusWorldID);
         }
 
@@ -46,9 +60,9 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"SessionKey:{SessionKey} " +
-$"MediusWorldID:{MediusWorldID}";
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey} " +
+                $"MediusWorldID: {MediusWorldID}";
         }
     }
 }

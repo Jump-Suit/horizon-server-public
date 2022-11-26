@@ -6,12 +6,20 @@ namespace RT.Models
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.ChatToggle)]
     public class MediusChatToggleRequest : BaseLobbyMessage, IMediusRequest
     {
-
         public override byte PacketType => (byte)MediusLobbyMessageIds.ChatToggle;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey; // SESSIONKEY_MAXLEN
-        public uint ChatToggle;
+        /// <summary>
+        /// ChatToggle to enable/disable chat 
+        /// </summary>
+        public MediusChatToggle ChatToggle;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -20,9 +28,11 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
-
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
-            ChatToggle = reader.ReadUInt32();
+            reader.ReadBytes(2);
+
+            //
+            ChatToggle = reader.Read<MediusChatToggle>();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -33,9 +43,11 @@ namespace RT.Models
             //
             writer.Write(MessageID ?? MessageId.Empty);
             writer.Write(SessionKey);
+            writer.Write(new byte[2]);
+
+            //
             writer.Write(ChatToggle);
         }
-
 
         public override string ToString()
         {

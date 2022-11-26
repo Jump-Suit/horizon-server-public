@@ -10,9 +10,9 @@ namespace RT.Models
 
         public MessageId MessageID { get; set; }
 
-        public string SessionKey = "13088";
-        public string Username;
-        public string Password;
+        public string SessionKey; // SESSIONKEY_MAXLEN
+        public string Username; // ACCOUNTNAME_MAXLEN
+        public string Password; // PASSWORD_MAXLEN
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {

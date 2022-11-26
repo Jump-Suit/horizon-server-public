@@ -49,14 +49,13 @@ namespace RT.Models
 
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-                $"StatusCode:{StatusCode} " +
-                $"News:{News} " +
-             $"EndOfList:{EndOfList} ";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
+                $"News: {News} " +
+                $"EndOfList: {EndOfList} ";
         }
     }
 }

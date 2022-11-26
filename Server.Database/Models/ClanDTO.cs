@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using RT.Common;
+using System.Collections.Generic;
 
 namespace Server.Database.Models
 {

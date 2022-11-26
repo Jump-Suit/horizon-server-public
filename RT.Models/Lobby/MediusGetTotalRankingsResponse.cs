@@ -43,13 +43,12 @@ namespace RT.Models
             writer.Write(TotalRankings);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"StatusCode:{StatusCode} " +
-$"TotalRankings:{TotalRankings}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
+                $"TotalRankings: {TotalRankings}";
         }
     }
 }

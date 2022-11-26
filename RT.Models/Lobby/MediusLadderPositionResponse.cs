@@ -22,9 +22,9 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
+            reader.ReadBytes(3);
 
             // 
-            reader.ReadBytes(3);
             LadderPosition = reader.ReadUInt32();
             StatusCode = reader.Read<MediusCallbackStatus>();
         }
@@ -36,9 +36,9 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
+            writer.Write(new byte[3]);
 
             // 
-            writer.Write(new byte[3]);
             writer.Write(LadderPosition);
             writer.Write(StatusCode);
         }

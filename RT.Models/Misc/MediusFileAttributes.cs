@@ -4,12 +4,15 @@ using System.IO;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// File Attributes.
+    /// </summary>
     public class MediusFileAttributes : IStreamSerializer
     {
         /// <summary>
         /// Client provided text description of file
         /// </summary>
-        public byte[] Description = new byte[Constants.MEDIUS_FILE_MAX_DESCRIPTION_LENGTH];
+        public string Description; //MEDIUS_FILE_MAX_DESCRIPTION_LENGTH
         /// <summary>
         /// Read only date/time when file was last changed
         /// </summary>
@@ -34,7 +37,7 @@ namespace RT.Models
         public virtual void Deserialize(BinaryReader reader)
         {
             // 
-            Description = reader.ReadBytes(Constants.MEDIUS_FILE_MAX_DESCRIPTION_LENGTH);
+            Description = reader.ReadString(Constants.MEDIUS_FILE_MAX_DESCRIPTION_LENGTH);
             LastChangedTimeStamp = reader.ReadUInt32();
             LastChangedByUserID = reader.ReadUInt32();
             NumberAccesses = reader.ReadUInt32();

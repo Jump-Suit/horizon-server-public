@@ -6,11 +6,13 @@ using System.Collections.Generic;
 
 namespace RT.Models
 {
+    #region MediusMessageAttribute
     [AttributeUsage(AttributeTargets.Class)]
     public class MediusMessageAttribute : Attribute
     {
         public NetMessageClass MessageClass;
         public byte MessageType;
+        public GhsOpcode GhsMsgType;
 
         public MediusMessageAttribute(NetMessageClass msgClass, MediusDmeMessageIds msgType)
         {
@@ -35,20 +37,22 @@ namespace RT.Models
             MessageClass = msgClass;
             MessageType = (byte)msgType;
         }
-    }
 
-    [AttributeUsage(AttributeTargets.Class)]
-    public class MediusPluginMessage : Attribute
-    {
-        //public NetMessageClass MessageClass;
-        public byte MessageType;
-
-        public MediusPluginMessage(NetMessageTypeIds msgType)
+        public MediusMessageAttribute(NetMessageClass msgClass, GhsOpcode msgType)
         {
+            MessageClass = msgClass;
+            GhsMsgType = msgType;
+        }
+
+        public MediusMessageAttribute(NetMessageClass msgClass, NetMessageTypeIds msgType)
+        {
+            MessageClass = msgClass;
             MessageType = (byte)msgType;
         }
     }
+    #endregion
 
+    #region BaseMediusMessage
     public abstract class BaseMediusMessage
     {
         /// <summary>
@@ -99,7 +103,7 @@ namespace RT.Models
         /// </summary>
         public virtual bool CanLog()
         {
-            switch (this.PacketClass)
+            switch (PacketClass)
             {
                 case NetMessageClass.MessageClassDME: return LogSettings.Singleton?.IsLog((MediusDmeMessageIds)this.PacketType) ?? false;
                 case NetMessageClass.MessageClassLobby: return LogSettings.Singleton?.IsLog((MediusLobbyMessageIds)this.PacketType) ?? false;
@@ -118,7 +122,7 @@ namespace RT.Models
         private static Dictionary<MediusLobbyMessageIds, Type> _lobbyMessageClassById = null;
         private static Dictionary<MediusLobbyExtMessageIds, Type> _lobbyExtMessageClassById = null;
         private static int _messageClassByIdLockValue = 0;
-        private static object _messageClassByIdLockObject = (object)_messageClassByIdLockValue;
+        private static object _messageClassByIdLockObject = _messageClassByIdLockValue;
 
 
         private static void Initialize()
@@ -208,6 +212,7 @@ namespace RT.Models
                             classType = null;
                         break;
                     }
+
             }
 
             // Instantiate
@@ -224,8 +229,11 @@ namespace RT.Models
         #endregion
 
     }
+    #endregion
 
-    public abstract class BaseMediusPluginMessage
+
+    #region BaseMediusGHSMessage
+    public abstract class BaseMediusGHSMessage
     {
         /// <summary>
         /// Message class.
@@ -235,14 +243,14 @@ namespace RT.Models
         /// <summary>
         /// Message type.
         /// </summary>
-        public abstract NetMessageTypeIds PacketType { get; }
+        public abstract GhsOpcode GhsOpcode { get; }
 
         /// <summary>
         /// When true, skips encryption when sending this particular message instance.
         /// </summary>
         public virtual bool SkipEncryption { get; set; } = false;
 
-        public BaseMediusPluginMessage()
+        public BaseMediusGHSMessage()
         {
 
         }
@@ -275,24 +283,18 @@ namespace RT.Models
         /// </summary>
         public virtual bool CanLog()
         {
-
-            switch (PacketType)
+            switch (PacketClass)
             {
-                case NetMessageTypeIds.NetMessageProtocolInfo: return LogSettings.Singleton?.IsLogPlugin(PacketType) ?? false;
+                case NetMessageClass.MessageClassGHS: return LogSettings.Singleton?.IsLogGHSPlugin(GhsOpcode) ?? false;
                 default: return true;
             }
-
         }
 
         #endregion
 
         #region Dynamic Instantiation
 
-        private static Dictionary<MediusDmeMessageIds, Type> _dmeMessageClassById = null;
-        private static Dictionary<MediusMGCLMessageIds, Type> _mgclMessageClassById = null;
-        private static Dictionary<MediusLobbyMessageIds, Type> _lobbyMessageClassById = null;
-        private static Dictionary<MediusLobbyExtMessageIds, Type> _lobbyExtMessageClassById = null;
-        private static Dictionary<NetMessageTypeIds, Type> _netPluginClassById = null;
+        private static Dictionary<GhsOpcode, Type> _ghsMessageClassById = null;
         private static int _messageClassByIdLockValue = 0;
         private static object _messageClassByIdLockObject = _messageClassByIdLockValue;
 
@@ -301,19 +303,14 @@ namespace RT.Models
         {
             lock (_messageClassByIdLockObject)
             {
-                if (_dmeMessageClassById != null)
+                if (_ghsMessageClassById != null)
                     return;
 
-                _dmeMessageClassById = new Dictionary<MediusDmeMessageIds, Type>();
-                _mgclMessageClassById = new Dictionary<MediusMGCLMessageIds, Type>();
-                _lobbyMessageClassById = new Dictionary<MediusLobbyMessageIds, Type>();
-                _lobbyExtMessageClassById = new Dictionary<MediusLobbyExtMessageIds, Type>();
-                _netPluginClassById = new Dictionary<NetMessageTypeIds, Type>();
+                _ghsMessageClassById = new Dictionary<GhsOpcode, Type>();
 
                 // Populate
-                var assembly = System.Reflection.Assembly.GetAssembly(typeof(BaseMediusPluginMessage));
+                var assembly = System.Reflection.Assembly.GetAssembly(typeof(BaseMediusMessage));
                 var types = assembly.GetTypes();
-
 
                 foreach (Type classType in types)
                 {
@@ -323,54 +320,44 @@ namespace RT.Models
                     {
                         switch (attrs[0].MessageClass)
                         {
-                            case NetMessageClass.MessageClassDME:
+                            case NetMessageClass.MessageClassGHS:
                                 {
-                                    _dmeMessageClassById.Add((MediusDmeMessageIds)attrs[0].MessageType, classType);
+                                    _ghsMessageClassById.Add((GhsOpcode)attrs[0].MessageType, classType);
                                     break;
                                 }
-                            case NetMessageClass.MessageClassLobbyReport:
-                                {
-                                    _mgclMessageClassById.Add((MediusMGCLMessageIds)attrs[0].MessageType, classType);
-                                    break;
-                                }
-                            case NetMessageClass.MessageClassLobby:
-                                {
-                                    _lobbyMessageClassById.Add((MediusLobbyMessageIds)attrs[0].MessageType, classType);
-                                    break;
-                                }
-                            case NetMessageClass.MessageClassLobbyExt:
-                                {
-                                    _lobbyExtMessageClassById.Add((MediusLobbyExtMessageIds)attrs[0].MessageType, classType);
-                                    break;
-                                }
-
                         }
-
                     }
                 }
             }
         }
 
-        public static BaseMediusPluginMessage Instantiate(Server.Common.Stream.MessageReader reader)
+        public static BaseMediusGHSMessage Instantiate(Server.Common.Stream.MessageReader reader)
         {
-            BaseMediusPluginMessage msg;
-
+            BaseMediusGHSMessage msg;
             Type classType = null;
-
-            //NetMessageClass msgClass = reader.Read<NetMessageClass>();
-            var msgType = reader.Read<NetMessageTypeIds>();
 
             // Init
             Initialize();
 
-            if (!_netPluginClassById.TryGetValue(msgType, out classType))
-                classType = null;
+            NetMessageClass msgClass = reader.Read<NetMessageClass>();
+            GhsOpcode msgType = reader.Read<GhsOpcode>();
+
+            switch (msgClass)
+            {
+                case NetMessageClass.MessageClassGHS:
+                    {
+                        if (!_ghsMessageClassById.TryGetValue((GhsOpcode)msgType, out classType))
+                            classType = null;
+                        break;
+                    }
+
+            }
 
             // Instantiate
             if (classType == null)
-                msg = new RawMediusMessage0((byte)msgType);
+                msg = new RawGHSMediusMessage(msgClass, msgType);
             else
-                msg = (BaseMediusPluginMessage)Activator.CreateInstance(classType);
+                msg = (BaseMediusGHSMessage)Activator.CreateInstance(classType);
 
             // Deserialize
             msg.Deserialize(reader);
@@ -380,4 +367,5 @@ namespace RT.Models
         #endregion
 
     }
+    #endregion
 }

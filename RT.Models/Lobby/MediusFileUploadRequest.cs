@@ -3,27 +3,41 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Initiate an upload from the client to the server.
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.FileUpload)]
     public class MediusFileUploadRequest : BaseLobbyMessage, IMediusRequest
     {
-
         public override byte PacketType => (byte)MediusLobbyMessageIds.FileUpload;
 
-        public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// File Information
+        /// </summary>
         public MediusFile MediusFileInfo;
-        public uint PucDataStart;
-        public uint UiDataSize;
+        /// <summary>
+        /// Data packet to upload
+        /// </summary>
+        public char[] PucDataStart;
+        /// <summary>
+        /// Size of data packet to upload
+        /// </summary>
+        public int UiDataSize;
+        /// <summary>
+        /// ID specified by Client to assosciate with this request
+        /// </summary>
+        public MessageId MessageID { get; set; }
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
             // 
-            MediusFileInfo = reader.Read<MediusFile>();
-            PucDataStart = reader.ReadUInt32();
-            UiDataSize = reader.ReadUInt32();
+            base.Deserialize(reader);
 
             // 
-            base.Deserialize(reader);
+            MediusFileInfo = reader.Read<MediusFile>();
+            PucDataStart = reader.ReadChars(UiDataSize);
+            UiDataSize = reader.ReadInt32();
+
 
             //
             MessageID = reader.Read<MessageId>();
@@ -33,12 +47,12 @@ namespace RT.Models
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
         {
             // 
+            base.Serialize(writer);
+
+            // 
             writer.Write(MediusFileInfo);
             writer.Write(PucDataStart);
             writer.Write(UiDataSize);
-
-            // 
-            base.Serialize(writer);
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
@@ -49,10 +63,10 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-                $"MediusFileInfo:{MediusFileInfo} " +
-                $"PucDataStart:{PucDataStart} " +
-                $"UiDataSize:{UiDataSize}";
+                $"MessageID: {MessageID} " +
+                $"MediusFileInfo: {MediusFileInfo} " +
+                $"PucDataStart: {PucDataStart} " +
+                $"UiDataSize: {UiDataSize}";
         }
     }
 }

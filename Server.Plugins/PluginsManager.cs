@@ -1,6 +1,7 @@
 ﻿using DotNetty.Common.Internal.Logging;
 using RT.Common;
 using Server.Plugins.Interface;
+using Server.Plugins;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -61,7 +62,6 @@ namespace Server.Plugins
 
         #region On Event
 
-
         public async Task OnEvent(PluginEvent eventType, object data)
         {
             if (!_pluginCallbackInstances.ContainsKey(eventType))
@@ -71,7 +71,7 @@ namespace Server.Plugins
             {
                 try
                 {
-                    await callback.Invoke((Interface.PluginEvent)eventType, data);
+                    await callback.Invoke(eventType, data);
                 }
                 catch (Exception e)
                 {
@@ -94,7 +94,7 @@ namespace Server.Plugins
                 }
                 catch (Exception e)
                 {
-                    Logger.Error($"PLUGIN OnEvent Exception. {callback}({msgId}, {data})");
+                    Logger.Error($"PLUGIN OnMessageEvent Exception. {callback}({msgId}, {data})");
                     Logger.Error(e);
                 }
             }
@@ -114,7 +114,7 @@ namespace Server.Plugins
                 }
                 catch (Exception e)
                 {
-                    Logger.Error($"PLUGIN OnEvent Exception. {callback}({key}, {data})");
+                    Logger.Error($"PLUGIN OnMediusMessageEvent Exception. {callback}({key}, {data})");
                     Logger.Error(e);
                 }
             }
@@ -211,6 +211,9 @@ namespace Server.Plugins
                         IPlugin instance = (IPlugin)Activator.CreateInstance(plugin);
 
                         _ = instance.Start(file.Directory.FullName, this);
+
+                        //Output the Plugin name
+                        Logger.Warn("Plugin added: " + file.Name);
                     }
                 }
                 catch (Exception ex)

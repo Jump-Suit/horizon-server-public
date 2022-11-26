@@ -1,12 +1,19 @@
 ﻿using DotNetty.Common.Internal.Logging;
+using Haukcode.HighResolutionTimer;
 using Microsoft.Extensions.Logging.Console;
 using Newtonsoft.Json;
 using NReco.Logging.File;
+using RT.Common;
+using RT.Models;
 using Server.Common;
 using Server.Common.Logging;
 using Server.Database;
+using Server.libAntiCheat.Main;
+using Server.Plugins;
 using Server.UniverseInformation.Config;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -20,18 +27,75 @@ namespace Server.UniverseInformation
 {
     class Program
     {
-        public const string CONFIG_FILE = "config.json";
-        public const string DB_CONFIG_FILE = "db.config.json";
-
+        private static string CONFIG_DIRECTIORY = "./";
+        public static string CONFIG_FILE => Path.Combine(CONFIG_DIRECTIORY, "muis.json");
+        public static string DB_CONFIG_FILE => Path.Combine(CONFIG_DIRECTIORY, "db.config.json");
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<Program>();
 
         public static ServerSettings Settings = new ServerSettings();
-        public static DbController Database = new DbController(DB_CONFIG_FILE);
+        public static DbController Database = null;
+
+        public static AntiCheat AntiCheatPlugin = new AntiCheat();
+        public static libAntiCheat.Models.ClientObject AntiCheatClient = new libAntiCheat.Models.ClientObject();
+
+        public static MediusManager Manager = new MediusManager();
+        public static PluginsManager Plugins = null;
+
+        public static RSA_KEY GlobalAuthPublic = null;
 
         public static MUIS[] UniverseInfoServers = null;
 
         private static FileLoggerProvider _fileLogger = null;
 
+        private static Dictionary<int, AppSettings> _appSettings = new Dictionary<int, AppSettings>();
+        private static AppSettings _defaultAppSettings = new AppSettings(0);
+        private static Dictionary<string, int[]> _appIdGroups = new Dictionary<string, int[]>();
+        private static ulong _sessionKeyCounter = 0;
+        private static readonly object _sessionKeyCounterLock = _sessionKeyCounter;
+        private static DateTime? _lastSuccessfulDbAuth = null;
+        private static int _ticks = 0;
+        private static Stopwatch _sw = new Stopwatch();
+        private static HighResolutionTimer _timer;
+
+        static async Task TickAsync()
+        {
+
+
+
+            // Attempt to authenticate with the db middleware
+            // We do this every 24 hours to get a fresh new token
+            if ((_lastSuccessfulDbAuth == null || (Utils.GetHighPrecisionUtcTime() - _lastSuccessfulDbAuth.Value).TotalHours > 24))
+            {
+                if (!await Database.Authenticate())
+                {
+                    // Log and exit when unable to authenticate
+                    Logger.Error($"Unable to authenticate connection to Cache Server.");
+                    return;
+                }
+                else
+                {
+                    _lastSuccessfulDbAuth = Utils.GetHighPrecisionUtcTime();
+
+                    // pass to manager
+                    await OnDatabaseAuthenticated();
+
+                    // refresh app settings
+                    await RefreshAppSettings();
+
+                    #region Check Cache Server Simulated
+                    if (Database._settings.SimulatedMode != true)
+                    {
+                        Logger.Info("Connected to Cache Server");
+                    }
+                    else
+                    {
+                        Logger.Info("Connected to Cache Server (Simulated)");
+                    }
+                    #endregion
+                }
+            }
+
+        }
 
         static async Task StartServerAsync()
         {
@@ -50,6 +114,15 @@ namespace Server.UniverseInformation
             Logger.Info($"* Medius Universe Information Server Version {gpszVersionString}");
             Logger.Info($"* Launched on {datetime}");
 
+            if (Database._settings.SimulatedMode == true)
+            {
+                Logger.Info("* Database Disabled Medius Stack");
+            }
+            else
+            {
+                Logger.Info("* Database Enabled Medius Stack");
+            }
+
             UniverseInfoServers = new MUIS[Settings.Ports.Length];
             for (int i = 0; i < UniverseInfoServers.Length; ++i)
             {
@@ -57,17 +130,15 @@ namespace Server.UniverseInformation
                 UniverseInfoServers[i] = new MUIS(Settings.Ports[i]);
                 UniverseInfoServers[i].Start();
             }
-
+            /*
             //* Process ID: %d , Parent Process ID: %d
             if (Database._settings.SimulatedMode == true)
             {
                 Logger.Info("* Database Disabled Medius Universe Information Server");
-            }
-            else
-            {
+            } else {
                 Logger.Info("* Database Enabled Medius Universe Information Server");
             }
-
+            */
             Logger.Info($"* Server Key Type: {Settings.EncryptMessages}");
 
             #region Remote Log Viewing
@@ -82,6 +153,25 @@ namespace Server.UniverseInformation
             }
             #endregion
 
+
+            #region MediusGetVersion
+            if (Settings.MediusServerVersionOverride == true)
+            {
+                // Use override methods in code to send our own version string from config
+                Logger.Info("Using config input server version");
+                Logger.Info($"MUISVersion Version: {Settings.MUISVersion}");
+
+            }
+            else
+            {
+                // Use hardcoded methods in code to handle specific games server versions
+                Logger.Info("Using game specific server versions");
+            }
+
+
+            #endregion
+
+
             //* Diagnostic Profiling Enabled: %d Counts
 
             Logger.Info("**************************************************");
@@ -92,13 +182,14 @@ namespace Server.UniverseInformation
                 DoGetHostEntry(ip);
             }
 
-            Logger.Info($"MUIS started.");
+            Logger.Info($"MUIS initalized.");
 
             try
             {
                 while (true)
                 {
                     // Tick
+                    await TickAsync();
                     await Task.WhenAll(UniverseInfoServers.Select(x => x.Tick()));
 
                     // Reload config
@@ -123,6 +214,13 @@ namespace Server.UniverseInformation
 
         static async Task Main(string[] args)
         {
+            // get path to config directory from first argument
+            if (args.Length > 0)
+                CONFIG_DIRECTIORY = args[0];
+
+            // 
+            Database = new DbController(DB_CONFIG_FILE);
+
             // 
             Initialize();
 
@@ -176,12 +274,14 @@ namespace Server.UniverseInformation
             else
             {
                 // Add default localhost entry
-                Settings.Universes.Add(0, new UniverseInfo()
-                {
-                    Name = "sample universe",
-                    Endpoint = "url",
-                    Port = 10075,
-                    UniverseId = 1
+                Settings.Universes.Add(0, new UniverseInfo[] {
+                    new UniverseInfo()
+                    {
+                        Name = "sample universe",
+                        Endpoint = "url",
+                        Port = 10075,
+                        UniverseId = 1
+                    }
                 });
 
                 // Save defaults
@@ -244,5 +344,79 @@ namespace Server.UniverseInformation
             return DateTime.Now.ToUniversalTime() - lastBootUp.ToUniversalTime();
         }
         #endregion
+
+        public static async Task OnDatabaseAuthenticated()
+        {
+            // get supported app ids
+            var appids = await Database.GetAppIds();
+
+            // build dictionary of app ids from response
+            _appIdGroups = appids.ToDictionary(x => x.Name, x => x.AppIds.ToArray());
+        }
+
+        static async Task RefreshAppSettings()
+        {
+            try
+            {
+                if (!await Database.AmIAuthenticated())
+                    return;
+
+                // get supported app ids
+                var appIdGroups = await Database.GetAppIds();
+                if (appIdGroups == null)
+                    return;
+
+                // get settings
+                foreach (var appIdGroup in appIdGroups)
+                {
+                    foreach (var appId in appIdGroup.AppIds)
+                    {
+                        var settings = await Database.GetServerSettings(appId);
+                        if (settings != null)
+                        {
+                            if (_appSettings.TryGetValue(appId, out var appSettings))
+                            {
+                                appSettings.SetSettings(settings);
+                            }
+                            else
+                            {
+                                appSettings = new AppSettings(appId);
+                                appSettings.SetSettings(settings);
+                                _appSettings.Add(appId, appSettings);
+
+                                // we also want to send this back to the server since this is new locally
+                                // and there might be new setting fields that aren't yet on the db
+                                await Database.SetServerSettings(appId, appSettings.GetSettings());
+                            }
+                        }
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+            }
+        }
+
+        /// <summary>
+        /// Generates a incremental session key number
+        /// </summary>
+        /// <returns></returns>
+        public static string GenerateSessionKey()
+        {
+            lock (_sessionKeyCounterLock)
+            {
+                return (++_sessionKeyCounter).ToString();
+            }
+        }
+
+        public static AppSettings GetAppSettingsOrDefault(int appId)
+        {
+            if (_appSettings.TryGetValue(appId, out var appSettings))
+                return appSettings;
+
+            return _defaultAppSettings;
+        }
     }
 }

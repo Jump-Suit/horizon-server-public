@@ -9,7 +9,14 @@ namespace RT.Models
 
         public override byte PacketType => (byte)MediusMGCLMessageIds.ServerWorldStatusRequest;
 
+        /// <summary>
+        /// /// <summary>
+        /// Message ID used for asynchronous request processing.
+        /// </summary>
         public MessageId MessageID { get; set; }
+        /// <summary>
+        /// Game world ID being requested
+        /// </summary>
         public int WorldID;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -20,6 +27,8 @@ namespace RT.Models
             // 
             MessageID = reader.Read<MessageId>();
             reader.ReadBytes(3);
+
+            //
             WorldID = reader.ReadInt32();
         }
 
@@ -31,6 +40,8 @@ namespace RT.Models
             // 
             writer.Write(MessageID ?? MessageId.Empty);
             writer.Write(new byte[3]);
+
+            //
             writer.Write(WorldID);
         }
 

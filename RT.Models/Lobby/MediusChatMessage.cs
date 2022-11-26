@@ -4,7 +4,7 @@ using Server.Common;
 namespace RT.Models
 {
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.ChatMessage)]
-    public class MediusChatMessage : BaseLobbyExtMessage
+    public class MediusChatMessage : BaseLobbyExtMessage, IMediusRequest
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.ChatMessage;
 

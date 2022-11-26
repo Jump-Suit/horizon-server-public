@@ -48,9 +48,9 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"MediusFileInfo:{MediusFileInfo} " +
-$"StatusCode:{StatusCode}";
+                $"MessageID: {MessageID} " +
+                $"MediusFileInfo: {MediusFileInfo} " +
+                $"StatusCode: {StatusCode}";
         }
     }
 }

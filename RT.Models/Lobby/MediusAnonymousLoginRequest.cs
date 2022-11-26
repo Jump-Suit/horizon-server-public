@@ -1,5 +1,6 @@
 using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -9,10 +10,21 @@ namespace RT.Models
 
         public override byte PacketType => (byte)MediusLobbyMessageIds.AnonymousLogin;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey; // SESSIONKEY_MAXLEN
+        /// <summary>
+        /// SessionDisplayName
+        /// </summary>
         public string SessionDisplayName; // ACCOUNTNAME_MAXLEN
+        /// <summary>
+        /// SessionDisplayStats
+        /// </summary>
         public string SessionDisplayStats; // ACCOUNTSTATS_MAXLEN
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -47,10 +59,10 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"SessionKey:{SessionKey} " +
-$"SessionDisplayName:{SessionDisplayName} " +
-$"SessionDisplayStats:{SessionDisplayStats}";
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey} " +
+                $"SessionDisplayName: {SessionDisplayName} " +
+                $"SessionDisplayStats: {string.Join("", SessionDisplayStats)}";
         }
     }
 }

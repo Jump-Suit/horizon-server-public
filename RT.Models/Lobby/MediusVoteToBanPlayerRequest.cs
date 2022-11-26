@@ -3,25 +3,39 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Request structure to add/remove a vote to ban another player
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.VoteToBanPlayer)]
     public class MediusVoteToBanPlayerRequest : BaseLobbyMessage, IMediusRequest
     {
         public override byte PacketType => (byte)MediusLobbyExtMessageIds.VoteToBanPlayer;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Vote addor remove
+        /// </summary>
         public MediusVoteActionType VoteAction;
+        /// <summary>
+        /// Reason for vote: vulgarity, cheating, other.
+        /// </summary>
         public MediusBanReasonType BanReason;
+        /// <summary>
+        /// Medius ID of game world to ban player from.
+        /// </summary>
         public int MediusWorldID;
+        /// <summary>
+        /// DME Client index of player to vote off.
+        /// </summary>
         public int DmeClientIndex;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
             // 
             base.Deserialize(reader);
-
-            //
-            MessageID = reader.Read<MessageId>();
 
             // 
             VoteAction = reader.Read<MediusVoteActionType>();
@@ -34,9 +48,6 @@ namespace RT.Models
         {
             // 
             base.Serialize(writer);
-
-            //
-            writer.Write(MessageID ?? MessageId.Empty);
 
             // 
             writer.Write(VoteAction);

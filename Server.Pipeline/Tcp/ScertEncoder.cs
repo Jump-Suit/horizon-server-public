@@ -44,7 +44,7 @@ namespace Server.Pipeline.Tcp
             scertClient.OnMessage(message);
 
             // Serialize
-            var msgs = message.Serialize(scertClient.MediusVersion, scertClient.CipherService);
+            var msgs = message.Serialize(scertClient.MediusVersion, scertClient.ApplicationID, scertClient.CipherService);
 
             // 
             foreach (var msg in msgs)

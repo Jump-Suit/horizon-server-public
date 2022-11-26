@@ -1,11 +1,12 @@
 ﻿using RT.Common;
+using RT.Models.Misc;
 using Server.Common;
 using System;
 
 namespace RT.Models
 {
     [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.AddToBuddyListConfirmation)]
-    public class MediusAddToBuddyListConfirmationRequest : BaseLobbyExtMessage, IMediusRequest
+    public class MediusAddToBuddyListConfirmationRequest : BaseLobbyExtMessage, IMediusAddToBuddyListConfirmationRequest
     {
 
         public override byte PacketType => (byte)MediusLobbyExtMessageIds.AddToBuddyListConfirmation;
@@ -13,8 +14,8 @@ namespace RT.Models
         public MessageId MessageID { get; set; }
 
         public string SessionKey; // SESSIONKEY_MAXLEN
-        public int TargetAccountID;
-        public MediusBuddyAddType AddType;
+        public int TargetAccountID { get; set; }
+        public MediusBuddyAddType AddType { get; set; }
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -23,9 +24,10 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
+            SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
+            reader.ReadBytes(2);
 
             // 
-            SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             TargetAccountID = reader.ReadInt32();
             AddType = reader.Read<MediusBuddyAddType>();
         }
@@ -37,9 +39,10 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
+            writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
+            writer.Write(new byte[2]);
 
             // 
-            writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
             writer.Write(TargetAccountID);
             writer.Write(AddType);
         }
@@ -49,8 +52,8 @@ namespace RT.Models
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
                 $"SessionKey: {SessionKey} " +
-                $"AccountID: {TargetAccountID} " +
-                $"AddType: {Convert.ToInt32(AddType)} ";
+                $"TargetAccountID: {TargetAccountID} " +
+                $"AddType: {AddType} ";
         }
     }
 }

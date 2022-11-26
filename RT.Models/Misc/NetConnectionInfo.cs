@@ -6,11 +6,29 @@ namespace RT.Models
 {
     public class NetConnectionInfo : IStreamSerializer
     {
+        /// <summary>
+        /// NetConnectionType connected to this server as
+        /// </summary>
         public NetConnectionType Type;
+        /// <summary>
+        /// NetAddressList
+        /// </summary>
         public NetAddressList AddressList = new NetAddressList();
+        /// <summary>
+        /// WorldID of the Connected client
+        /// </summary>
         public int WorldID;
+        /// <summary>
+        /// ServerKey
+        /// </summary>
         public RSA_KEY ServerKey = new RSA_KEY();
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey;
+        /// <summary>
+        /// Access Token
+        /// </summary>
         public string AccessKey;
 
         public void Deserialize(BinaryReader reader)

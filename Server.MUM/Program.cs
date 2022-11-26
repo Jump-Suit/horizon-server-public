@@ -5,7 +5,6 @@ using Newtonsoft.Json;
 using NReco.Logging.File;
 using Server.Common;
 using Server.Common.Logging;
-using Server.Medius;
 using Server.Plugins;
 using Server.UniverseManager.Config;
 using System.Diagnostics;
@@ -20,9 +19,7 @@ namespace Server.UniverseManager
         public static ServerSettings Settings = new ServerSettings();
 
         public static MUM UniverseManager = new(Settings.ServerPort);
-
-        public static MediusManager Manager = new MediusManager();
-        public static PluginsManager Plugins = null;
+        //public static PluginsManager Plugins = null;
 
         private static FileLoggerProvider _fileLogger = null;
 
@@ -31,36 +28,30 @@ namespace Server.UniverseManager
 
         private static int _ticks = 0;
         private static Stopwatch _sw = new Stopwatch();
-        private static HighResolutionTimer _timer;
+
+        public string MUMShortVersion = "2.10.0015";
 
         static async Task StartServerAsync()
         {
             DateTime lastConfigRefresh = Utils.GetHighPrecisionUtcTime();
 
-
-
-            //Medius Universe Information Server Version 2.10.0003
+            string MUMVersion = "Medius Universe Manager Version 2.10.0015";
 
             Logger.Info("**************************************************");
 
             #region MediusGetVersion
             if (Settings.MediusServerVersionOverride == true)
             {
-                #region MAS Enabled?
-                Logger.Info($"* MUM Version: {Settings.MUMVersion}");
-
-                #endregion
+                Logger.Info($"* {Settings.MUMVersion}");
             }
             else
             {
                 // Use hardcoded methods in code to handle specific games server versions
-                Logger.Info("* Using Game Specific Server Versions");
+                Logger.Info($"* {MUMVersion}");
             }
             #endregion
             string datetime = DateTime.Now.ToString("MMMM/dd/yyyy hh:mm:ss tt");
             Logger.Info($"* Launched on {datetime}");
-
-
 
             //* Process ID: %d , Parent Process ID: %d
 
@@ -86,12 +77,35 @@ namespace Server.UniverseManager
             //* Diagnostic Profiling Enabled: %d Counts
 
             Logger.Info("**************************************************");
-
             Logger.Info($"Enabling MUM on Server IP = {Settings.ServerIPAddress} TCP Port = {Settings.ServerPort}.");
-
             Logger.Info($"MUM started.");
 
-            UniverseManager.Start();
+            await UniverseManager.Start();
+
+            try
+            {
+                while (true)
+                {
+                    await UniverseManager.Tick();
+
+                    // Reload config
+                    if ((Utils.GetHighPrecisionUtcTime() - lastConfigRefresh).TotalMilliseconds > Settings.RefreshConfigInterval)
+                    {
+                        RefreshConfig();
+                        lastConfigRefresh = Utils.GetHighPrecisionUtcTime();
+                    }
+
+                    await Task.Delay(100);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+            }
+            finally
+            {
+
+            }
         }
 
         static async Task Main(string[] args)
@@ -169,10 +183,10 @@ namespace Server.UniverseManager
                 await Task.WhenAll(UniverseManager.Tick());
 
                 // Tick manager
-                await Manager.Tick();
+                //await Manager.Tick();
 
                 // Tick plugins
-                await Plugins.Tick();
+                //await Plugins.Tick();
 
                 // 
                 if ((Utils.GetHighPrecisionUtcTime() - _lastComponentLog).TotalSeconds > 15f)

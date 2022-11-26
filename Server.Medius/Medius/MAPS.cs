@@ -4,6 +4,7 @@ using RT.Cryptography;
 using RT.Models;
 using RT.Models.ServerPlugins;
 using Server.Common;
+using Server.Medius.Models;
 using System;
 using System.Linq;
 using System.Net;
@@ -16,7 +17,10 @@ namespace Server.Medius
         static readonly IInternalLogger _logger = InternalLoggerFactory.GetInstance<MAPS>();
 
         protected override IInternalLogger Logger => _logger;
-        public override int Port => Program.Settings.MAPSPort;
+
+        public override int TCPPort => Program.Settings.MAPSTCPPort;
+        public override int UDPPort => Program.Settings.MAPSUDPPort;
+
 
         public MAPS()
         {
@@ -27,7 +31,8 @@ namespace Server.Medius
         {
             // Get ScertClient data
             var scertClient = clientChannel.GetAttribute(Server.Pipeline.Constants.SCERT_CLIENT).Get();
-            scertClient.CipherService.EnableEncryption = Program.Settings.EncryptMessages;
+            var enableEncryption = Program.GetAppSettingsOrDefault(data.ApplicationId).EnableEncryption;
+            scertClient.CipherService.EnableEncryption = enableEncryption;
 
             // 
             switch (message)
@@ -35,37 +40,39 @@ namespace Server.Medius
                 case RT_MSG_CLIENT_HELLO clientHello:
                     {
                         // send hello
-                        Queue(new RT_MSG_SERVER_HELLO() { RsaPublicKey = Program.Settings.EncryptMessages ? Program.Settings.DefaultKey.N : Org.BouncyCastle.Math.BigInteger.Zero }, clientChannel);
+                        Queue(new RT_MSG_SERVER_HELLO() { RsaPublicKey = enableEncryption ? Program.Settings.DefaultKey.N : Org.BouncyCastle.Math.BigInteger.Zero }, clientChannel);
                         break;
                     }
                 case RT_MSG_CLIENT_CRYPTKEY_PUBLIC clientCryptKeyPublic:
                     {
                         // generate new client session key
-                        scertClient.CipherService.GenerateCipher(CipherContext.RSA_AUTH, clientCryptKeyPublic.Key.Reverse().ToArray());
+                        scertClient.CipherService.GenerateCipher(CipherContext.RSA_AUTH, clientCryptKeyPublic.PublicKey.Reverse().ToArray());
                         scertClient.CipherService.GenerateCipher(CipherContext.RC_CLIENT_SESSION);
 
-                        Queue(new RT_MSG_SERVER_CRYPTKEY_PEER() { Key = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
+                        Queue(new RT_MSG_SERVER_CRYPTKEY_PEER() { SessionKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
                         break;
                     }
                 case RT_MSG_CLIENT_CONNECT_TCP clientConnectTcp:
                     {
-                        if (!Program.Settings.IsCompatAppId(clientConnectTcp.AppId))
+                        #region Check if AppId from Client matches Server
+                        if (!Program.Manager.IsAppIdSupported(clientConnectTcp.AppId))
                         {
                             Logger.Error($"Client {clientChannel.RemoteAddress} attempting to authenticate with incompatible app id {clientConnectTcp.AppId}");
                             await clientChannel.CloseAsync();
                             return;
                         }
+                        #endregion
 
                         data.ApplicationId = clientConnectTcp.AppId;
 
-                        Queue(new RT_MSG_SERVER_CONNECT_REQUIRE() { ReqServerPassword = 0x00, Contents = Utils.FromString("0000") }, clientChannel);
+                        Queue(new RT_MSG_SERVER_CONNECT_REQUIRE(), clientChannel);
                         break;
                     }
                 case RT_MSG_CLIENT_CONNECT_READY_REQUIRE clientConnectReadyRequire:
                     {
                         if (!scertClient.IsPS3Client)
                         {
-                            Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { Key = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
+                            Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
                         }
                         Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
                         {
@@ -74,8 +81,6 @@ namespace Server.Medius
                             PlayerCount = 0x0001,
                             IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
                         }, clientChannel);
-
-                        Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
                         break;
                     }
                 case RT_MSG_CLIENT_CONNECT_READY_TCP clientConnectReadyTcp:
@@ -124,7 +129,7 @@ namespace Server.Medius
                     }
                 default:
                     {
-                        Logger.Warn($"UNHANDLED MESSAGE: {message}");
+                        Logger.Warn($"UNHANDLED RT MESSAGE: {message}");
 
                         break;
                     }
@@ -133,6 +138,7 @@ namespace Server.Medius
 
         protected virtual void ProcessMediusPluginMessage(BaseMediusPluginMessage message, IChannel clientChannel, ChannelData data)
         {
+            var scertClient = clientChannel.GetAttribute(Pipeline.Constants.SCERT_CLIENT).Get();
             if (message == null)
             {
                 Logger.Warn($"MessageType is Null!");
@@ -142,10 +148,13 @@ namespace Server.Medius
             switch (message)
             {
 
-                case NetMessageProtocolInfo netMessageProtocolInfo:
+                case NetMessageHello netMessageHello:
                     {
+                        data.ClientObject = Program.ProfileServer.ReserveClient(netMessageHello);
+
                         // Create client object
                         data.ClientObject.ApplicationId = data.ApplicationId;
+                        data.ClientObject.MediusVersion = (int)scertClient.MediusVersion;
                         data.ClientObject.OnConnected();
 
                         data.ClientObject.Queue(new NetMessageProtocolInfo()
@@ -157,12 +166,21 @@ namespace Server.Medius
                         break;
                     }
 
+
+
                 default:
                     {
                         Logger.Warn($"Unhandled Medius Plugin Message: {message}");
                         break;
                     }
             }
+        }
+
+        public ClientObject ReserveClient(NetMessageHello request)
+        {
+            var client = new ClientObject();
+            client.BeginSession();
+            return client;
         }
     }
 }

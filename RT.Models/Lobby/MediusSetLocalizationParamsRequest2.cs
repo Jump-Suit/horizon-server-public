@@ -13,6 +13,7 @@ namespace RT.Models
         public string SessionKey; // SESSIONKEY_MAXLEN
         public MediusCharacterEncodingType CharacterEncoding;
         public MediusLanguageType Language;
+        public MediusTimeZone TimeZone;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -27,6 +28,7 @@ namespace RT.Models
             reader.ReadBytes(2);
             CharacterEncoding = reader.Read<MediusCharacterEncodingType>();
             Language = reader.Read<MediusLanguageType>();
+            TimeZone = reader.Read<MediusTimeZone>();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -42,6 +44,7 @@ namespace RT.Models
             writer.Write(new byte[2]);
             writer.Write(CharacterEncoding);
             writer.Write(Language);
+            writer.Write(TimeZone);
         }
 
 
@@ -51,7 +54,8 @@ namespace RT.Models
                 $"MessageID: {MessageID} " +
                 $"SessionKey: {SessionKey} " +
                 $"CharacterEncoding: {CharacterEncoding} " +
-                $"Language: {Language} ";
+                $"Language: {Language} " +
+                $"TimeZone: {TimeZone}";
         }
     }
 }

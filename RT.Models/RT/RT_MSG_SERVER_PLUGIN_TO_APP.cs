@@ -29,9 +29,10 @@ namespace RT.Models
         {
             if (Message != null)
             {
-                //writer.Write(Message.PacketClass);
+                writer.Write(Message.PacketClass);
+                writer.Write(new byte[3]);
                 writer.Write(Message.PacketType);
-                Message.Serialize(writer);
+                Message.SerializePlugin(writer);
             }
         }
 
@@ -44,10 +45,6 @@ namespace RT.Models
         {
             return base.ToString() + " " +
                 $"Message: {Message}";
-                //$"incomingMessage: {incomingMessage} " +
-                //$"size: {size} " +
-                //$"pluginId: {pluginId} " +
-                //$"messageType: {messageType}";
         }
 
     }

@@ -61,7 +61,7 @@ namespace RT.Models
         {
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
-                $"Data: {(Data != null ? BitConverter.ToString(Data) : "<null>")} " +
+                $"Data: {(Data != null ? string.Join("", Data) : "<null>")} " +
                 $"iStartByteIndex: {iStartByteIndex} " +
                 $"iDataSize: {iDataSize} " +
                 $"iPacketNumber: {iPacketNumber} " +

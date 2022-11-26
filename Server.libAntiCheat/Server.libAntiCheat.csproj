@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	<ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DotNetty.Common" Version="0.7.4" />
+  </ItemGroup>
+  
+  <ItemGroup>
+	<ProjectReference Include="..\RT.Models\RT.Models.csproj" />
+  </ItemGroup>
+  
+</Project>

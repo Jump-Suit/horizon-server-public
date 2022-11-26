@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Server.NAT": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:1241;http://localhost:1244"
+    }
+  }
+}

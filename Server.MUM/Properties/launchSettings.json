@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "Server.UniverseManager": {
+    "Server.MUM": {
       "commandName": "Project"
     },
     "Docker": {

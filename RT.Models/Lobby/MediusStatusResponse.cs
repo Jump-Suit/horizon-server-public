@@ -3,13 +3,10 @@ using Server.Common;
 
 namespace RT.Models
 {
-    public class MediusStatusResponse : BaseMediusMessage, IMediusResponse
+    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.BanPlayerResponse)]
+    public class MediusBanPlayerResponse : BaseLobbyMessage, IMediusResponse
     {
-        public NetMessageClass Class;
-        public byte Type;
-
-        public override byte PacketType => Type;
-        public override NetMessageClass PacketClass => Class;
+        public override byte PacketType => (byte)MediusLobbyMessageIds.BanPlayerResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 

@@ -5,30 +5,66 @@ using System.IO;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Fundamental information about a file.
+    /// </summary>
     public class MediusFile : IStreamSerializer
     {
-        public string Filename;
-        public byte[] ServerChecksum = new byte[Constants.MEDIUS_FILE_CHECKSUM_NUMBYTES];
-        public uint FileID;
-        public uint FileSize;
-        public uint CreationTimeStamp;
-        public uint OwnerID;
-        public uint GroupID;
+        /// <summary>
+        /// Filename
+        /// </summary>
+        public string FileName;
+        /// <summary>
+        /// checksum of file data
+        /// </summary>
+        public string ServerChecksum;
+        /// <summary>
+        /// Read only ID of file assigned by server
+        /// </summary>
+        public int FileID;
+        /// <summary>
+        /// Read only file size in bytes
+        /// </summary>
+        public int FileSize;
+        /// <summary>
+        /// Read only datetime of file creation
+        /// </summary>
+        public int CreationTimeStamp;
+        /// <summary>
+        /// Owner's user account id
+        /// </summary>
+        public int OwnerID;
+        /// <summary>
+        /// Group id
+        /// </summary>
+        public int GroupID;
+        /// <summary>
+        /// Owner File Permissions
+        /// </summary>
         public ushort OwnerPermissionRWX;
+        /// <summary>
+        /// Group File Permissions
+        /// </summary>
         public ushort GroupPermissionRWX;
+        /// <summary>
+        /// Global File Permissions
+        /// </summary>
         public ushort GlobalPermissionRWX;
+        /// <summary>
+        /// Read only ID used to identify the current operation being performed on file.
+        /// </summary>
         public ushort ServerOperationID;
 
         public void Deserialize(BinaryReader reader)
         {
             // 
-            Filename = reader.ReadString(Constants.MEDIUS_FILE_MAX_FILENAME_LENGTH);
-            ServerChecksum = reader.ReadBytes(Constants.MEDIUS_FILE_CHECKSUM_NUMBYTES);
-            FileID = reader.ReadUInt32();
-            FileSize = reader.ReadUInt32();
-            CreationTimeStamp = reader.ReadUInt32();
-            OwnerID = reader.ReadUInt32();
-            GroupID = reader.ReadUInt32();
+            FileName = reader.ReadString(Constants.MEDIUS_FILE_MAX_FILENAME_LENGTH);
+            ServerChecksum = reader.ReadString(Constants.MEDIUS_FILE_CHECKSUM_NUMBYTES);
+            FileID = reader.ReadInt32();
+            FileSize = reader.ReadInt32();
+            CreationTimeStamp = reader.ReadInt32();
+            OwnerID = reader.ReadInt32();
+            GroupID = reader.ReadInt32();
             OwnerPermissionRWX = reader.ReadUInt16();
             GroupPermissionRWX = reader.ReadUInt16();
             GlobalPermissionRWX = reader.ReadUInt16();
@@ -38,7 +74,7 @@ namespace RT.Models
         public void Serialize(BinaryWriter writer)
         {
             // 
-            writer.Write(Filename, Constants.MEDIUS_FILE_MAX_FILENAME_LENGTH);
+            writer.Write(FileName, Constants.MEDIUS_FILE_MAX_FILENAME_LENGTH);
             writer.Write(ServerChecksum, Constants.MEDIUS_FILE_CHECKSUM_NUMBYTES);
             writer.Write(FileID);
             writer.Write(FileSize);
@@ -53,8 +89,8 @@ namespace RT.Models
 
         public override string ToString()
         {
-            return $"Filename: {Filename} " +
-                $"ServerChecksum: {BitConverter.ToString(ServerChecksum)} " +
+            return $"Filename: {FileName} " +
+                $"ServerChecksum: {Convert.ToString(ServerChecksum)} " +
                 $"FileID: {FileID} " +
                 $"FileSize: {FileSize} " +
                 $"CreationTimeStamp: {CreationTimeStamp} " +

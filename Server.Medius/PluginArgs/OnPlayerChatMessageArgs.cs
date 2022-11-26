@@ -10,6 +10,8 @@ namespace Server.Medius.PluginArgs
         /// </summary>
         public ClientObject Player { get; set; }
 
+        public Channel Channel { get; set; }
+
         /// <summary>
         /// Message.
         /// </summary>
@@ -18,8 +20,8 @@ namespace Server.Medius.PluginArgs
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"Player:{Player} " +
-                $"Message:{Message}";
+                $"Player: {Player} " +
+                $"Message: {Message}";
         }
 
     }

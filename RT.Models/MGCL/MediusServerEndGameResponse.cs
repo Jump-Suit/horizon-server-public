@@ -8,6 +8,9 @@ namespace RT.Models
     {
         public override byte PacketType => (byte)MediusMGCLMessageIds.ServerEndGameResponse;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
         public MGCL_ERROR_CODE Confirmation;
 

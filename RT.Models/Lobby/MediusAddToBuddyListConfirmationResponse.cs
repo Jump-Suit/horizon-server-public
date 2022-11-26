@@ -3,11 +3,10 @@ using Server.Common;
 
 namespace RT.Models
 {
-    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.AddToBuddyListFwdConfirmation)]
+    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.AddToBuddyListConfirmationResponse)]
     public class MediusAddToBuddyListConfirmationResponse : BaseLobbyMessage, IMediusResponse
     {
-
-        public override byte PacketType => (byte)MediusLobbyExtMessageIds.AddToBuddyListFwdConfirmation;
+        public override byte PacketType => (byte)MediusLobbyExtMessageIds.AddToBuddyListConfirmationResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 
@@ -24,11 +23,12 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
+            reader.ReadBytes(3);
 
             // 
             StatusCode = reader.Read<MediusCallbackStatus>();
             TargetAccountID = reader.ReadInt32();
-            TargetAccountName = reader.ReadString();
+            TargetAccountName = reader.ReadString(Constants.ACCOUNTNAME_MAXLEN);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -38,11 +38,12 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
+            writer.Write(new byte[3]);
 
             // 
             writer.Write(StatusCode);
             writer.Write(TargetAccountID);
-            writer.Write(TargetAccountName);
+            writer.Write(TargetAccountName, Constants.ACCOUNTNAME_MAXLEN);
         }
 
 
@@ -52,7 +53,7 @@ namespace RT.Models
                 $"MessageID: {MessageID} " +
                 $"StatusCode: {StatusCode} " +
                 $"TargetAccountID: {TargetAccountID} " +
-                $"TargetAccountName: {TargetAccountName} ";
+                $"TargetAccountName: {TargetAccountName}";
         }
     }
 }

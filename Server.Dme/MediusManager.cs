@@ -1,20 +1,24 @@
-﻿using DotNetty.Common.Internal.Logging;
+﻿using DotNetty.Codecs;
+using DotNetty.Codecs.Json;
+using DotNetty.Common.Internal.Logging;
+using DotNetty.Handlers.Logging;
 using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
 using RT.Common;
 using RT.Cryptography;
 using RT.Models;
+using Server.Pipeline.Tcp;
 using Server.Common;
 using Server.Dme.Models;
-using Server.Pipeline.Attribute;
-using Server.Pipeline.Tcp;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
+using Server.Pipeline.Attribute;
 
 namespace Server.Dme
 {
@@ -135,7 +139,7 @@ namespace Server.Dme
 
                 // Log if id is set
                 if (message.CanLog())
-                    Logger.Info($"MPS RECV {channel}: {message}");
+                    Logger.Debug($"MPS RECV {channel}: {message}");
             };
 
             _bootstrap = new Bootstrap();
@@ -161,6 +165,7 @@ namespace Server.Dme
         public async Task Stop()
         {
             await Task.WhenAll(_worlds.Select(x => x.Stop()));
+            await _mpsChannel.DisconnectAsync();
             await _group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
 
             // 
@@ -168,9 +173,47 @@ namespace Server.Dme
             _removeWorldQueue.Clear();
             _mpsRecvQueue.Clear();
             _mpsSendQueue.Clear();
+            _mpsState = MPSConnectionState.NO_CONNECTION;
+        }
+        
+        public async Task HandleIncomingMessages()
+        {
+            if (_mpsChannel == null)
+                return;
+
+            //
+            if (_mpsState == MPSConnectionState.FAILED || 
+                (_mpsState != MPSConnectionState.AUTHENTICATED && (Utils.GetHighPrecisionUtcTime() - _utcConnectionState).TotalSeconds > 30))
+                throw new Exception("Failed to authenticate with the MPS server.");
+
+            await Program.TimeAsync("mm incoming", async () =>
+            {
+                try
+                {
+                    // Process all messages in queue
+                    while (_mpsRecvQueue.TryDequeue(out var message))
+                    {
+                        try
+                        {
+                            await ProcessMessage(message, _mpsChannel);
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Error(e);
+                        }
+                    }
+
+                    // Handle incoming for each world
+                    await Task.WhenAll(_worlds.Select(x => x.HandleIncomingMessages()));
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                }
+            });
         }
 
-        public async Task Tick()
+        public async Task HandleOutgoingMessages()
         {
             if (_mpsChannel == null)
                 return;
@@ -185,21 +228,8 @@ namespace Server.Dme
 
             try
             {
-                // Process all messages in queue
-                while (_mpsRecvQueue.TryDequeue(out var message))
-                {
-                    try
-                    {
-                        await ProcessMessage(message, _mpsChannel);
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.Error(e);
-                    }
-                }
-
-                // Process each world
-                await Task.WhenAll(_worlds.Select(x => x.Tick()));
+                // Handle outgoing for each world
+                await Task.WhenAll(_worlds.Select(x => x.HandleOutgoingMessages()));
 
                 // Handle world removals
                 while (_removeWorldQueue.TryDequeue(out var world))
@@ -211,7 +241,6 @@ namespace Server.Dme
                     // Add send queue to responses
                     while (_mpsSendQueue.TryDequeue(out var message))
                         responses.Add(message);
-
 
                     //
                     if (responses.Count > 0)
@@ -247,9 +276,9 @@ namespace Server.Dme
             _mpsState = MPSConnectionState.CONNECTED;
 
             // 
-            if (!_mpsChannel.HasAttribute(Pipeline.Constants.SCERT_CLIENT))
+            if (!_mpsChannel.HasAttribute(Server.Pipeline.Constants.SCERT_CLIENT))
                 _mpsChannel.GetAttribute(Pipeline.Constants.SCERT_CLIENT).Set(new ScertClientAttribute());
-            var scertClient = _mpsChannel.GetAttribute(Pipeline.Constants.SCERT_CLIENT).Get();
+            var scertClient = _mpsChannel.GetAttribute(Server.Pipeline.Constants.SCERT_CLIENT).Get();
             scertClient.RsaAuthKey = Program.Settings.MPS.Key;
             scertClient.CipherService.GenerateCipher(scertClient.RsaAuthKey);
 
@@ -289,7 +318,7 @@ namespace Server.Dme
                         // Send public key
                         Enqueue(new RT_MSG_CLIENT_CRYPTKEY_PUBLIC()
                         {
-                            Key = Program.Settings.MPS.Key.N.ToByteArrayUnsigned().Reverse().ToArray()
+                            PublicKey = Program.Settings.MPS.Key.N.ToByteArrayUnsigned().Reverse().ToArray()
                         });
 
                         _mpsState = MPSConnectionState.HANDSHAKE;
@@ -301,11 +330,12 @@ namespace Server.Dme
                             throw new Exception($"Unexpected RT_MSG_SERVER_CRYPTKEY_PEER from server. {serverCryptKeyPeer}");
 
                         // generate new client session key
-                        scertClient.CipherService.GenerateCipher(CipherContext.RC_CLIENT_SESSION, serverCryptKeyPeer.Key);
-
+                        scertClient.CipherService.GenerateCipher(CipherContext.RC_CLIENT_SESSION, serverCryptKeyPeer.SessionKey);
+                        
                         await _mpsChannel.WriteAndFlushAsync(new RT_MSG_CLIENT_CONNECT_TCP()
                         {
-                            AppId = ApplicationId
+                            AppId = ApplicationId,
+                            Key = Program.GlobalAuthPublic
                         });
 
                         _mpsState = MPSConnectionState.CONNECT_TCP;
@@ -325,7 +355,7 @@ namespace Server.Dme
                                 ListenServerAddress = new NetAddress()
                                 {
                                     Address = Program.SERVER_IP.ToString(),
-                                    Port = (uint)Program.TcpServer.Port
+                                    Port = Program.TcpServer.Port
                                 }
                             }
                         });
@@ -342,10 +372,7 @@ namespace Server.Dme
                     }
                 case RT_MSG_CLIENT_ECHO clientEcho:
                     {
-                        Enqueue(new RT_MSG_CLIENT_ECHO()
-                        {
-                            Value = 0xA5,
-                        });
+                        Enqueue(new RT_MSG_CLIENT_ECHO() { Value = clientEcho.Value });
                         break;
                     }
                 case RT_MSG_SERVER_APP serverApp:
@@ -395,15 +422,21 @@ namespace Server.Dme
                 //
                 case MediusServerCreateGameWithAttributesRequest createGameWithAttributesRequest:
                     {
-                        World world = new World(this, createGameWithAttributesRequest.MaxClients);
-                        _worlds.Add(world);
-
-                        Enqueue(new MediusServerCreateGameWithAttributesResponse()
+                        try
                         {
-                            MessageID = createGameWithAttributesRequest.MessageID,
-                            Confirmation = MGCL_ERROR_CODE.MGCL_SUCCESS,
-                            WorldID = (int)createGameWithAttributesRequest.MediusWorldUID,
-                        });
+                            World world = new World(this, createGameWithAttributesRequest.ApplicationID, createGameWithAttributesRequest.MaxClients);
+                            _worlds.Add(world);
+
+                            Enqueue(new MediusServerCreateGameWithAttributesResponse()
+                            {
+                                MessageID = createGameWithAttributesRequest.MessageID,
+                                Confirmation = MGCL_ERROR_CODE.MGCL_SUCCESS,
+                                WorldID = world.WorldId
+                            });
+                        } catch (Exception e) {
+                            Logger.Warn($"error at {e}");
+                        };
+
                         break;
                     }
                 case MediusServerJoinGameRequest joinGameRequest:
@@ -457,6 +490,7 @@ namespace Server.Dme
         }
 
         #endregion
+
 
         #endregion
 

@@ -9,7 +9,7 @@ namespace RT.Models
         public override RT_MSG_TYPE Id => RT_MSG_TYPE.RT_MSG_CLIENT_CONNECT_TCP;
 
         // 
-        public uint TargetWorldId;
+        public int TargetWorldId;
         public byte UNK0;
         public int AppId;
         public RSA_KEY Key;
@@ -22,7 +22,7 @@ namespace RT.Models
             SessionKey = null;
             AccessToken = null;
 
-            TargetWorldId = reader.ReadUInt32();
+            TargetWorldId = reader.ReadInt32();
             if (reader.MediusVersion < 109)
                 UNK0 = reader.ReadByte();
             AppId = reader.ReadInt32();
@@ -41,7 +41,7 @@ namespace RT.Models
             if (writer.MediusVersion < 109)
                 writer.Write(UNK0);
             writer.Write(AppId);
-            writer.Write(Key ?? RSA_KEY.Empty);
+            writer.Write(Key);
         }
 
         public override string ToString()
@@ -49,7 +49,7 @@ namespace RT.Models
             return base.ToString() + " " +
                 $"TargetWorldId: {TargetWorldId:X8} " +
                 $"UNK0: {UNK0:X2} " +
-                $"AppId: {AppId:X8} " +
+                $"AppId: {AppId} " +
                 $"Key: {Key} " +
                 $"SessionKey: {SessionKey} " +
                 $"AccessToken: {AccessToken}";

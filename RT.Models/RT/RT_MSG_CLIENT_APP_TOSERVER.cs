@@ -10,13 +10,38 @@ namespace RT.Models
 
         public BaseMediusMessage Message { get; set; } = null;
 
+        //public BaseMediusGhsMessage GhsMessage { get; set; } = null;
+
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
+            /*
+            if(reader.AppId == 0)
+            {
+                GhsMessage = BaseMediusGhsMessage.Instantiate(reader);
+            } else
+            {
+                Message = BaseMediusMessage.Instantiate(reader);
+            }
+            */
             Message = BaseMediusMessage.Instantiate(reader);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
         {
+            /*
+            if(GhsMessage != null)
+            {
+                writer.Write(GhsMessage.PacketClass);
+                writer.Write(GhsMessage.PacketType);
+                GhsMessage.Serialize(writer);
+            } else if (Message != null)
+            {
+                writer.Write(Message.PacketClass);
+                writer.Write(Message.PacketType);
+                Message.Serialize(writer);
+            }
+            */
+
             if (Message != null)
             {
                 writer.Write(Message.PacketClass);

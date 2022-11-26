@@ -22,10 +22,11 @@ namespace Server.UniverseManager
         private int _port = 0;
         public int Port => _port;
 
-        protected IEventLoopGroup _bossGroup = null;
-        protected IEventLoopGroup _workerGroup = null;
-        protected IChannel _boundChannel = null;
-        protected ScertServerHandler _scertHandler = null;
+        protected IEventLoopGroup _bossGroup;
+        protected IEventLoopGroup _workerGroup;
+        protected IChannel _boundChannel;
+        protected ScertServerHandler _scertHandler;
+
         private uint _clientCounter = 0;
 
         protected internal class ChannelData
@@ -37,7 +38,9 @@ namespace Server.UniverseManager
 
         protected ConcurrentDictionary<string, ChannelData> _channelDatas = new ConcurrentDictionary<string, ChannelData>();
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public MUM(int port)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             _port = port;
         }
@@ -45,7 +48,7 @@ namespace Server.UniverseManager
         /// <summary>
         /// Start the MUM TCP Server.
         /// </summary>
-        public virtual async void Start()
+        public virtual async Task Start()
         {
             //
             _bossGroup = new MultithreadEventLoopGroup(1);
@@ -183,7 +186,9 @@ namespace Server.UniverseManager
 
         #region Message Processing
 
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         protected async Task ProcessMessage(BaseScertMessage message, IChannel clientChannel, ChannelData data)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             // Get ScertClient data
             var scertClient = clientChannel.GetAttribute(Server.Pipeline.Constants.SCERT_CLIENT).Get();
@@ -201,43 +206,23 @@ namespace Server.UniverseManager
                 case RT_MSG_CLIENT_CRYPTKEY_PUBLIC clientCryptKeyPublic:
                     {
                         // generate new client session key
-                        scertClient.CipherService.GenerateCipher(CipherContext.RSA_AUTH, clientCryptKeyPublic.Key.Reverse().ToArray());
+                        scertClient.CipherService.GenerateCipher(CipherContext.RSA_AUTH, clientCryptKeyPublic.PublicKey.Reverse().ToArray());
                         scertClient.CipherService.GenerateCipher(CipherContext.RC_CLIENT_SESSION);
 
-                        Queue(new RT_MSG_SERVER_CRYPTKEY_PEER() { Key = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
+                        Queue(new RT_MSG_SERVER_CRYPTKEY_PEER() { SessionKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
                         break;
                     }
                 case RT_MSG_CLIENT_CONNECT_TCP clientConnectTcp:
                     {
                         data.ApplicationId = clientConnectTcp.AppId;
 
-                        //   HSG:F Pubeta, HW:O 
-                        if (data.ApplicationId == 10538 || data.ApplicationId == 10582 || data.ApplicationId == 10130)
+                        
+                        Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
                         {
-                            Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
-                            {
-                                IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address,
-                            }, clientChannel);
+                            IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address,
+                        }, clientChannel);
 
-                            Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
-                        }
-                        else
-                        {
-                            if (scertClient.MediusVersion <= 109)
-                            {
-                                Queue(new RT_MSG_SERVER_CONNECT_REQUIRE() { Contents = Utils.FromString("004802") }, clientChannel);
-                            }
-                            Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
-                            {
-                                IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address,
-                            }, clientChannel);
-
-                            Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { Key = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
-
-                            Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
-                        }
-
-
+                        Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
 
                         break;
                     }

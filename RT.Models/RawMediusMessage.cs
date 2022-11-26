@@ -48,8 +48,8 @@ namespace RT.Models
         protected NetMessageClass _class;
         public override NetMessageClass PacketClass => _class;
 
-        protected byte _messageType;
-        public override NetMessageTypeIds PacketType => (NetMessageTypeIds)_messageType;
+        protected NetMessageTypeIds _messageType;
+        public override NetMessageTypeIds PacketType => _messageType;
 
         public byte[] Contents { get; set; }
 
@@ -58,8 +58,47 @@ namespace RT.Models
 
         }
 
-        public RawMediusMessage0(byte messageType)
+        public RawMediusMessage0(NetMessageClass msgClass, NetMessageTypeIds messageType)
         {
+            _class = msgClass;
+            _messageType = messageType;
+        }
+
+        public override void DeserializePlugin(Server.Common.Stream.MessageReader reader)
+        {
+            Contents = reader.ReadRest();
+        }
+
+        public override void SerializePlugin(Server.Common.Stream.MessageWriter writer)
+        {
+            if (Contents != null)
+                writer.Write(Contents);
+        }
+
+        public override string ToString()
+        {
+            return base.ToString() + $" MsgType: {PacketType} Contents:{BitConverter.ToString(Contents)}";
+        }
+    }
+    
+    public class RawGHSMediusMessage : BaseMediusGHSMessage
+    {
+        protected NetMessageClass _class;
+        public override NetMessageClass PacketClass => _class;
+
+        protected GhsOpcode _messageType;
+        public override GhsOpcode GhsOpcode => _messageType;
+
+        public byte[] Contents { get; set; }
+
+        public RawGHSMediusMessage()
+        {
+
+        }
+
+        public RawGHSMediusMessage(NetMessageClass msgClass, GhsOpcode messageType)
+        {
+            _class = msgClass;
             _messageType = messageType;
         }
 
@@ -76,7 +115,8 @@ namespace RT.Models
 
         public override string ToString()
         {
-            return base.ToString() + $" MsgType:{PacketType} Contents:{BitConverter.ToString(Contents)}";
+            return base.ToString() + $" MsgType:{GhsOpcode} Contents:{BitConverter.ToString(Contents)}";
         }
     }
+    
 }

@@ -3,12 +3,23 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Update State Level of this session
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.UpdateUserState)]
-    public class MediusUpdateUserState : BaseLobbyMessage
+    public class MediusUpdateUserState : BaseLobbyMessage, IMediusRequest
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.UpdateUserState;
 
+        public MessageId MessageID { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
+
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey; // SESSIONKEY_MAXLEN
+        /// <summary>
+        /// Change to in chat channel, left game, or left party
+        /// </summary>
         public MediusUserAction UserAction;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

@@ -3,15 +3,33 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Request for the Medius Servers to connect a game world to this host
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobbyReport, MediusMGCLMessageIds.ServerConnectGamesRequest)]
     public class MediusServerConnectGamesRequest : BaseMGCLMessage, IMediusRequest
     {
         public override byte PacketType => (byte)MediusMGCLMessageIds.ServerConnectGamesRequest;
 
+        /// <summary>
+        /// Message ID used for asynchronous request processing.
+        /// </summary>
         public MessageId MessageID { get; set; }
+        /// <summary>
+        /// IP Address of the server to connect to
+        /// </summary>
         public string ServerIP; // MGCL_SERVERIP_MAXLEN
+        /// <summary>
+        /// Port of the server to connect to.
+        /// </summary>
         public int ServerPort;
+        /// <summary>
+        /// Game World ID to connect to.
+        /// </summary>
         public int GameWorldID;
+        /// <summary>
+        /// Spectator World ID to connect to.
+        /// </summary>
         public int SpectatorWorldID;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

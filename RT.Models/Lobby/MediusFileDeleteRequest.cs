@@ -13,8 +13,13 @@ namespace RT.Models
 
         public override byte PacketType => (byte)MediusLobbyMessageIds.FileDelete;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// MediusFile to delete
+        /// </summary>
         public MediusFile MediusFileToDelete;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

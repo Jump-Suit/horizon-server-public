@@ -4,14 +4,23 @@ using Server.Common;
 namespace RT.Models
 {
     [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.GetAccessLevelInfoResponse)]
-    public class MediusGetAccessLevelInfoResponse : BaseLobbyExtMessage, IMediusRequest
+    public class MediusGetAccessLevelInfoResponse : BaseLobbyExtMessage, IMediusResponse
     {
-
         public override byte PacketType => (byte)MediusLobbyExtMessageIds.GetAccessLevelInfoResponse;
 
-        public MessageId MessageID { get; set; }
+        public bool IsSuccess => StatusCode >= 0;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
+        public MessageId MessageID { get; set; } 
+        /// <summary>
+        /// Response code to send back to the Access Level Request
+        /// </summary>
         public MediusCallbackStatus StatusCode;
+        /// <summary>
+        /// Access Level that the currently connected client has
+        /// </summary>
         public MediusAccessLevelType AccessLevel;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -22,8 +31,8 @@ namespace RT.Models
             //
             MessageID = reader.Read<MessageId>();
 
+            //
             reader.ReadBytes(3);
-
             StatusCode = reader.Read<MediusCallbackStatus>();
             AccessLevel = reader.Read<MediusAccessLevelType>();
         }
@@ -41,7 +50,6 @@ namespace RT.Models
             writer.Write(StatusCode);
             writer.Write(AccessLevel);
         }
-
 
         public override string ToString()
         {

@@ -31,7 +31,7 @@ namespace Server.Pipeline.Udp
             var scertClient = ctx.GetAttribute(Constants.SCERT_CLIENT).Get();
 
             // Serialize
-            var msgs = message.Message.Serialize(scertClient.MediusVersion, scertClient.CipherService);
+            var msgs = message.Message.Serialize(scertClient.MediusVersion, scertClient.ApplicationID, scertClient.CipherService);
 
             // Condense as much as possible
             var condensedMsgs = msgs.GroupWhileAggregating(0, (sum, item) => sum + item.Length, (sum, item) => sum < maxPacketLength);

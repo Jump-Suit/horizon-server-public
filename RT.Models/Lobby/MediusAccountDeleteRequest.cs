@@ -6,6 +6,7 @@ namespace RT.Models
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.AccountDelete)]
     public class MediusAccountDeleteRequest : BaseLobbyMessage, IMediusRequest
     {
+        public override NetMessageClass PacketClass => NetMessageClass.MessageClassLobby;
 
         public override byte PacketType => (byte)MediusLobbyMessageIds.AccountDelete;
 
@@ -40,13 +41,12 @@ namespace RT.Models
             writer.Write(MasterPassword, Constants.PASSWORD_MAXLEN);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"SessionKey:{SessionKey} " +
-$"MasterPassword:{MasterPassword}";
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey} " +
+                $"MasterPassword: {MasterPassword}";
         }
     }
 }

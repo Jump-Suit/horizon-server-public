@@ -10,9 +10,16 @@ namespace RT.Models
 
         public bool IsSuccess => StatusCode >= 0;
 
-
+        /// Notes:
+        /// Status code can beL MediusWMError, MediusPlayerNotPrivileged, MediusSuccess
+        
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Response code for the request to select a location
+        /// </summary>
         public MediusCallbackStatus StatusCode;
 
 

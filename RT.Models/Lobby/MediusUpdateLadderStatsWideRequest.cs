@@ -41,13 +41,12 @@ namespace RT.Models
             for (int i = 0; i < Constants.LADDERSTATSWIDE_MAXLEN; ++i) { writer.Write(i >= Stats.Length ? 0 : Stats[i]); }
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"LadderType:{LadderType} " +
-$"Stats:{Stats}";
+                $"MessageID: {MessageID} " +
+                $"LadderType: {LadderType} " +
+                $"Stats: {string.Join("", Stats)}";
         }
     }
 }

@@ -3,15 +3,29 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Request information about a universe
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.GetUniverseInformation)]
     public class MediusGetUniverseInformationRequest : BaseLobbyMessage, IMediusRequest
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.GetUniverseInformation;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Bitfield to determine the type of information to retrieve
+        /// </summary>
         public MediusUniverseVariableInformationInfoFilter InfoType;
+        /// <summary>
+        /// Character encoding: ISO-8859-1 or UTF-8
+        /// </summary>
         public MediusCharacterEncodingType CharacterEncoding;
+        /// <summary>
+        /// Language Setting
+        /// </summary>
         public MediusLanguageType Language;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

@@ -10,10 +10,13 @@ namespace RT.Models
 
         public bool IsSuccess => StatusCode >= 0;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
 
         public MediusCallbackStatus StatusCode;
-        public uint GMT_time = Utils.GetUnixTime();
+        public int GMT_time = (int)Utils.GetUnixTime();
         public MediusTimeZone Local_server_timezone;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -27,7 +30,7 @@ namespace RT.Models
             // 
             reader.ReadBytes(3);
             StatusCode = reader.Read<MediusCallbackStatus>();
-            GMT_time = reader.ReadUInt32();
+            GMT_time = reader.ReadInt32();
             Local_server_timezone = reader.Read<MediusTimeZone>();
         }
 

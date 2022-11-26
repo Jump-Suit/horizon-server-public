@@ -9,6 +9,7 @@ namespace Server.SVO.Config
         /// </summary>
         public int RefreshConfigInterval = 5000;
 
+        public bool SVODebug = false;
 
         #region SVO SCE-RT Service Location
 
@@ -20,12 +21,12 @@ namespace Server.SVO.Config
         public string? SVOIp { get; set; } = null;
 
         /// <summary>
-        /// HTTP Port of the Sports View Online Server.
+        /// HTTP Port of the SCE-RT View Online Server.
         /// </summary>
         public int SVOHttpPort { get; set; } = 10060;
 
         /// <summary>
-        /// HTTPS Port of the Sports View Online Server.
+        /// HTTPS Port of the SCE-RT View Online Server.
         /// </summary>
         public int SVOHttpsPort { get; set; } = 10061;
         #endregion

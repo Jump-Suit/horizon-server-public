@@ -41,13 +41,12 @@ namespace RT.Models
             writer.Write(MediusWorldID);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"SessionKey:{SessionKey} " +
-$"MediusWorldID:{MediusWorldID}";
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey} " +
+                $"MediusWorldID: {MediusWorldID}";
         }
     }
 }

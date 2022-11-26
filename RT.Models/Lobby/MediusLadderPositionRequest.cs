@@ -29,6 +29,8 @@ namespace RT.Models
             // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             reader.ReadBytes(2);
+
+            //
             StartByte = reader.ReadInt32();
             EndByte = reader.ReadInt32();
             SortOrder = reader.Read<MediusSortOrder>();
@@ -46,6 +48,8 @@ namespace RT.Models
             // 
             writer.Write(SessionKey);
             writer.Write(new byte[2]);
+
+            //
             writer.Write(StartByte);
             writer.Write(EndByte);
             writer.Write(SortOrder);

@@ -11,6 +11,10 @@
         /// The account stats field contains up to this many bytes of binary data.
         /// </summary>
         public const int ACCOUNTSTATS_MAXLEN = 256;
+        /// <summary>
+        /// The player report stats field contains up to this many bytes of binary data.
+        /// </summary>
+        public const int PLAYERREPORTSTATS_MAXLEN = 512;
         #endregion
 
         /// <summary>
@@ -61,9 +65,18 @@
         /// Maximum number of bytes for the game stats, The is a binary field of fixed length, and no default value.
         /// </summary>
         public const int GAMESTATS_MAXLEN = 256;
+        /// <summary>
+        /// Maximum number of bytes in a spectator password, including null termination.
+        /// </summary>
+        public const int SPECTATORPASSWORD_MAXLEN = 32;
         #endregion
 
         public const int WINNINGTEAM_MAXLEN = 64;
+
+        /// <summary>
+        /// Maximum number of bytes in a MACHINE signature post. All binary data. (DEPRECATED)
+        /// </summary>
+        public const int MACHINESIGNATURE_MAXLEN = 128;
         /// <summary>
         /// Maximum number of bytes in a DNAS signature post. All binary data.
         /// </summary>
@@ -84,7 +97,7 @@
         public const int ANNOUNCEMENT1_MAXLEN = 4000;
         public const int MEDIUS_GENERIC_CHAT_FILTER_BYTES_LEN = 16;
         public const int MEDIUS_MESSAGE_MAXLEN = 512;
-        public const int MEDIUS_UDP_MESSAGE_MAXLEN = 512;
+        public const int MEDIUS_UDP_MESSAGE_MAXLEN = 584;
         public const int NEWS_MAXLEN = 256;
         public const int POLICY_MAXLEN = 256;
         public const int PLAYERNAME_MAXLEN = 32;
@@ -137,6 +150,9 @@
         public const int SUPERSETDESCRIPTION_MAXLEN = 256;
         public const int SUPERSETEXTRAINFO_MAXLEN = 256;
 
+        public const int REQUESTDATA_MAXLEN = 16;
+        public const int APPLICATIONDATA_MAXLEN = 15;
+
         public const int PARTYNAME_MAXLEN = 64;
         public const int PARTYPASSWORD_MAXLEN = 32;
 
@@ -147,10 +163,14 @@
         public const int MEDIUS_FILE_MAX_DOWNLOAD_DATA_SIZE = 464;
         public const int MEDIUS_FILE_MAX_FILENAME_LENGTH = 128;
         public const int MEDIUS_FILE_CHECKSUM_NUMBYTES = 16;
+        //public const int MEDIUS_FILE_CHECKSUM_NUMBYTES = 48;
         public const int MEDIUS_FILE_MAX_DESCRIPTION_LENGTH = 256;
+        public const int MEDIUS_FILE_MAX_KEY_LENGTH = 56;
+        public const int MEDIUS_FILE_MAX_VALUE_LENGTH = 256;
 
         public const int DME_FRAGMENT_MAX_PAYLOAD_SIZE = 484;
-        public const int DME_VERSION_LENGTH = 16;
+        public const int DME_NAME_LENGTH = 24;
+        public const int DME_VERSION_LENGTH = 20;
 
         public const int BUFFER_SIZE = 1500;
 
@@ -166,6 +186,12 @@
         /// Deprecated.
         /// </summary>
         public const int ICONLOCATION_MAXLEN = 64;
+        #endregion
+
+        #region OTG
+
+        public const int SYSTEMID_MAXLEN = 20;
+
         #endregion
     }
 }

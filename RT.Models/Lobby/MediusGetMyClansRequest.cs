@@ -6,7 +6,6 @@ namespace RT.Models
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.GetMyClans)]
     public class MediusGetMyClansRequest : BaseLobbyMessage, IMediusRequest
     {
-
         public override byte PacketType => (byte)MediusLobbyMessageIds.GetMyClans;
 
         public MessageId MessageID { get; set; }
@@ -26,6 +25,8 @@ namespace RT.Models
             // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             reader.ReadBytes(2);
+
+            //
             Start = reader.ReadInt32();
             PageSize = reader.ReadInt32();
         }
@@ -41,18 +42,19 @@ namespace RT.Models
             // 
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
             writer.Write(new byte[2]);
+
+            //
             writer.Write(Start);
             writer.Write(PageSize);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"SessionKey:{SessionKey} " +
-$"Start:{Start} " +
-$"PageSize:{PageSize}";
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey} " +
+                $"Start: {Start} " +
+                $"PageSize: {PageSize}";
         }
     }
 }

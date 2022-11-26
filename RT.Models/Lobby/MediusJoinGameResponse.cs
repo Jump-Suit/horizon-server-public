@@ -10,11 +10,18 @@ namespace RT.Models
 
         public bool IsSuccess => StatusCode >= 0;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
 
         public MediusCallbackStatus StatusCode;
         public MediusGameHostType GameHostType;
         public NetConnectionInfo ConnectInfo;
+        /// <summary>
+        /// MaxPlayers
+        /// </summary>
+        public long MaxPlayers;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -25,13 +32,15 @@ namespace RT.Models
             MessageID = reader.Read<MessageId>();
 
             //
+
             reader.ReadBytes(3);
+
             StatusCode = reader.Read<MediusCallbackStatus>();
             GameHostType = reader.Read<MediusGameHostType>();
             ConnectInfo = reader.Read<NetConnectionInfo>();
 
-            if (reader.MediusVersion > 112)
-                reader.ReadBytes(4);
+            if (reader.MediusVersion >= 113 && reader.AppId == 24180 || reader.AppId == 24000 || reader.AppId == 22500)
+                MaxPlayers = reader.ReadInt64();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -44,12 +53,13 @@ namespace RT.Models
 
             // 
             writer.Write(new byte[3]);
+
             writer.Write(StatusCode);
             writer.Write(GameHostType);
             writer.Write(ConnectInfo);
 
-            if (writer.MediusVersion > 112)
-                writer.Write(new byte[4]);
+            if (writer.MediusVersion >= 113 && writer.AppId == 24180 || writer.AppId == 24000 || writer.AppId == 22500)
+                writer.Write(MaxPlayers);
         }
 
         public override string ToString()
@@ -58,7 +68,8 @@ namespace RT.Models
                 $"MessageID: {MessageID} " +
                 $"StatusCode: {StatusCode} " +
                 $"GameHostType: {GameHostType} " +
-                $"ConnectInfo: {ConnectInfo}";
+                $"ConnectInfo: {ConnectInfo} " +
+                $"MaxPlayers: {MaxPlayers}";
         }
     }
 }

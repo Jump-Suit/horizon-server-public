@@ -1,4 +1,8 @@
-﻿namespace Server.Plugins.Interface
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Server.Plugins.Interface
 {
     public enum PluginEvent
     {
@@ -30,5 +34,6 @@
         DME_PLAYER_ON_LEFT,
 
         DME_GAME_ON_RECV_UDP,
+        DME_GAME_ON_RECV_TCP
     }
 }

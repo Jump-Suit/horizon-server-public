@@ -11,11 +11,25 @@ namespace RT.Models
 
         public bool IsSuccess => StatusCode >= 0;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Response status from the request to get information about a channel
+        /// </summary>
         public MediusCallbackStatus StatusCode;
+        /// <summary>
+        /// Chat channel name
+        /// </summary>
         public string LobbyName; // LOBBYNAME_MAXLEN
+        /// <summary>
+        /// Number of players
+        /// </summary>
         public int ActivePlayerCount;
+        /// <summary>
+        /// Maximum number of players.
+        /// </summary>
         public int MaxPlayers;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

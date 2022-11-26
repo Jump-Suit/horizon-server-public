@@ -6,7 +6,6 @@ namespace RT.Models
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.FileListFilesResponse)]
     public class MediusFileListResponse : BaseLobbyMessage, IMediusResponse
     {
-
         public override byte PacketType => (byte)MediusLobbyMessageIds.FileListFilesResponse;
 
         public bool IsSuccess => StatusCode >= 0;
@@ -41,7 +40,6 @@ namespace RT.Models
             writer.Write(EndOfList);
             writer.Write(new byte[2]);
         }
-
 
         public override string ToString()
         {

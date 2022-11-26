@@ -3,14 +3,29 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// he Confirmation value maps to MGCL_ERROR_CODE.<Br></Br>
+    /// If it is MGCL_SUCCESS, then the ConnectInfo points to the proxy server to <br></br>
+    /// which this host can connect in order to interface with the Medius universe.<br></br>
+    /// Save the connect information in a variable, and use it with MGCL_Connect().
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobbyReport, MediusMGCLMessageIds.ServerAuthenticationResponse)]
     public class MediusServerAuthenticationResponse : BaseMGCLMessage, IMediusResponse
     {
 
         public override byte PacketType => (byte)MediusMGCLMessageIds.ServerAuthenticationResponse;
 
+        /// <summary>
+        /// Message ID used for asynchronous request processing.
+        /// </summary>
         public MessageId MessageID { get; set; }
+        /// <summary>
+        /// MGCL_SUCCESS or an error.
+        /// </summary>
         public MGCL_ERROR_CODE Confirmation;
+        /// <summary>
+        /// Address of the proxy server to connect to.
+        /// </summary>
         public NetConnectionInfo ConnectInfo;
 
         public bool IsSuccess => Confirmation >= 0;

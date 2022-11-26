@@ -11,15 +11,15 @@ namespace Server.Medius.PluginArgs
         public ClientObject Player { get; set; }
 
         /// <summary>
-        /// Create game request.
+        /// Create request.
         /// </summary>
         public IMediusRequest Request { get; set; }
 
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"Player:{Player} " +
-                $"Request:{Request}";
+                $"Player: {Player} " +
+                $"Request: {Request}";
         }
     }
 }

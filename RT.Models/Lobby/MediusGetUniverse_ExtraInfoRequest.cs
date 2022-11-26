@@ -8,10 +8,21 @@ namespace RT.Models
     {
         public override byte PacketType => (byte)MediusLobbyExtMessageIds.GetUniverse_ExtraInfo;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Bitfield to determine the type of information to retrieve
+        /// </summary>
         public MediusUniverseVariableInformationInfoFilter InfoType;
+        /// <summary>
+        /// Character encoding: ISO-8859-1 or UTF-8
+        /// </summary>
         public MediusCharacterEncodingType CharacterEncoding;
+        /// <summary>
+        /// Language Setting
+        /// </summary>
         public MediusLanguageType Language;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

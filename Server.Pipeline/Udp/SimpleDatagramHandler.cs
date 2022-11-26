@@ -38,7 +38,6 @@ namespace Server.Pipeline.Udp
             OnChannelInactive?.Invoke(ctx.Channel);
         }
 
-
         protected override void ChannelRead0(IChannelHandlerContext ctx, DatagramPacket message)
         {
             // Send upstream

@@ -1,6 +1,7 @@
 ﻿using HpTimeStamps;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -17,6 +18,9 @@ namespace Server.Common
 
     public static class Utils
     {
+        private static Stopwatch _swTicker = Stopwatch.StartNew();
+        private static long _swTickerInitialTicks = DateTime.UtcNow.Ticks;
+
         public static byte[] ReverseEndian(byte[] ba)
         {
             byte[] ret = new byte[ba.Length];
@@ -150,13 +154,12 @@ namespace Server.Common
 
         public static DateTime GetHighPrecisionUtcTime()
         {
-#if USE_DATETIME_NOW
-            return DateTime.UtcNow;
-#else
-            return MonoStampSource.UtcNow;
-#endif
+			return new DateTime(_swTicker.Elapsed.Ticks + _swTickerInitialTicks, DateTimeKind.Utc);
         }
-
+        public static long GetMillisecondsSinceStartup()
+        {
+            return _swTicker.ElapsedMilliseconds;
+        }
         public static uint GetUnixTime()
         {
             return GetHighPrecisionUtcTime().ToUnixTime();

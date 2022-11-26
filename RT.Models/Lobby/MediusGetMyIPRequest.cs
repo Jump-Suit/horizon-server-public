@@ -11,8 +11,13 @@ namespace RT.Models
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.GetMyIP;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey; // SESSIONKEY_MAXLEN
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -43,8 +48,8 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"SessionKey:{SessionKey}";
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey}";
         }
     }
 }

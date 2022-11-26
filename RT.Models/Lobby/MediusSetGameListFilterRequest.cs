@@ -11,7 +11,7 @@ namespace RT.Models
         public MessageId MessageID { get; set; }
 
         public MediusGameListFilterField FilterField;
-        public uint Mask;
+        public int Mask;
         public MediusComparisonOperator ComparisonOperator;
         public int BaselineValue;
 
@@ -26,7 +26,7 @@ namespace RT.Models
             // 
             reader.ReadBytes(3);
             FilterField = reader.Read<MediusGameListFilterField>();
-            Mask = reader.ReadUInt32();
+            Mask = reader.ReadInt32();
             ComparisonOperator = reader.Read<MediusComparisonOperator>();
             BaselineValue = reader.ReadInt32();
         }
@@ -51,11 +51,11 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"FilterField:{FilterField} " +
-$"Mask:{Mask} " +
-$"ComparisonOperator:{ComparisonOperator} " +
-$"BaselineValue:{BaselineValue}";
+                $"MessageID: {MessageID} " +
+                $"FilterField: {FilterField} " +
+                $"Mask: {Mask} " +
+                $"ComparisonOperator: {ComparisonOperator} " +
+                $"BaselineValue: {BaselineValue}";
         }
     }
 }

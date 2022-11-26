@@ -19,6 +19,11 @@ namespace Server.Common.Logging
         public string LogPath { get; set; } = "logs/medius.log";
 
         /// <summary>
+        /// Whether to output metric information.
+        /// </summary>
+        public bool LogMetrics { get; set; } = false;
+
+        /// <summary>
         /// Whether to also log to the console.
         /// </summary>
         public bool LogToConsole { get; set; } = false;
@@ -77,6 +82,7 @@ namespace Server.Common.Logging
         private Dictionary<MediusMGCLMessageIds, bool> _mgclLogFilters = new Dictionary<MediusMGCLMessageIds, bool>();
         private Dictionary<MediusLobbyExtMessageIds, bool> _lobbyExtLogFilters = new Dictionary<MediusLobbyExtMessageIds, bool>();
         private Dictionary<NetMessageTypeIds, bool> _netLogFilters = new Dictionary<NetMessageTypeIds, bool>();
+        private Dictionary<GhsOpcode, bool> _ghsOpsLogFilters = new Dictionary<GhsOpcode, bool>();
 
         /// <summary>
         /// Whether or not the given RT message id should be logged
@@ -119,11 +125,19 @@ namespace Server.Common.Logging
         }
 
         /// <summary>
-        /// Whether or not the given Medius lobby extension message id should be logged
+        /// Whether or not the given Medius Zipper plugin extension message id should be logged
         /// </summary>
         public bool IsLogPlugin(NetMessageTypeIds msgType)
         {
             return _netLogFilters.TryGetValue(msgType, out var r) && r;
+        }
+
+        /// <summary>
+        /// Whether or not the given Medius GHS plugin extension message id should be logged
+        /// </summary>
+        public bool IsLogGHSPlugin(GhsOpcode msgType)
+        {
+            return _ghsOpsLogFilters.TryGetValue(msgType, out var r) && r;
         }
 
         /// <summary>
@@ -172,7 +186,7 @@ namespace Server.Common.Logging
                     if (Enum.TryParse<MediusLobbyExtMessageIds>(filter, out var value))
                         _lobbyExtLogFilters.Add(value, true);
             }
-
+            /*
             _netLogFilters.Clear();
             if (MediusNetMessageTypesLogFilter != null)
             {
@@ -180,6 +194,7 @@ namespace Server.Common.Logging
                     if (Enum.TryParse<NetMessageTypeIds>(filter, out var value))
                         _netLogFilters.Add(value, true);
             }
+            */
         }
     }
 

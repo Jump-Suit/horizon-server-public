@@ -12,7 +12,7 @@ namespace RT.Models
 
         public MessageId MessageID { get; set; }
 
-        public uint Total;
+        public int Total;
         public MediusCallbackStatus StatusCode;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -26,7 +26,7 @@ namespace RT.Models
             // 
             reader.ReadBytes(3);
             StatusCode = reader.Read<MediusCallbackStatus>();
-            Total = reader.ReadUInt32();
+            Total = reader.ReadInt32();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -47,7 +47,7 @@ namespace RT.Models
         {
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
-                $"Total: {Total}" +
+                $"Total: {Total} " +
                 $"StatusCode: {StatusCode} ";
         }
     }

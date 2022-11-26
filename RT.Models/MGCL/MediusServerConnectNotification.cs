@@ -3,13 +3,26 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Request a structure to notify Medius about the connect or disconnnect of a client on this game host.
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobbyReport, MediusMGCLMessageIds.ServerConnectNotification)]
     public class MediusServerConnectNotification : BaseMGCLMessage
     {
         public override byte PacketType => (byte)MediusMGCLMessageIds.ServerConnectNotification;
 
+        /// <summary>
+        /// A connect or disconnect event.
+        /// </summary>
         public MGCL_EVENT_TYPE ConnectEventType;
+        /// <summary>
+        /// Medius game world Unique ID that the player
+        /// connected or disconnected from.
+        /// </summary>
         public uint MediusWorldUID;
+        /// <summary>
+        /// The player's session key.
+        /// </summary>
         public string PlayerSessionKey;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

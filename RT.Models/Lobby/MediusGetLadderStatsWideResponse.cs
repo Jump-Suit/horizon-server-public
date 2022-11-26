@@ -1,5 +1,6 @@
 using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -53,7 +54,7 @@ namespace RT.Models
                 $"MessageID: {MessageID} " +
                 $"StatusCode: {StatusCode} " +
                 $"AccountID_or_ClanID: {AccountID_or_ClanID} " +
-                $"Stats: {Stats}";
+                $"Stats: {Convert.ToString(Stats)}";
         }
     }
 }

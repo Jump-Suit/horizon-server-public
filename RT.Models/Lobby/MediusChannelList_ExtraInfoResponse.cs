@@ -6,7 +6,6 @@ namespace RT.Models
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.ChannelList_ExtraInfoResponse)]
     public class MediusChannelList_ExtraInfoResponse : BaseLobbyMessage, IMediusResponse
     {
-
         public override byte PacketType => (byte)MediusLobbyMessageIds.ChannelList_ExtraInfoResponse;
 
         public bool IsSuccess => StatusCode >= 0;
@@ -42,7 +41,8 @@ namespace RT.Models
             PlayerCount = reader.ReadUInt16();
             MaxPlayers = reader.ReadUInt16();
 
-            if (reader.MediusVersion > 108)
+            // Older Pre 1.50 Medius titles didn't include this
+            if (reader.MediusVersion > 108) 
             {
                 GameWorldCount = reader.ReadUInt16();
                 reader.ReadBytes(2);
@@ -50,10 +50,16 @@ namespace RT.Models
 
             SecurityLevel = reader.Read<MediusWorldSecurityLevelType>();
             GenericField1 = reader.ReadUInt32();
-            GenericField2 = reader.ReadUInt32();
-            GenericField3 = reader.ReadUInt32();
-            GenericField4 = reader.ReadUInt32();
-            GenericFieldLevel = reader.Read<MediusWorldGenericFieldLevelType>();
+
+            //WRC4 uses these fields
+            if (reader.MediusVersion > 108 || reader.AppId != 10304 || reader.AppId == 10202)
+            {
+                GenericField2 = reader.ReadUInt32();
+                GenericField3 = reader.ReadUInt32();
+                GenericField4 = reader.ReadUInt32();
+                GenericFieldLevel = reader.Read<MediusWorldGenericFieldLevelType>();
+            }
+
             LobbyName = reader.ReadString(Constants.LOBBYNAME_MAXLEN);
             EndOfList = reader.ReadBoolean();
             reader.ReadBytes(3);
@@ -82,33 +88,36 @@ namespace RT.Models
 
             writer.Write(SecurityLevel);
             writer.Write(GenericField1);
-            writer.Write(GenericField2);
-            writer.Write(GenericField3);
-            writer.Write(GenericField4);
-            writer.Write(GenericFieldLevel);
+
+            if (writer.MediusVersion > 108 || writer.AppId != 10304 || writer.AppId == 10202)
+            {
+                writer.Write(GenericField2);
+                writer.Write(GenericField3);
+                writer.Write(GenericField4);
+                writer.Write(GenericFieldLevel);
+            }
             writer.Write(LobbyName, Constants.LOBBYNAME_MAXLEN);
             writer.Write(EndOfList);
             writer.Write(new byte[3]);
         }
 
-
         public override string ToString()
         {
-            return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"StatusCode:{StatusCode} " +
-$"MediusWorldID:{MediusWorldID} " +
-$"PlayerCount:{PlayerCount} " +
-$"MaxPlayers:{MaxPlayers} " +
-$"GameWorldCount:{GameWorldCount} " +
-$"SecurityLevel:{SecurityLevel} " +
-$"GenericField1:{GenericField1:X8} " +
-$"GenericField2:{GenericField2:X8} " +
-$"GenericField3:{GenericField3:X8} " +
-$"GenericField4:{GenericField4:X8} " +
-$"GenericFieldLevel:{GenericFieldLevel} " +
-$"LobbyName:{LobbyName} " +
-$"EndOfList:{EndOfList}";
+                return base.ToString() + " " +
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
+                $"MediusWorldID: {MediusWorldID} " +
+                $"PlayerCount: {PlayerCount} " +
+                $"MaxPlayers: {MaxPlayers} " +
+                $"GameWorldCount: {GameWorldCount} " +
+                $"SecurityLevel: {SecurityLevel} " +
+                $"GenericField1: {GenericField1:X8} " +
+                $"GenericField2: {GenericField2:X8} " +
+                $"GenericField3: {GenericField3:X8} " +
+                $"GenericField4: {GenericField4:X8} " +
+                $"GenericFieldLevel: {GenericFieldLevel} " +
+                $"LobbyName: {LobbyName} " +
+                $"EndOfList: {EndOfList}";
         }
     }
 }

@@ -5,10 +5,6 @@
     },
     "Docker": {
       "commandName": "Docker"
-    },
-    "Profile 1": {
-      "commandName": "Executable",
-      "executablePath": "D:\\PC Development\\!Github Repos\\Deadlocked-Server-Private-Revamp\\Server.Medius\\bin\\Debug\\netcoreapp3.1\\Server.Medius.exe"
     }
   }
 }

@@ -49,7 +49,7 @@ namespace Server.Test.Medius
                         // Send public key
                         Queue(new RT_MSG_CLIENT_CRYPTKEY_PUBLIC()
                         {
-                            Key = AuthKey.N.ToByteArrayUnsigned().Reverse().ToArray()
+                            PublicKey = AuthKey.N.ToByteArrayUnsigned().Reverse().ToArray()
                         });
 
                         State = ClientState.HANDSHAKE;

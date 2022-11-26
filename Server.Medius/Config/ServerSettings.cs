@@ -4,6 +4,7 @@ using RT.Cryptography;
 using Server.Common.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Server.Medius.Config
@@ -16,14 +17,9 @@ namespace Server.Medius.Config
         public int RefreshConfigInterval = 5000;
 
         /// <summary>
-        /// Beta specific config.
+        /// Path to the plugins directory.
         /// </summary>
-        public BetaConfig Beta { get; set; } = new BetaConfig();
-
-        /// <summary>
-        /// Compatible application ids. Null means all are accepted.
-        /// </summary>
-        public int[] ApplicationIds { get; set; } = { 0 };
+        public string PluginsPath { get; set; } = "plugins/";
 
         #region PublicIp
         /// <summary>
@@ -40,41 +36,6 @@ namespace Server.Medius.Config
         #endregion
 
         /// <summary>
-        /// When a client attempts to log into a non-existent account,
-        /// instead of returning account not found,
-        /// create the account and log them in.
-        /// Necessary for Central Station support.
-        /// </summary>
-        public bool CreateAccountOnNotFound { get; set; } = false;
-
-        /// <summary>
-        /// Time since last echo response before timing the client out.
-        /// </summary>
-        public int ClientTimeoutSeconds { get; set; } = 30;
-
-        /// <summary>
-        /// Time since game created and host never connected to close the game world.
-        /// </summary>
-        public int GameTimeoutSeconds { get; set; } = 30;
-
-        #region Server Echo
-        /// <summary>
-        /// Enable/Disable sending of Server Echo for games that don't implement this.
-        /// </summary>
-        public bool ServerEchoUnsupported { get; set; } = false;
-
-        /// <summary>
-        /// Number of seconds before the server should send an echo to the client.
-        /// </summary>
-        public int ServerEchoInterval { get; set; } = 10;
-        #endregion
-
-        /// <summary>
-        /// Period of time when a client is moving between medius server components where the client object will be kept alive.
-        /// </summary>
-        public int KeepAliveGracePeriod { get; set; } = 8;
-
-        /// <summary>
         /// Number of ticks per second.
         /// </summary>
         public int TickRate { get; set; } = 10;
@@ -84,11 +45,30 @@ namespace Server.Medius.Config
         /// </summary>
         public int LocationID = 0;
 
+        #region Database
+        //#####################################
+        //# Database Connection Configuration #
+        //#####################################
+
+        /// <summary>
+        /// Set to 1 to enable database connectivity, or 0 for simulated-DB mode (default 1)
+        /// </summary>
+        public int ConfigDBEnabled = 0;
+
+        public string DBInfoFileName = "dbinfo.txt";
+        #endregion
+
         #region Enable Select Servers
+
         /// <summary>
         /// Enable MAPS Zipper Interactive Only
         /// </summary>
         public bool EnableMAPS { get; set; } = false;
+
+        /// <summary>
+        /// Enable MMS (Medius Matchmaking Server) PS3
+        /// </summary>
+        public bool EnableMMS { get; set; } = false;
 
         /// <summary>
         /// Enable MAS
@@ -108,10 +88,18 @@ namespace Server.Medius.Config
 
         #region Ports
         /// <summary>
-        /// Port of the MAPS server.
+        /// TCP Port of the MAPS server.
         /// </summary>
-        public int MAPSPort { get; set; } = 10073;
+        public int MAPSTCPPort { get; set; } = 10073;
 
+        /// <summary>
+        /// UDP Port of the MAPS server.
+        /// </summary>
+        public int MAPSUDPPort { get; set; } = 10072;
+
+        public int MMSTCPPort { get; set; } = 10079;
+
+        #region Standard 
         /// <summary>
         /// Port of the MAS server.
         /// </summary>
@@ -127,9 +115,12 @@ namespace Server.Medius.Config
         /// </summary>
         public int MPSPort { get; set; } = 10077;
         #endregion
+        #endregion
 
         #region Medius Versions
         public bool MediusServerVersionOverride { get; set; } = false;
+
+        public string MMSVersion { get; set; } = "Medius Matchmaking Server Version 3.03.0000";
 
         public string MASVersion { get; set; } = "Medius Authentication Server Version 3.03.0000";
 
@@ -157,6 +148,7 @@ namespace Server.Medius.Config
         /// Default is: natservice.pdonline.scea.com:10070
         /// </summary>
         public string NATIp { get; set; } = null;
+
         /// <summary>
         /// Port of the NAT server.
         /// Provide the Port of the SCE-RT NAT Service
@@ -172,11 +164,6 @@ namespace Server.Medius.Config
         public int RemoteLogViewPort = 0;
         #endregion
 
-        /// <summary>
-        /// Time, in seconds, before timing out a Dme server.
-        /// </summary>
-        public int DmeTimeoutSeconds { get; set; } = 60;
-
         #region System Message Test
         /// <summary>
         /// System Message Test
@@ -189,6 +176,17 @@ namespace Server.Medius.Config
         public bool SystemMessageSingleTest { get; set; } = false;
         #endregion
 
+        /// <summary>
+        /// # Anonymous account ID seed, for games that use anonymous login
+        /// # such as ATV2.
+        /// # Set each authentication server to a different value,
+        /// # preferably between 0 and 127
+        /// # A possible scheme would be to have each MAS## use the ## as
+        /// # the value.  For example, MAS01 could use the value 1, etc....
+        /// </summary>
+
+        public int AnonymousIDRangeSeed = 1;
+
         #region DNAS
         /// <summary>
         /// Enable posting of machine signature to database (1 = enable, 0 = disable)
@@ -196,27 +194,17 @@ namespace Server.Medius.Config
         public bool DnasEnablePost { get; set; } = false;
         #endregion
 
-        /// <summary>
-        /// 'Severity' of the system message sent to notify the user has been banned.
-        ///  This is game specific.
-        /// </summary>
-        public byte BanSystemMessageSeverity { get; set; } = 200;
-
         #region Medius File Services - File Server Configuration
+
         /// <summary>
-        /// When true, will allow messages like MediusCreateFile, MediusUploadFile, MediusDownloadFile, MediusFileListFiles
+        /// Root path of the medius file service directory.
         /// </summary>
-        public bool AllowMediusFileServices { get; set; } = false;
+        public string MediusFileServerRootPath { get; set; } = "Files";
 
         /// <summary>
         /// Set the hostname to the ApacheWebServerHostname
         /// </summary>
         public string MFSTransferURI { get; set; } = "http://192.168.1.86/";
-
-        /// <summary>
-        /// Root path of the medius file service directory.
-        /// </summary>
-        public string MediusFileServerRootPath { get; set; } = "MFSFiles";
 
         /// <summary>
         /// Max number of download requests in the download queue
@@ -247,7 +235,7 @@ namespace Server.Medius.Config
 
         #region PostDebugInfo
         /// <summary>
-        /// Enable posting of debug information from the client 
+        /// Enable posting of debug information from the client <br></br>
         /// Set to false to disable, set to true to enable.            
         /// </summary>
         public bool PostDebugInfoEnable = true;
@@ -357,26 +345,24 @@ namespace Server.Medius.Config
             );
         #endregion
 
-        #region Server Key Type
-        /// <summary>
-        /// Whether or not to encrypt messages.
-        /// 1 to enable encryption/security, 0 to disable (default 0)
-        /// </summary>
-        public bool EncryptMessages { get; set; } = true;
-        #endregion
-
-        #region Locations TEMP
-        /// <summary>
-        /// Collection of locations.
-        /// </summary>
-        public List<Location> Locations { get; set; }
-        #endregion
-
         #region VULARITY FILTER
         /// <summary>
         /// Regex text filters for 
         /// </summary>
         public Dictionary<TextFilterContext, string> TextBlacklistFilters { get; set; } = new Dictionary<TextFilterContext, string>();
+
+        /// <summary>
+        /// # Specify name/location of SCE-RT dictionary files
+        /// # (no valid defaults)
+        /// </summary>
+        public string MediusVulgarityRootPath { get; set; } = "VulgarityFiles";
+
+        public string HardDictionaryName = "d1.cl";
+        public string SoftNoDictionaryName = "d2.cl";
+        public string SoftYesDictionaryName = "d3.cl";
+
+        /// # Substring dictionary
+        public string VulgaritySubstringDictionary = "vulgar.fpat";
 
         #endregion
 
@@ -385,76 +371,7 @@ namespace Server.Medius.Config
         /// </summary>
         public LogSettings Logging { get; set; } = new LogSettings();
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="appId"></param>
-        /// <returns></returns>
-        public bool IsCompatAppId(int appId)
-        {
-            if (ApplicationIds == null)
-                return true;
-
-            return ApplicationIds.Contains(appId);
-        }
     }
-
-    #region BetaConfig
-    public class BetaConfig
-    {
-        /// <summary>
-        /// Whether the beta settings are enabled.
-        /// </summary>
-        public bool Enabled { get; set; } = false;
-
-        /// <summary>
-        /// Allow the creation of new accounts.
-        /// </summary>
-        public bool AllowAccountCreation { get; set; } = false;
-
-        /// <summary>
-        /// When true, only accounts in the whitelist will be allowed to login.
-        /// </summary>
-        public bool RestrictSignin { get; set; } = false;
-
-        /// <summary>
-        /// Accounts that can be logged into with RestrictSignIn set.
-        /// </summary>
-        public string[] PermittedAccounts { get; set; } = null;
-    }
-    #endregion
-
-    #region Location
-    public class Location
-    {
-        /// <summary>
-        /// Id of location.
-        /// </summary>
-        public int Id { get; set; }
-
-        /// <summary>
-        /// Name of location.
-        /// </summary>
-        public string Name { get; set; }
-
-        /// <summary>
-        /// Name of respective channel.
-        /// </summary>
-        public string ChannelName { get; set; }
-
-        /// <summary>
-        /// Collection of all compatible app ids.
-        /// </summary>
-        public int[] AppIds { get; set; }
-
-        /// <summary>
-        /// Allows the creator of a lobby world to set the number of GenericFields to use as a generic lobby attribute (1, 2, 3, or 4).
-        /// Relevant for server-side filtering.
-        /// Notes: A lobby World must be created with the same filter level as the client that will be filtering on.
-        /// </summary>
-        public MediusWorldGenericFieldLevelType GenericFieldLevel { get; set; }
-    }
-    #endregion
 
     #region TextFilterContext
     public enum TextFilterContext

@@ -10,9 +10,22 @@ namespace RT.Models
 
         public bool IsSuccess => StatusCode >= 0;
 
-        public MessageId MessageID { get; set; }
+        /// Notes: Status code can be: MediusFail, MediusSuccess, 
+        /// MediusRequestDenied (If calling on a non-lobby server connection)
+        /// 
+        /// Description: Returns total number of channels for an ApplicationID.
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
+        public MessageId MessageID { get; set; }
+        /// <summary>
+        /// Total number of channels for the given ApplicationID
+        /// </summary>
         public uint Total;
+        /// <summary>
+        /// Response code for the request to get the total number of chat channels
+        /// </summary>
         public MediusCallbackStatus StatusCode;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

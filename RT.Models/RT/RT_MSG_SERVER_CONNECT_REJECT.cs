@@ -6,7 +6,7 @@ namespace RT.Models
     [ScertMessage(RT_MSG_TYPE.RT_MSG_SERVER_CONNECT_REJECT)]
     public class RT_MSG_SERVER_CONNECT_REJECT : BaseScertMessage
     {
-        public override RT_MSG_TYPE Id => RT_MSG_TYPE.RT_MSG_SERVER_CONNECT_NOTIFY;
+        public override RT_MSG_TYPE Id => RT_MSG_TYPE.RT_MSG_SERVER_CONNECT_REJECT;
 
         //
         public RT_MSG_CLIENT_REJECT rejectReason;

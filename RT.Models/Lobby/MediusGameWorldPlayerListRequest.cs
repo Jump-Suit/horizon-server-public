@@ -6,7 +6,6 @@ namespace RT.Models
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.GameWorldPlayerList)]
     public class MediusGameWorldPlayerListRequest : BaseLobbyMessage, IMediusRequest
     {
-
         public override byte PacketType => (byte)MediusLobbyMessageIds.GameWorldPlayerList;
 
         public MessageId MessageID { get; set; }
@@ -42,13 +41,12 @@ namespace RT.Models
             writer.Write(MediusWorldID);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"SessionKey:{SessionKey} " +
-$"MediusWorldID:{MediusWorldID}";
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey} " +
+                $"MediusWorldID: {MediusWorldID}";
         }
     }
 }

@@ -9,21 +9,69 @@ namespace RT.Models
 
         public override byte PacketType => (byte)MediusLobbyExtMessageIds.MatchFindGameRequest;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey; // SESSIONKEY_MAXLEN
+        /// <summary>
+        /// Superset ID
+        /// </summary>
         public uint SupersetID;
+        /// <summary>
+        /// MediusGameWorldID
+        /// </summary>
         public uint GameWorldID;
+        /// <summary>
+        /// Game Password
+        /// </summary>
         public string GamePassword; // GAMEPASSWORD_MAXLEN
+        /// <summary>
+        /// PlayerJoinType
+        /// </summary>
         public MediusJoinType PlayerJoinType;
+        /// <summary>
+        /// Minimum Players allowed in match
+        /// </summary>
         public uint MinPlayers;
+        /// <summary>
+        /// Maximum Players allowed in match
+        /// </summary>
         public uint MaxPlayers;
+        /// <summary>
+        /// GameHostTypeBitField
+        /// </summary>
         public char[] GameHostTypeBitField;
-        public uint MatchOptions;
+        /// <summary>
+        /// Game Specific Match Options
+        /// </summary>
+        public MediusMatchOptions MatchOptions;
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string ServerSessionKey; // SESSIONKEY_MAXLEN
+        /// <summary>
+        /// Game Specific Request Data
+        /// </summary>
         public char[] RequestData;
+        /// <summary>
+        /// GroupMemberListSize
+        /// </summary>
         public int GroupMemberListSize;
+        /// <summary>
+        /// ApplicationDataSize
+        /// </summary>
         public int ApplicationDataSize;
+        /// <summary>
+        /// GroupMemberAccountIDList
+        /// </summary>
         public char[] GroupMemberAccountIDList;
+        /// <summary>
+        /// ApplicationData
+        /// </summary>
         public char[] ApplicationData;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -36,15 +84,21 @@ namespace RT.Models
 
             // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
+            reader.ReadBytes(2);
+            
+            //
             SupersetID = reader.ReadUInt32();
             GameWorldID = reader.ReadUInt32();
             PlayerJoinType = reader.Read<MediusJoinType>();
             MinPlayers = reader.ReadUInt32();
             MaxPlayers = reader.ReadUInt32();
             GameHostTypeBitField = reader.ReadChars(4);
-            MatchOptions = reader.ReadUInt32();
+            MatchOptions = reader.Read<MediusMatchOptions>();
             ServerSessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             RequestData = reader.ReadChars(16);
+            reader.ReadBytes(3);
+            
+            //
             GroupMemberListSize = reader.ReadInt32();
             ApplicationDataSize = reader.ReadInt32();
             GroupMemberAccountIDList = reader.ReadChars(GroupMemberListSize);
@@ -61,6 +115,9 @@ namespace RT.Models
 
             // 
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
+            writer.Write(new byte[2]);
+
+            //
             writer.Write(SupersetID);
             writer.Write(GameWorldID);
             writer.Write(PlayerJoinType);
@@ -70,6 +127,9 @@ namespace RT.Models
             writer.Write(MatchOptions);
             writer.Write(ServerSessionKey);
             writer.Write(RequestData);
+            writer.Write(new byte[3]);
+
+            //
             writer.Write(GroupMemberListSize);
             writer.Write(ApplicationDataSize);
             writer.Write(GroupMemberAccountIDList);

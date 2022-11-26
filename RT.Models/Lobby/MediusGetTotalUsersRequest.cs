@@ -3,14 +3,26 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Returns total number of users for an ApplicationID<br></br>
+    /// Status Code can be: MediusWMError, MediusSuccess
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.GetTotalUsers)]
     public class MediusGetTotalUsersRequest : BaseLobbyMessage, IMediusRequest
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.GetTotalUsers;
 
+        /// <summary>
+        /// MessageId
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey; // SESSIONKEY_MAXLEN
+        /// <summary>
+        /// Application ID to filter by.
+        /// </summary>
         public int AppId;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -46,8 +58,8 @@ namespace RT.Models
         {
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
-             $"SessionKey: {SessionKey} " +
-             $"AppId: {AppId} ";
+                $"SessionKey: {SessionKey} " +
+                $"AppId: {AppId} ";
         }
     }
 }

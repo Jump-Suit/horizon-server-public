@@ -3,17 +3,38 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Request structure to add/update/remove MediusToken
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.TokenRequest)]
     public class MediusTokenRequest : BaseLobbyExtMessage, IMediusRequest
     {
         public override byte PacketType => (byte)MediusLobbyExtMessageIds.TokenRequest;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
+        /// <summary>
+        /// Token action to take: Add, update, clear.
+        /// </summary>
         public MediusTokenActionType TokenAction;
+        /// <summary>
+        /// Token category.
+        /// </summary>
         public MediusTokenCategoryType TokenCategory;
+        /// <summary>
+        /// Entity ID of the token.
+        /// </summary>
         public uint EntityID;
-        public byte[] TokenToReplace = new byte[Constants.MEDIUS_TOKEN_MAXSIZE];
-        public byte[] Token = new byte[Constants.MEDIUS_TOKEN_MAXSIZE];
+        /// <summary>
+        /// Token to replace.
+        /// </summary>
+        public string TokenToReplace;
+        /// <summary>
+        /// New token to replace with, or create.
+        /// </summary>
+        public string Token;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -26,8 +47,8 @@ namespace RT.Models
             TokenAction = reader.Read<MediusTokenActionType>();
             TokenCategory = reader.Read<MediusTokenCategoryType>();
             EntityID = reader.ReadUInt32();
-            TokenToReplace = reader.ReadBytes(Constants.MEDIUS_TOKEN_MAXSIZE);
-            Token = reader.ReadBytes(Constants.MEDIUS_TOKEN_MAXSIZE);
+            TokenToReplace = reader.ReadString(Constants.MEDIUS_TOKEN_MAXSIZE);
+            Token = reader.ReadString(Constants.MEDIUS_TOKEN_MAXSIZE);
             reader.ReadBytes(3); // padding
         }
 
@@ -50,12 +71,12 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID: {MessageID}" + " " +
-                $"TokenAction: {TokenAction}" + " " +
-                $"TokenCategory: {TokenCategory}" + " " +
-                $"EntityID: {EntityID}" + " " +
-                $"TokenToReplace: {TokenToReplace}" + " " +
-                $"Token: {Token}";
+                $"MessageID: {MessageID} " +
+                $"TokenAction: {TokenAction} " + 
+                $"TokenCategory: {TokenCategory}" +
+                $"EntityID: {EntityID} " +
+                $"TokenToReplace: {string.Join("", TokenToReplace)} " +
+                $"Token: {string.Join("", Token)}";
         }
     }
 }

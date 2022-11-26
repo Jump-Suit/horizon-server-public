@@ -1,5 +1,7 @@
+using DotNetty.Common.Utilities;
 using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -19,7 +21,7 @@ namespace RT.Models
         public string ClanName; // CLANNAME_MAXLEN
         public int LeaderAccountID;
         public string LeaderAccountName; // ACCOUNTNAME_MAXLEN
-        public byte[] Stats; // CLANSTATS_MAXLEN
+        public string Stats; // CLANSTATS_MAXLEN
         public MediusClanStatus Status;
         public bool EndOfList;
 
@@ -39,7 +41,7 @@ namespace RT.Models
             ClanName = reader.ReadString(Constants.CLANNAME_MAXLEN);
             LeaderAccountID = reader.ReadInt32();
             LeaderAccountName = reader.ReadString(Constants.ACCOUNTNAME_MAXLEN);
-            Stats = reader.ReadBytes(Constants.CLANSTATS_MAXLEN);
+            Stats = reader.ReadString(Constants.CLANSTATS_MAXLEN);
             Status = reader.Read<MediusClanStatus>();
             EndOfList = reader.ReadBoolean();
             reader.ReadBytes(3);
@@ -71,16 +73,16 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"StatusCode:{StatusCode} " +
-$"ClanID:{ClanID} " +
-$"ApplicationID:{ApplicationID} " +
-$"ClanName:{ClanName} " +
-$"LeaderAccountID:{LeaderAccountID} " +
-$"LeaderAccountName:{LeaderAccountName} " +
-$"Stats:{Stats} " +
-$"Status:{Status} " +
-$"EndOfList:{EndOfList}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
+                $"ClanID: {ClanID} " +
+                $"ApplicationID: {ApplicationID} " +
+                $"ClanName: {ClanName} " +
+                $"LeaderAccountID: {LeaderAccountID} " +
+                $"LeaderAccountName: {LeaderAccountName} " +
+                $"Stats: {Stats} " +
+                $"Status: {Status} " +
+                $"EndOfList: {EndOfList}";
         }
     }
 }

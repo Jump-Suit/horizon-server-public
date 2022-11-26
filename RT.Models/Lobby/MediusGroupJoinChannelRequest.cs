@@ -11,9 +11,9 @@ namespace RT.Models
         public MessageId MessageID { get; set; }
 
         public string SessionKey; // SESSIONKEY_MAXLEN
-        public int Unk1;
-        public int Unk2;
-        public string Unk3;
+        public int MediusLobbyWorldID;
+        public int MediusPartyWorldID;
+        public string LobbyPassword;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -25,9 +25,12 @@ namespace RT.Models
 
             // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
-            Unk1 = reader.ReadInt32();
-            Unk2 = reader.ReadInt32();
-            Unk3 = reader.ReadString();
+            reader.ReadBytes(2);
+
+            //
+            MediusLobbyWorldID = reader.ReadInt32();
+            MediusPartyWorldID = reader.ReadInt32();
+            LobbyPassword = reader.ReadString(Constants.LOBBYPASSWORD_MAXLEN);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -40,9 +43,12 @@ namespace RT.Models
 
             // 
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
-            writer.Write(Unk1);
-            writer.Write(Unk2);
-            writer.Write(Unk3);
+            writer.Write(new byte[2]);
+
+            //
+            writer.Write(MediusLobbyWorldID);
+            writer.Write(MediusPartyWorldID);
+            writer.Write(LobbyPassword);
         }
 
 
@@ -50,7 +56,10 @@ namespace RT.Models
         {
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
-                $"SessionKey: {SessionKey}";
+                $"SessionKey: {SessionKey}" +
+                $"MediusLobbyWorldID: {MediusLobbyWorldID} " +
+                $"MediusPartyWorldID: {MediusPartyWorldID} " +
+                $"LobbyPassword: {LobbyPassword}";
         }
     }
 }

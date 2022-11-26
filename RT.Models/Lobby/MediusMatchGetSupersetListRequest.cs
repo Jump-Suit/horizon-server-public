@@ -3,13 +3,22 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Fetch Match Supersets from database
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.MatchGetSupersetListRequest)]
     public class MediusMatchGetSupersetListRequest : BaseLobbyExtMessage, IMediusRequest
     {
 
         public override byte PacketType => (byte)MediusLobbyExtMessageIds.MatchGetSupersetListRequest;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey; // SESSIONKEY_MAXLEN
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -35,7 +44,6 @@ namespace RT.Models
             // 
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
         }
-
 
         public override string ToString()
         {

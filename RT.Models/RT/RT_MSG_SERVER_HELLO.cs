@@ -10,8 +10,9 @@ namespace RT.Models
     {
         public override RT_MSG_TYPE Id => RT_MSG_TYPE.RT_MSG_SERVER_HELLO;
 
-        public ushort ARG1 = 0x006E;
-        public ushort ARG2 = 0x0001;
+        //PS2
+        public ushort protocolVersion = 0x006E;
+        public ushort encryptionVersion = 0x0001;
 
         //PS3 
         public bool MLS = false;
@@ -28,8 +29,8 @@ namespace RT.Models
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
-            ARG1 = reader.ReadUInt16();
-            ARG2 = reader.ReadUInt16();
+            protocolVersion = reader.ReadUInt16();
+            encryptionVersion = reader.ReadUInt16();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -59,9 +60,16 @@ namespace RT.Models
             }
             else //Send PS2 Server Hello
             {
-                writer.Write(ARG1);
-                writer.Write(ARG2);
+                writer.Write(protocolVersion);
+                writer.Write(encryptionVersion);
             }
+        }
+
+        public override string ToString()
+        {
+            return base.ToString() + " " +
+                $"protocolVersion: {protocolVersion} " +
+                $"encryptionVersion: {encryptionVersion}";
         }
     }
 }

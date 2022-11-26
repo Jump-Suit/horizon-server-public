@@ -27,16 +27,18 @@ namespace RT.Models
 
             // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
+            //reader.ReadBytes(2);
+
             NumEntries = reader.ReadInt32();
-
-
-
+            
             List = new string[NumEntries];
+            
             for (int i = 0; i < NumEntries; i++)
             {
                 NAME_LEN = reader.ReadByte();
                 List[i] = reader.ReadString(NAME_LEN);
             }
+            
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -49,12 +51,16 @@ namespace RT.Models
 
             // 
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
+            //writer.Write(new byte[2]);
+
             writer.Write(NumEntries);
+            
             for (int i = 0; i < NumEntries; i++)
             {
                 writer.Write(NAME_LEN);
                 writer.Write(List[i]);
             }
+            
         }
 
         public override string ToString()
@@ -63,7 +69,7 @@ namespace RT.Models
                 $"MessageID: {MessageID} " +
                 $"SessionKey: {SessionKey} " +
                 $"NumEntries: {NumEntries} " +
-                $"List: {Convert.ToString(List)}";
+                $"List: {string.Join(" ", List)}";
         }
     }
 }

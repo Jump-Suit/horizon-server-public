@@ -5,10 +5,10 @@ namespace Server.Medius.Models
     public class GameListFilter
     {
         public uint FieldID = 0;
-        public MediusGameListFilterField FilterField;
-        public int BaselineValue;
-        public MediusComparisonOperator ComparisonOperator;
-        public uint Mask;
+        public MediusGameListFilterField FilterField = 0;
+        public int BaselineValue = 0;
+        public MediusComparisonOperator ComparisonOperator = MediusComparisonOperator.LESS_THAN;
+        public int Mask = -1;
 
         public bool IsMatch(Game game)
         {

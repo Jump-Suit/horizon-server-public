@@ -58,12 +58,12 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-                $"StatusCode:{StatusCode} " +
-                $"AccountID:{AccountID} " +
-                $"AccountName:{AccountName} " +
-                $"OnlineState:{OnlineState} " +
-                $"EndOfList:{EndOfList}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
+                $"AccountID: {AccountID} " +
+                $"AccountName: {AccountName} " +
+                $"OnlineState: {OnlineState} " +
+                $"EndOfList: {EndOfList}";
         }
     }
 }

@@ -68,15 +68,15 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"StatusCode:{StatusCode} " +
-$"ClanInvitationID:{ClanInvitationID} " +
-$"ClanID:{ClanID} " +
-$"ResponseStatus:{ResponseStatus} " +
-$"Message:{Message} " +
-$"LeaderAccountID:{LeaderAccountID} " +
-$"LeaderAccountName:{LeaderAccountName} " +
-$"EndOfList:{EndOfList}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
+                $"ClanInvitationID: {ClanInvitationID} " +
+                $"ClanID: {ClanID} " +
+                $"ResponseStatus: {ResponseStatus} " +
+                $"Message: {Message} " +
+                $"LeaderAccountID: {LeaderAccountID} " +
+                $"LeaderAccountName: {LeaderAccountName} " +
+                $"EndOfList: {EndOfList}";
         }
     }
 }

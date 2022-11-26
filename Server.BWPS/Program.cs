@@ -14,12 +14,9 @@ namespace Server.BWPServer
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<Program>();
 
         public static ServerSettings Settings = new ServerSettings();
-
         public static BWPServer BWPS = new BWPServer();
 
-
         private static FileLoggerProvider? _fileLogger;
-
 
         static async Task StartServerAsync()
         {

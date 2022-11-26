@@ -3,15 +3,29 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Request to update currently logged-in account password
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.AccountUpdatePassword)]
     public class MediusAccountUpdatePasswordRequest : BaseLobbyMessage, IMediusRequest
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.AccountUpdatePassword;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey; // SESSIONKEY_MAXLEN
+        /// <summary>
+        /// Old Password
+        /// </summary>
         public string OldPassword; // PASSWORD_MAXLEN
+        /// <summary>
+        /// New Password
+        /// </summary>
         public string NewPassword; // PASSWORD_MAXLEN
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

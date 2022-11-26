@@ -1,11 +1,16 @@
 ﻿using DotNetty.Common.Internal.Logging;
+using Microsoft.Extensions.Logging;
 using RT.Common;
 using RT.Models;
 using Server.Dme.PluginArgs;
+using Server.Plugins.Interface;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Server.Dme.Models
@@ -17,25 +22,29 @@ namespace Server.Dme.Models
         public const int MAX_WORLDS = 256;
         public const int MAX_CLIENTS_PER_WORLD = 10;
 
-        #region Id Management
+         #region Id Management
 
         private static ConcurrentDictionary<int, World> _idToWorld = new ConcurrentDictionary<int, World>();
         private ConcurrentDictionary<int, bool> _pIdIsUsed = new ConcurrentDictionary<int, bool>();
+        private static int _idCounter = 0;
 
         private void RegisterWorld()
         {
-            int i = 0;
-            while (i < MAX_WORLDS && _idToWorld.ContainsKey(i))
-                ++i;
+            int totalIdsCounted = 0;
+            while (totalIdsCounted < MAX_WORLDS && _idToWorld.ContainsKey(_idCounter))
+            {
+                _idCounter = (_idCounter + 1) % MAX_WORLDS;
+                ++totalIdsCounted;
+            }
 
             // 
-            if (i == MAX_WORLDS)
+            if (totalIdsCounted == MAX_WORLDS)
                 throw new InvalidOperationException("Max worlds reached!");
 
             // 
-            WorldId = i;
-            _idToWorld.TryAdd(i, this);
-            Logger.Info($"Registered world with id {i}");
+            WorldId = _idCounter++;
+            _idToWorld.TryAdd(WorldId, this);
+            Logger.Info($"Registered world with id {WorldId}");
         }
 
         private void FreeWorld()
@@ -67,27 +76,27 @@ namespace Server.Dme.Models
 
         public int WorldId { get; protected set; } = -1;
 
+        public int ApplicationId { get; protected set; } = 0;
+
         public int MaxPlayers { get; protected set; } = 0;
 
         public bool SelfDestructFlag { get; protected set; } = false;
 
         public bool ForceDestruct { get; protected set; } = false;
 
-        public bool Timedout => !WorldTimeUtc.HasValue && (Server.Common.Utils.GetHighPrecisionUtcTime() - WorldCreatedTimeUtc).TotalSeconds > Program.Settings.GameTimeoutSeconds;
-
-        public bool Destroy => (Timedout || SelfDestructFlag) && Clients.Count == 0;
+        public bool Destroy => ((WorldTimer.Elapsed.TotalSeconds > Program.GetAppSettingsOrDefault(ApplicationId).GameTimeoutSeconds) || SelfDestructFlag) && Clients.Count == 0;
         public bool Destroyed { get; protected set; } = false;
 
-        public DateTime WorldCreatedTimeUtc { get; protected set; } = Server.Common.Utils.GetHighPrecisionUtcTime();
-        public DateTime? WorldTimeUtc { get; protected set; } = null;
+        public Stopwatch WorldTimer { get; protected set; } = Stopwatch.StartNew();
 
         public ConcurrentDictionary<int, ClientObject> Clients = new ConcurrentDictionary<int, ClientObject>();
 
         public MediusManager Manager { get; } = null;
-
-        public World(MediusManager manager, int maxPlayers)
+        
+        public World(MediusManager manager, int appId, int maxPlayers)
         {
             Manager = manager;
+            ApplicationId = appId;
 
             // populate collection of used player ids
             for (int i = 0; i < MAX_CLIENTS_PER_WORLD; ++i)
@@ -111,14 +120,30 @@ namespace Server.Dme.Models
             Dispose();
         }
 
-        public async Task Tick()
+        public Task HandleIncomingMessages()
+        {
+            List<Task> tasks = new List<Task>();
+
+            // Process clients
+            for (int i = 0; i < MAX_CLIENTS_PER_WORLD; ++i)
+            {
+                if (Clients.TryGetValue(i, out var client))
+                {
+                    tasks.Add(client.HandleIncomingMessages());
+                }
+            }
+
+            return Task.WhenAll(tasks);
+        }
+
+        public async Task HandleOutgoingMessages()
         {
             // Process clients
             for (int i = 0; i < MAX_CLIENTS_PER_WORLD; ++i)
             {
                 if (Clients.TryGetValue(i, out var client))
                 {
-                    if (client.Destroy && Program.Settings.ServerEchoUnsupported != true || ForceDestruct || Destroyed)
+                    if (client.Destroy || ForceDestruct || Destroyed)
                     {
                         await OnPlayerLeft(client);
                         Manager.RemoveClient(client);
@@ -127,7 +152,7 @@ namespace Server.Dme.Models
                     }
                     else if (client.IsAggTime)
                     {
-                        client.Tick();
+                        client.HandleOutgoingMessages();
                     }
                 }
             }
@@ -157,7 +182,7 @@ namespace Server.Dme.Models
 
             foreach (var client in Clients)
             {
-                if (client.Value == source || !client.Value.IsAuthenticated || !client.Value.IsConnected || !client.Value.RecvFlag.HasFlag(RT_RECV_FLAG.RECV_BROADCAST))
+                if (client.Value == source || !client.Value.IsAuthenticated || !client.Value.IsConnected || !client.Value.HasRecvFlag(RT_RECV_FLAG.RECV_BROADCAST))
                     continue;
 
                 client.Value.EnqueueTcp(msg);
@@ -174,7 +199,8 @@ namespace Server.Dme.Models
 
             foreach (var client in Clients)
             {
-                if (client.Value == source || !client.Value.IsAuthenticated || !client.Value.IsConnected || !client.Value.RecvFlag.HasFlag(RT_RECV_FLAG.RECV_BROADCAST))
+                if (client.Value == source || !client.Value.IsAuthenticated || !client.Value.IsConnected || !client.Value.HasRecvFlag(RT_RECV_FLAG.RECV_BROADCAST))
+                //if (!client.Value.IsAuthenticated || !client.Value.IsConnected || !client.Value.HasRecvFlag(RT_RECV_FLAG.RECV_BROADCAST))
                     continue;
 
                 client.Value.EnqueueUdp(msg);
@@ -187,7 +213,7 @@ namespace Server.Dme.Models
             {
                 if (Clients.TryGetValue(targetId, out var client))
                 {
-                    if (client == null || !client.IsAuthenticated || !client.IsConnected || !client.RecvFlag.HasFlag(RT_RECV_FLAG.RECV_LIST))
+                    if (client == null || !client.IsAuthenticated || !client.IsConnected || !client.HasRecvFlag(RT_RECV_FLAG.RECV_LIST))
                         continue;
 
                     client.EnqueueTcp(new RT_MSG_CLIENT_APP_SINGLE()
@@ -205,7 +231,7 @@ namespace Server.Dme.Models
             {
                 if (Clients.TryGetValue(targetId, out var client))
                 {
-                    if (client == null || !client.IsAuthenticated || !client.IsConnected || !client.RecvFlag.HasFlag(RT_RECV_FLAG.RECV_LIST))
+                    if (client == null || !client.IsAuthenticated || !client.IsConnected || !client.HasRecvFlag(RT_RECV_FLAG.RECV_LIST))
                         continue;
 
                     client.EnqueueUdp(new RT_MSG_CLIENT_APP_SINGLE()
@@ -221,7 +247,7 @@ namespace Server.Dme.Models
         {
             var target = Clients.FirstOrDefault(x => x.Value.DmeId == targetDmeId).Value;
 
-            if (target != null && target.IsAuthenticated && target.IsConnected && target.RecvFlag.HasFlag(RT_RECV_FLAG.RECV_SINGLE))
+            if (target != null && target.IsAuthenticated && target.IsConnected && target.HasRecvFlag(RT_RECV_FLAG.RECV_SINGLE))
             {
                 target.EnqueueTcp(new RT_MSG_CLIENT_APP_SINGLE()
                 {
@@ -235,7 +261,7 @@ namespace Server.Dme.Models
         {
             var target = Clients.FirstOrDefault(x => x.Value.DmeId == targetDmeId).Value;
 
-            if (target != null && target.IsAuthenticated && target.IsConnected && target.RecvFlag.HasFlag(RT_RECV_FLAG.RECV_SINGLE))
+            if (target != null && target.IsAuthenticated && target.IsConnected && target.HasRecvFlag(RT_RECV_FLAG.RECV_SINGLE))
             {
                 target.EnqueueUdp(new RT_MSG_CLIENT_APP_SINGLE()
                 {
@@ -258,7 +284,7 @@ namespace Server.Dme.Models
         public async Task OnPlayerJoined(ClientObject player)
         {
             // Plugin
-            await Program.Plugins.OnEvent(Plugins.PluginEvent.DME_PLAYER_ON_JOINED, new OnPlayerArgs()
+            await Program.Plugins.OnEvent(PluginEvent.DME_PLAYER_ON_JOINED, new OnPlayerArgs()
             {
                 Player = player,
                 Game = this
@@ -267,7 +293,7 @@ namespace Server.Dme.Models
             // Tell other clients
             foreach (var client in Clients)
             {
-                if (client.Value == player || !client.Value.RecvFlag.HasFlag(RT_RECV_FLAG.RECV_NOTIFICATION))
+                if (client.Value == player || !client.Value.HasRecvFlag(RT_RECV_FLAG.RECV_NOTIFICATION))
                     continue;
 
                 client.Value.EnqueueTcp(new RT_MSG_SERVER_CONNECT_NOTIFY()
@@ -290,7 +316,7 @@ namespace Server.Dme.Models
         public async Task OnPlayerLeft(ClientObject player)
         {
             // Plugin
-            await Program.Plugins.OnEvent(Plugins.PluginEvent.DME_PLAYER_ON_LEFT, new OnPlayerArgs()
+            await Program.Plugins.OnEvent(PluginEvent.DME_PLAYER_ON_LEFT, new OnPlayerArgs()
             {
                 Player = player,
                 Game = this
@@ -299,7 +325,7 @@ namespace Server.Dme.Models
             // Tell other clients
             foreach (var client in Clients)
             {
-                if (client.Value == player || !client.Value.RecvFlag.HasFlag(RT_RECV_FLAG.RECV_NOTIFICATION))
+                if (client.Value == player || !client.Value.HasRecvFlag(RT_RECV_FLAG.RECV_NOTIFICATION))
                     continue;
 
                 client.Value.EnqueueTcp(new RT_MSG_SERVER_DISCONNECT_NOTIFY()
@@ -369,7 +395,6 @@ namespace Server.Dme.Models
                 MessageID = request.MessageID,
                 DmeClientIndex = newClient.DmeId,
                 AccessKey = newClient.Token,
-                pubKey = request.ConnectInfo.ServerKey,
                 Confirmation = MGCL_ERROR_CODE.MGCL_SUCCESS
             };
         }
@@ -378,7 +403,7 @@ namespace Server.Dme.Models
 
         public override string ToString()
         {
-            return $"WorldId: {WorldId}, ClientCount: {Clients.Count}";
+            return $"WorldId:{WorldId}, ClientCount:{Clients.Count}";
         }
 
     }
