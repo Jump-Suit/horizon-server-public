@@ -21,12 +21,12 @@ namespace Server.SVO
 
         static async Task Main(string[] args)
         {
+            await StartServerAsync();
             // 
             Initialize();
 
             //InternalLoggerFactory.DefaultFactory.AddProvider(new ConsoleLoggerProvider((s, level) => level >= LogSettings.Singleton.LogLevel, true));
 
-            await StartServerAsync();
         }
 
         static async Task StartServerAsync()
@@ -61,7 +61,7 @@ namespace Server.SVO
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();

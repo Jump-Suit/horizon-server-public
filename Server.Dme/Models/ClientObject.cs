@@ -300,11 +300,6 @@ namespace Server.Dme.Models
                 EnqueueTcp(message);
         }
 
-        public void EnqueueTcp(BaseMediusMessage message)
-        {
-            EnqueueTcp(new RT_MSG_SERVER_APP() { Message = message });
-        }
-
         public void EnqueueTcp(IEnumerable<BaseMediusMessage> messages)
         {
             EnqueueTcp(messages.Select(x => new RT_MSG_SERVER_APP() { Message = x }));

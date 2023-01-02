@@ -280,7 +280,7 @@ namespace Server.Medius
                     //Connecting to Medius Universe Manager 127.0.0.1 10076 1
                     //Connected to Universe Manager server
 
-                    AuthenticationServer.Start();
+                    MatchmakingServer.Start();
                     Logger.Info("Medius Matchmaking Server Initialized");
                     #endregion
 
@@ -693,7 +693,17 @@ namespace Server.Medius
 
         static async Task Initialize()
         {
-            await RefreshConfig();
+            await RefreshConfig().ContinueWith(r =>
+            {
+                if(r.IsCompletedSuccessfully && r.IsCompleted)
+                {
+                    Logger.Info("Reloading Config File");
+                } else
+                {
+                    Logger.Info($"ConfigManager Cannot Reload Configuration File {CONFIG_FILE}");
+                }
+                //Program.AntiCheatPlugin.mc_anticheat_event(AnticheatEventCode.anticheatLEAVEGAME, data.ClientObject.WorldId, data.ClientObject.AccountId, Program.AntiCheatClient, updateUserState, 256);
+            });
 
 
             /*

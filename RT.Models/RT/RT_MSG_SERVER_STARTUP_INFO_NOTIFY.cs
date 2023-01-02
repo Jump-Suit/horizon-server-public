@@ -9,25 +9,25 @@ namespace RT.Models
         public override RT_MSG_TYPE Id => RT_MSG_TYPE.RT_MSG_SERVER_STARTUP_INFO_NOTIFY;
 
         public byte GameHostType { get; set; } = (byte)MGCL_GAME_HOST_TYPE.MGCLGameHostClientServerAuxUDP;
-        public uint Timestamp { get; set; } = Utils.GetUnixTime();
+        public uint Timebase { get; set; } = Utils.GetUnixTime();
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
             GameHostType = reader.ReadByte();
-            Timestamp = reader.ReadUInt32();
+            Timebase = reader.ReadUInt32();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
         {
             writer.Write(GameHostType);
-            writer.Write(Timestamp);
+            writer.Write(Timebase);
         }
 
         public override string ToString()
         {
             return base.ToString() + " " +
                 $"GameHostType: {(MGCL_GAME_HOST_TYPE)GameHostType} " +
-                $"Timestamp: {Timestamp}";
+                $"Timebase: {Timebase}";
         }
     }
 }

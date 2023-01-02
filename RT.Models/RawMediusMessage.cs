@@ -80,11 +80,11 @@ namespace RT.Models
             return base.ToString() + $" MsgType: {PacketType} Contents:{BitConverter.ToString(Contents)}";
         }
     }
-    
+    /*
     public class RawGHSMediusMessage : BaseMediusGHSMessage
     {
-        protected NetMessageClass _class;
-        public override NetMessageClass PacketClass => _class;
+        protected ushort _msgSize;
+        public override ushort msgSize => _msgSize;
 
         protected GhsOpcode _messageType;
         public override GhsOpcode GhsOpcode => _messageType;
@@ -96,10 +96,10 @@ namespace RT.Models
 
         }
 
-        public RawGHSMediusMessage(NetMessageClass msgClass, GhsOpcode messageType)
+        public RawGHSMediusMessage(GhsOpcode messageType, ushort msgSize)
         {
-            _class = msgClass;
-            _messageType = messageType;
+            _messageType = (GhsOpcode)ReverseBytes16((ushort)messageType);
+            _msgSize = msgSize;
         }
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -115,8 +115,17 @@ namespace RT.Models
 
         public override string ToString()
         {
-            return base.ToString() + $" MsgType:{GhsOpcode} Contents:{BitConverter.ToString(Contents)}";
+            return base.ToString() + $" MsgType: {GhsOpcode} Contents: {BitConverter.ToString(Contents)}";
+        } 
+        /// <summary>
+          /// Reverses UInt16 
+          /// </summary>
+          /// <param name="nValue"></param>
+          /// <returns></returns>
+        public static new ushort ReverseBytes16(ushort nValue)
+        {
+            return (ushort)((ushort)((nValue >> 8)) | (nValue << 8));
         }
     }
-    
+    */
 }

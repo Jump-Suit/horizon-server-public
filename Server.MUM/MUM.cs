@@ -256,7 +256,7 @@ namespace Server.UniverseManager
                     {
                         Queue(new RT_MSG_CLIENT_ECHO()
                         {
-                            Value = 0xA5
+                            Value = clientEcho.Value
                         }, clientChannel);
                         break;
                     }

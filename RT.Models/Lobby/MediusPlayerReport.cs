@@ -25,7 +25,7 @@ namespace RT.Models
         /// <summary>
         /// Account Stats to update
         /// </summary>
-        public byte[] Stats;
+        public byte[] Stats = new byte[Constants.ACCOUNTSTATS_MAXLEN];
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -38,7 +38,7 @@ namespace RT.Models
 
             //
             MediusWorldID = reader.ReadInt32();
-            Stats = reader.ReadBytes(Constants.PLAYERREPORTSTATS_MAXLEN);
+            Stats = reader.ReadBytes(Constants.ACCOUNTSTATS_MAXLEN);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -60,7 +60,7 @@ namespace RT.Models
             return base.ToString() + " " +
                 $"SessionKey: {SessionKey} " +
                 $"MediusWorldID: {MediusWorldID} " +
-                $"Stats: {string.Join("", Convert.ToBase64String(Stats))}";
+                $"Stats: {BitConverter.ToString(Stats)}";
         }
     }
 }

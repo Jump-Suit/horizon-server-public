@@ -1,4 +1,5 @@
 ﻿using Server.Common.Logging;
+using System.Collections;
 
 namespace Server.SVO.Config
 {
@@ -34,7 +35,7 @@ namespace Server.SVO.Config
         /// <summary>
         /// Root URL for the game's svo files
         /// </summary>
-        public string SVORootDir { get; set; } = "title_SVML";
+        public string[] SVOPath { get; set; } = new string[] { "title_SVML" , "DEMO_XML"};
 
         /// <summary>
         /// Logging settings.

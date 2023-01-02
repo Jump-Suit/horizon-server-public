@@ -51,7 +51,7 @@ namespace RT.Models
             writer.Write(MessageID ?? MessageId.Empty);
 
             writer.Write(SessionKey);
-            writer.Write(Name);
+            writer.Write(Name, Constants.WORLDNAME_MAXLEN);
             writer.Write(new byte[2]);
             writer.Write(WorldType);
         }

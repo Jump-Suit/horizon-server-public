@@ -1,5 +1,6 @@
 ﻿using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -27,7 +28,7 @@ namespace RT.Models
         /// <summary>
         /// GameStats
         /// </summary>
-        public byte[] GameStats = new byte[Constants.GAMESTATS_MAXLEN];
+        public byte[] GameStats = new byte[Constants.GAMESTATS_MAXLEN]; // GAMESTATS_MAXLEN
         /// <summary>
         /// Minimum Players
         /// </summary>
@@ -115,7 +116,6 @@ namespace RT.Models
             writer.Write(WorldStatus);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
@@ -123,7 +123,7 @@ namespace RT.Models
                 $"MediusWorldID: {MediusWorldID} " +
                 $"PlayerCount: {PlayerCount} " +
                 $"GameName: {GameName} " +
-                $"GameStats: {string.Join("", GameStats)} " +
+                $"GameStats: {BitConverter.ToString(GameStats)} " +
                 $"MinPlayers: {MinPlayers} " +
                 $"MaxPlayers: {MaxPlayers} " +
                 $"GameLevel: {GameLevel} " +

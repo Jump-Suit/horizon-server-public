@@ -311,7 +311,7 @@ namespace Server.Dme
         protected async Task ProcessMessage(BaseScertMessage message, IChannel clientChannel, ChannelData data)
         {
             // Get ScertClient data
-            var scertClient = clientChannel.GetAttribute(Server.Pipeline.Constants.SCERT_CLIENT).Get();
+            var scertClient = clientChannel.GetAttribute(Pipeline.Constants.SCERT_CLIENT).Get();
             var enableEncryption = Program.GetAppSettingsOrDefault(data.ApplicationId).EnableDmeEncryption;
             scertClient.CipherService.EnableEncryption = enableEncryption;
 
@@ -434,7 +434,7 @@ namespace Server.Dme
                         Queue(new RT_MSG_SERVER_STARTUP_INFO_NOTIFY()
                         {
                             GameHostType = (byte)MGCL_GAME_HOST_TYPE.MGCLGameHostClientServerAuxUDP,
-                            Timestamp = (uint)data.ClientObject.DmeWorld.WorldTimer.ElapsedMilliseconds
+                            Timebase = (uint)data.ClientObject.DmeWorld.WorldTimer.ElapsedMilliseconds
                         }, clientChannel);
                         Queue(new RT_MSG_SERVER_INFO_AUX_UDP()
                         {
@@ -553,7 +553,7 @@ namespace Server.Dme
                     }
                 case RT_MSG_CLIENT_APP_TOSERVER clientAppToServer:
                     {
-                        await ProcessMediusMessage(clientAppToServer.Message, clientChannel, data);
+                        await   ProcessMediusMessage(clientAppToServer.Message, clientChannel, data);
                         break;
                     }
 
@@ -583,23 +583,36 @@ namespace Server.Dme
             {
                 case TypePing ping:
                     {
-                        Logger.Info($"PingPacketHandler: client {data.ClientObject.DmeId} received \n");
+                        Logger.Info($"PingPacketHandler: client {data.ClientObject} received \n");
                         if (ping.RequestEcho == true)
                         {
+                            byte[] value = new byte[0xA];
                             Queue(new RT_MSG_CLIENT_ECHO()
                             {
-                                Value = 0xA5
+                                Value = value
                             }, clientChannel);
                             break;
                         }
 
-                        data.ClientObject?.EnqueueTcp(new TypePing()
+                        Queue(new RT_MSG_SERVER_APP()
                         {
-                            TimeOfSend = Utils.GetUnixTime(),
-                            PingInstance = ping.PingInstance,
-                            RequestEcho = ping.RequestEcho
+                            Message = new TypePing()
+                            {
+                                TimeOfSend = Utils.GetUnixTime(),
+                                PingInstance = ping.PingInstance,
+                                RequestEcho = ping.RequestEcho
+                            }
                         });
-
+                        /*
+                        data.ClientObject.EnqueueTcp(new RT_MSG_SERVER_APP() { 
+                            Message = new TypePing()
+                            {
+                                TimeOfSend = Utils.GetUnixTime(),
+                                PingInstance = ping.PingInstance,
+                                RequestEcho = ping.RequestEcho
+                            }
+                        });
+                        */
                         break;
                     }
 

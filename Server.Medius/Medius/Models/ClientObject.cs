@@ -91,6 +91,11 @@ namespace Server.Medius.Models
         public NetConnectionType NetConnectionType { get; set; }
 
         /// <summary>
+        /// Client's CharacterEncoding Type
+        /// </summary>
+        public MediusCharacterEncodingType CharacterEncoding { get; set; }
+
+        /// <summary>
         /// Client's language type
         /// </summary>
         public MediusLanguageType LanguageType { get; set; }
@@ -113,7 +118,7 @@ namespace Server.Medius.Models
         /// <summary>
         /// 
         /// </summary>
-        public byte[] AccountStats { get; protected set; } = null;
+        public byte[] AccountStats { get; set; } = new byte[256];
 
         /// <summary>
         /// Anonymous Login Name for the duration of that session
@@ -497,7 +502,7 @@ namespace Server.Medius.Models
             await LeaveCurrentGame();
 
             // Leave channel
-            LeaveCurrentChannel();
+            await LeaveCurrentChannel();
 
             // Logout
             _logoutTime = Common.Utils.GetHighPrecisionUtcTime();
@@ -854,10 +859,20 @@ namespace Server.Medius.Models
             }
         }
         #endregion
+        /*
+        public Task<RT_RESULT> rt_msg_server_check_protocol_compatibility(ushort clientVersion, int p_compatible)
+        {
+            if(clientVersion <= 113)
+            {
 
+                Logger.Info($"rt_msg_server_check_protocol_compatibility: client_version {clientVersion}, p_compatible {p_compatible}");
+            }
+            return 
+        }
+        */
         public override string ToString()
         {
-            return $"({AccountId}:{AccountName})";
+            return $"({AccountId}:{AccountName}:{ApplicationId})";
             //return $"(worldId: {DmeWorld.WorldId},clientId: {DmeId})";
         }
     }

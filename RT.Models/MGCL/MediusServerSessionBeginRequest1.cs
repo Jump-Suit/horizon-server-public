@@ -32,14 +32,7 @@ namespace RT.Models
             LocationID = reader.ReadInt32();
             ApplicationID = reader.ReadInt32();
             ServerType = reader.Read<MGCL_GAME_HOST_TYPE>();
-            if (reader.MediusVersion < 110)
-            {
-                ServerVersionOld = reader.ReadString(Constants.MGCL_SERVERVERSION_MAXLEN);
-            }
-            else
-            {
-                ServerVersionNew = reader.ReadString(Constants.MGCL_SERVERVERSION_MAXLEN1);
-            }
+            ServerVersionNew = reader.ReadString(Constants.MGCL_SERVERVERSION_MAXLEN1);
             Port = reader.ReadInt32();
             reader.ReadBytes(4);
         }
@@ -55,14 +48,7 @@ namespace RT.Models
             writer.Write(LocationID);
             writer.Write(ApplicationID);
             writer.Write(ServerType);
-            if (writer.MediusVersion < 110)
-            {
-                writer.Write(ServerVersionOld, Constants.MGCL_SERVERVERSION_MAXLEN);
-            }
-            else
-            {
-                writer.Write(ServerVersionNew, Constants.MGCL_SERVERVERSION_MAXLEN1);
-            }
+            writer.Write(ServerVersionNew, Constants.MGCL_SERVERVERSION_MAXLEN1);
             writer.Write(Port);
             writer.Write(new byte[4]);
         }

@@ -2068,6 +2068,56 @@ namespace Server.Database
             return result;
         }
 
+        /// <summary>
+        /// Edits an existing clan message.
+        /// </summary>
+        /// <param name="accountId">Id of sender account.</param>
+        /// <param name="clanId">Id of clan.</param>
+        /// <param name="messageId">Id of clan message to delete.</param>
+        /// <returns>Success or failure.</returns>
+        public async Task<bool> ClanDeleteMessage(int accountId, int clanId, int messageId, int appId)
+        {
+            bool result = false;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    // get clan
+                    var clan = await GetClanById(clanId, appId);
+                    if (clan == null)
+                        return false;
+
+                    // validate leader
+                    if (clan.ClanLeaderAccount.AccountId != accountId)
+                        return false;
+
+                    // find message
+                    var clanMessage = clan.ClanMessages.FirstOrDefault(x => x.Id == messageId);
+                    if (clanMessage == null)
+                        return false;
+
+                    //
+                    clanMessage.Message = null;
+
+                    result = true;
+                }
+                else
+                {
+                    result = (await PostDbAsync($"Clan/deleteMessage?accountId={accountId}&clanId={clanId}", new ClanMessageDTO()
+                    {
+                        Id = messageId
+                    })).IsSuccessStatusCode;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
         #endregion
 
         #region DebugInfo
@@ -2381,8 +2431,14 @@ namespace Server.Database
                 }
                 else
                 {
-                    Logger.Warn($"FileNameBeginsWith: {FileNameBeginsWith} OwnerByID: {OwnerByID}");
-                    result = await GetDbAsync<List<FileDTO>>($"FileServices/getFileList?AppId={appId}&FileNameBeginsWith={FileNameBeginsWith}&OwnerByID={OwnerByID}");
+                    if(OwnerByID > 2147483647)
+                    {
+                        OwnerByID = 2147483646;
+
+                        Logger.Warn($"FileNameBeginsWith: {FileNameBeginsWith.Remove(FileNameBeginsWith.Length - 1)} OwnerByID: {OwnerByID}");
+                        result = await GetDbAsync<List<FileDTO>>($"FileServices/getFileList?AppId={appId}&FileNameBeginsWith={FileNameBeginsWith.Remove(FileNameBeginsWith.Length - 1)}&OwnerByID={OwnerByID}");
+
+                    }
                 }
             }
             catch (Exception e)

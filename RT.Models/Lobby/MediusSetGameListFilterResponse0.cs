@@ -26,15 +26,6 @@ namespace RT.Models
             // 
             reader.ReadBytes(3);
             StatusCode = reader.Read<MediusCallbackStatus>();
-
-
-            /*
-            //Not NBA07 PSP
-            if (reader.MediusVersion > 108 || reader.AppId != 11484 )
-            {
-                FilterID = reader.ReadUInt32();
-            }
-            */
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -48,14 +39,6 @@ namespace RT.Models
             // 
             writer.Write(new byte[3]);
             writer.Write(StatusCode);
-
-            /*
-            //Not NBA07 PSP
-            if (writer.MediusVersion > 108 || writer.AppId != 11484)
-            {
-                writer.Write(FilterID);
-            }
-            */
         }
 
 
@@ -63,8 +46,7 @@ namespace RT.Models
         {
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
-                $"StatusCode: {StatusCode} " +
-                $"FilterID: {FilterID}";
+                $"StatusCode: {StatusCode}";
         }
     }
 }

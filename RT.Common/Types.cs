@@ -123,6 +123,20 @@ namespace RT.Common
         RT_MSG_SERVER_CLIENT_CONNECT,
     }
 
+    public enum RT_RESULT : int
+    {
+        RT_RESULT_OK,
+        RT_RESULT_ERROR = 1,
+        RT_INVALID_PARAM = 2,
+        RT_NULL_PTR_ERROR = 3,
+        RT_NOT_IMPLEMENTED = 4,
+        RT_NOT_INITIALIZED = 5,
+        RT_ERROR_UNKNOWN = 6,
+        RT_NOT_SUPPORTED = 7,
+        RT_NO_SPC = 8,
+        RT_INVALID_CSTRING = 9,
+        RT_MEMORY_ALLOC_ERROR = 64,
+    }
 
     #endregion
 
@@ -867,12 +881,22 @@ namespace RT.Common
         MediusUtilWorldNotPersistent
     }
 
+    #region MediusApplicationType
+    /// <summary>
+    /// Enumeration used to determine the application types within the Medius SDK
+    /// </summary>
     public enum MediusApplicationType : int
     {
+        /// <summary>
+        /// Game type.
+        /// </summary>
         MediusAppTypeGame,
+        /// <summary>
+        /// Lobby chat channel type.
+        /// </summary>
         LobbyChatChannel,
-        ExtraMediusApplicationType = 0xFF00000
     }
+    #endregion
 
     #region MediusTextFilterType
     /// <summary>
@@ -1237,15 +1261,40 @@ namespace RT.Common
     }
     #endregion
 
+    #region MediusWorldStatus
+    /// <summary>
+    /// Used to set a game world to a certain state. <br></br> 
+    /// This affects whether the game can be joined or not and is displayed in GameInfo and GameList information.
+    /// </summary>
     public enum MediusWorldStatus : int
     {
+        /// <summary>
+        /// Game world is not active
+        /// </summary>
         WorldInactive,
+        /// <summary>
+        /// Players are staging in the game, but not yet playing.
+        /// </summary>
         WorldStaging,
+        /// <summary>
+        /// Players are playing in the game world.
+        /// </summary>
         WorldActive,
+        /// <summary>
+        /// Players are not allowed to join this game world.
+        /// </summary>
         WorldClosed,
+        /// <summary>
+        /// Set by server while creation is in progress.
+        /// </summary>
         WorldPendingCreation,
+        /// <summary>
+        /// Set by server for spectator worlds only after creation while <br></br> 
+        /// connection to the game world is in progress.
+        /// </summary>
         WorldPendingConnectToGame,
     }
+    #endregion
 
     #region MediusGameListFilterField
     public enum MediusGameListFilterField : int
@@ -1259,12 +1308,17 @@ namespace RT.Common
         MEDIUS_FILTER_GENERIC_FIELD_1 = 7,
         MEDIUS_FILTER_GENERIC_FIELD_2 = 8,
         MEDIUS_FILTER_GENERIC_FIELD_3 = 9,
-        MEDIUS_FILTER_LOBBY_WORLDID = 10,
-        MEDIUS_FILTER_GENERIC_FIELD_4 = 11,
-        MEDIUS_FILTER_GENERIC_FIELD_5 = 12,
-        MEDIUS_FILTER_GENERIC_FIELD_6 = 13,
-        MEDIUS_FILTER_GENERIC_FIELD_7 = 14,
-        MEDIUS_FILTER_GENERIC_FIELD_8 = 15,
+        MEDIUS_FILTER_LOBBY_WORLDID = 0x0A,
+        MEDIUS_FILTER_GENERIC_FIELD_4 = 0x0B,
+        MEDIUS_FILTER_GENERIC_FIELD_5 = 0x0C,
+        MEDIUS_FILTER_GENERIC_FIELD_6 = 0x0D,
+        MEDIUS_FILTER_GENERIC_FIELD_7 = 0x0E,
+        MEDIUS_FILTER_GENERIC_FIELD_8 = 0x0F,
+        MEDIUS_FILTER_MATCH_MAKING_GAMES = 0x10,
+        MEDIUS_FILTER_LOCATION_ID = 0x11,
+        MEDIUS_FILTER_BUDDY_COUNT = 0x12,
+        MEDIUS_FILTER_CLAN_MEMBER_COUNT = 0x13,
+        MEDIUS_FILTER_IGNORED_PLAYER_COUNT = 0x14,
     }
     #endregion
 
@@ -1320,14 +1374,23 @@ namespace RT.Common
     }
     #endregion
 
+    #region MediusLobbyFilterType
     /// <summary>
-    /// 
+    /// Whether the filter mask(s) submitted to a MediusSetLobbyWorldFilter() <br></br>
+    /// call will be Lobby&Filter=Filter or Lobby&Filter=Lobby.
     /// </summary>
     public enum MediusLobbyFilterType : int
     {
-        MediusLobbyFilterEqualsLobby = 0,
-        MediusLobbyFilterEqualsFilter = 1,
+        /// <summary>
+        /// Lobby filtering rules. Lobby&Filter = Lobby.
+        /// </summary>
+        MediusLobbyFilterEqualsLobby,
+        /// <summary>
+        /// Lobby filtering rules. Lobby&Filter = Filter.
+        /// </summary>
+        MediusLobbyFilterEqualsFilter,
     }
+    #endregion
 
     #region MediusLobbyFilterMaskLevelType
     /// <summary>
@@ -1478,11 +1541,6 @@ namespace RT.Common
         ///  This specifies a connection to a Server via UDP.  This is reserved for SCE-RT "Spectator" functionality.
         /// </summary>
         NetConnectionTypeClientListenerUDP = 7,
-
-        /// <summary>
-        /// Ensures that all values are stored as 32-bit integers on all compilers.
-        /// </summary>
-        ExtraNetConnectionType = 0xffffff
     }
     #endregion
 
@@ -1496,30 +1554,6 @@ namespace RT.Common
         SERVER_FORCED_DISCONNECT_TIME0UT = 5,
         SERVER_FORCED_DISCONNECT_BAD_PERF = 6,
         SERVER_FORCED_DISCONNECT_BANNED = 7
-    }
-
-    public enum MGCL_ALERT_LEVEL : int
-    {
-        MGCL_SUCCESS = 0,
-        MGCL_CONNECTION_ERROR = -1,
-        MGCL_CONNECTION_FAILED = -2,
-        MGCL_DISCONNECT_FAILED = -3,
-        MGCL_NOT_CONNECTED = -4,
-        MGCL_SEND_FAILED = -5,
-        MGCL_INITIALIZATION_FAILED = -6,
-        MGCL_SHUTDOWN_ERROR = -7,
-        MGCL_NETWORK_ERROR = -8,
-        MGCL_AUTHENTICATION_FAILED = -9,
-        MGCL_SESSIONBEGIN_FAILED = -10,
-        MGCL_SESSIONEND_FAILED = -11,
-        MGCL_UNSUCCESSFUL = -12,
-        MGCL_INVALID_ARG = -13,
-        MGCL_NATRESOLVE_FAILED = -14,
-        MGCL_GAME_NAME_EXISTS = -15,
-        MGCL_WORLDID_INUSE = -16,
-        MGCL_DME_ERROR = -17,
-        MGCL_CALL_MGCL_CLOSE_BEFORE_REINITIALIZING = -18,
-        MGCL_NUM_GAME_WORLDS_PER_LOBBY_WORLD_EXCEEDED = -19,
     }
 
     [Flags]
@@ -2114,7 +2148,6 @@ namespace RT.Common
         AccountUpdateStats_OpenAccessResponse = 0x3A,
         AddPlayerToClan_ByClanOfficer = 0x3B,
         AddPlayerToClan_ByClanOfficerResponse = 0x3C,
-        // PS3
         CrossChatMessage = 0x3D,
         CroxxChatFwdMessage = 0x3E,
         QueueUpdateMessage = 0x3F,
@@ -2271,8 +2304,38 @@ namespace RT.Common
     /// </summary>
     public enum MGCL_TRUST_LEVEL : int
     {
+        /// <summary>
+        /// This server is a trusted game server.
+        /// </summary>
         MGCL_TRUSTED,
+        /// <summary>
+        /// This server is NOT a trusted game server.
+        /// </summary>
         MGCL_NOT_TRUSTED,
+    }
+
+    /// <summary>
+    /// This is a enumeration used to identify the current level of service. <br></br>
+    /// This prevents create/join games from occurring on this host.
+    /// </summary>
+    public enum MGCL_ALERT_LEVEL : int
+    {
+        /// <summary>
+        /// Default, no alert occurs. Allow normal use.
+        /// </summary>
+        MGCL_ALERT_NONE,
+        /// <summary>
+        /// Low load. No new clients may join.
+        /// </summary>
+        MGCL_ALERT_LOW,
+        /// <summary>
+        /// Moderate load. No new clients may join.
+        /// </summary>
+        MGCL_ALERT_MID,
+        /// <summary>
+        /// High load. No new clients may join.
+        /// </summary>
+        MGCL_ALERT_HIGH,
     }
 
     public enum MGCL_GAME_HOST_TYPE : int
@@ -2282,17 +2345,44 @@ namespace RT.Common
         MGCLGameHostPeerToPeer = 2,
         MGCLGameHostLANPlay = 3,
         MGCLGameHostClientServerAuxUDP = 4,
+        MGCLGameHostClientServerUDP = 5,
+        MGCLGameHostIndependent = 6,
+        MGCLGameHostMax = 7,
     }
 
     public enum MGCL_ERROR_CODE : sbyte
     {
+        /// <summary>
+        /// Successful Response
+        /// </summary>
         MGCL_SUCCESS = 0,
+        /// <summary>
+        /// Connection Terminated
+        /// </summary>
         MGCL_CONNECTION_ERROR = -1,
+        /// <summary>
+        /// Unable to connect to target host
+        /// </summary>
         MGCL_CONNECTION_FAILED = -2,
+        /// <summary>
+        /// Unable to disconnect from target host
+        /// </summary>
         MGCL_DISCONNECT_FAILED = -3,
+        /// <summary>
+        /// Attempt to use an API call that requires a connection - without a connection
+        /// </summary>
         MGCL_NOT_CONNECTED = -4,
+        /// <summary>
+        /// Sending of data failed
+        /// </summary>
         MGCL_SEND_FAILED = -5,
+        /// <summary>
+        /// initializtion of MGCL Library failed
+        /// </summary>
         MGCL_INITIALIZATION_FAILED = -6,
+        /// <summary>
+        /// Shutdown of MGCL Library failed
+        /// </summary>
         MGCL_SHUTDOWN_ERROR = -7,
         MGCL_NETWORK_ERROR = -8,
         MGCL_AUTHENTICATION_FAILED = -9,
@@ -2694,6 +2784,21 @@ namespace RT.Common
         ExtraMediusTokenCategoryType = 0xffffff
     }
     #endregion
+
+    public enum ONLINE_STATUS_TYPE : int
+    {
+        OFFLINE,
+        AVAILABLE,
+        PRIVATE,
+        AWAY,
+        IDLE,
+        STAGING,
+        LOADING,
+        IN_GAME,
+        CHAT_HOST,
+        CHAT_CLIENT,
+        MAX_ONLINE_STATUS_TYPE
+    }
 
     #region DME 
 
@@ -3157,8 +3262,8 @@ namespace RT.Common
         ghs_ClientConfirmNameAccountID = 3,
         ghs_ClientErrorGeneral = 24576,
         ghs_ClientErrorInvalidRequestID = 24577,
-        ghs_ServerProtocolNegotiation = 32769,
-        ghs_ServerGrantNameAccountID = 32770,
+        ghs_ServerProtocolNegotiation = 32769, //32769
+        ghs_ServerGrantNameAccountID = 32770, //32770
         ghs_ServerConfirmNameAccountID = 32771,
         ghs_ServerRejectName = 32772,
         ghs_ServerErrorGeneral = 57344,

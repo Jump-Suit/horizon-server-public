@@ -25,7 +25,7 @@ namespace RT.Models
         /// <summary>
         /// SessionDisplayStats
         /// </summary>
-        public string SessionDisplayStats; // ACCOUNTSTATS_MAXLEN
+        public byte[] SessionDisplayStats; // ACCOUNTSTATS_MAXLEN
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -38,7 +38,7 @@ namespace RT.Models
             // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             SessionDisplayName = reader.ReadString(Constants.ACCOUNTNAME_MAXLEN);
-            SessionDisplayStats = reader.ReadString(Constants.ACCOUNTSTATS_MAXLEN);
+            SessionDisplayStats = reader.ReadBytes(Constants.ACCOUNTSTATS_MAXLEN);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)

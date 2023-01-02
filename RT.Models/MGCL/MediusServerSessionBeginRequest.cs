@@ -14,6 +14,9 @@ namespace RT.Models
         public int ApplicationID;
         public MGCL_GAME_HOST_TYPE ServerType;
         public string ServerVersion; // MGCL_SERVERVERSION_MAXLEN
+        /// <summary>
+        /// Not used in version 2.10
+        /// </summary>
         public int Port;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -55,7 +58,7 @@ namespace RT.Models
                 $"ApplicationID: {ApplicationID} " +
                 $"ServerType: {ServerType} " +
                 $"ServerVersion: {ServerVersion} " +
-                $"Port: {Port}";
+                $"Port: {Port}(ignored)";
         }
     }
 }

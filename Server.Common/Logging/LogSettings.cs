@@ -74,6 +74,11 @@ namespace Server.Common.Logging
         public string[] MediusNetMessageTypesLogFilter { get; set; } = Enum.GetNames(typeof(NetMessageTypeIds));
 
         /// <summary>
+        /// Collection of Medius GHS Opcodes
+        /// </summary>
+        public string[] MediusGhsOpcodeFilter { get; set; } = Enum.GetNames(typeof(GhsOpcode));
+
+        /// <summary>
         /// Internal preprocessed collection of message id filters.
         /// </summary>
         private Dictionary<RT_MSG_TYPE, bool> _rtLogFilters = new Dictionary<RT_MSG_TYPE, bool>();
@@ -195,6 +200,14 @@ namespace Server.Common.Logging
                         _netLogFilters.Add(value, true);
             }
             */
+
+            _ghsOpsLogFilters.Clear();
+            if (MediusGhsOpcodeFilter != null)
+            {
+                foreach (var filter in MediusGhsOpcodeFilter)
+                    if (Enum.TryParse<GhsOpcode>(filter, out var value))
+                        _ghsOpsLogFilters.Add(value, true);
+            }
         }
     }
 

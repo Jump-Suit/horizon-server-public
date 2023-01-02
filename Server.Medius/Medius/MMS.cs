@@ -223,7 +223,7 @@ namespace Server.Medius
                         data.ApplicationId = clientConnectTcp.AppId;
                         scertClient.ApplicationID = clientConnectTcp.AppId;
 
-                        data.ClientObject = Program.Manager.GetClientByAccessToken(clientConnectTcp.AccessToken, data.ApplicationId);
+                        data.ClientObject = Program.Manager.GetClientByAccessToken(clientConnectTcp.AccessToken, clientConnectTcp.AppId);
 
 
                         #region Client Object Null?

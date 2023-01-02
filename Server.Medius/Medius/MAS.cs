@@ -284,8 +284,8 @@ namespace Server.Medius
                                     {
                                         AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                             {
-                                            new NetAddress() { Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService },
-                                            new NetAddress() { AddressType = NetAddressType.NetAddressNone },
+                                                new NetAddress() { Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService },
+                                                new NetAddress() { AddressType = NetAddressType.NetAddressNone },
                                             }
                                     },
                                     Type = NetConnectionType.NetConnectionTypeClientServerUDP
@@ -354,58 +354,75 @@ namespace Server.Medius
                         // Keep the client alive until the dme objects connects to MPS or times out
                         data.ClientObject.KeepAliveUntilNextConnection();
 
-                        // Arc The Lad - End of Darkness cannot use the ServerKey, so they need to be removed, same with Amplitude and R&C3: Pubeta
-                        if (data.ClientObject.ApplicationId == 10984 || data.ClientObject.ApplicationId == 10164 || data.ClientObject.ApplicationId == 10680 || data.ClientObject.ApplicationId == 10124)
+                        var appIdList = Program.Database.GetAppIds();
+                        if(data.ClientObject.ApplicationId != appIdList.Result.FirstOrDefault().AppIds.FirstOrDefault())
                         {
-                            data.ClientObject.NetConnectionType = NetConnectionType.NetConnectionTypeClientServerTCP;
 
                             data.ClientObject.Queue(new MediusServerAuthenticationResponse()
                             {
                                 MessageID = mgclAuthRequest.MessageID,
-                                Confirmation = MGCL_ERROR_CODE.MGCL_SUCCESS,
+                                Confirmation = MGCL_ERROR_CODE.MGCL_AUTHENTICATION_FAILED,
                                 ConnectInfo = new NetConnectionInfo()
                                 {
-                                    AccessKey = data.ClientObject.Token,
-                                    SessionKey = data.ClientObject.SessionKey,
-                                    WorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId).Id,
-                                    //The ServerKey need to be omitted of the connectInfo, a null serverkey throw a Network Error
-                                    //ServerKey = Program.GlobalAuthPublic,
-                                    AddressList = new NetAddressList()
-                                    {
-                                        AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
-                                        {
-                                            new NetAddress() { Address = Program.ProxyServer.IPAddress.ToString(), Port = Program.ProxyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal },
-                                            new NetAddress() { AddressType = NetAddressType.NetAddressNone },
-                                        }
-                                    },
-                                    Type = NetConnectionType.NetConnectionTypeClientServerTCP
+                                    Type = NetConnectionType.NetConnectionNone
                                 }
                             });
-                        }
-                        else //reply
-                        {
-                            data.ClientObject.Queue(new MediusServerAuthenticationResponse()
+                        } else {
+
+                            // Arc The Lad - End of Darkness cannot use the ServerKey, so they need to be removed, same with Amplitude and R&C3: Pubeta
+                            if (data.ClientObject.ApplicationId == 10984 || data.ClientObject.ApplicationId == 10164 || data.ClientObject.ApplicationId == 10680 || data.ClientObject.ApplicationId == 10124)
                             {
-                                MessageID = mgclAuthRequest.MessageID,
-                                Confirmation = MGCL_ERROR_CODE.MGCL_SUCCESS,
-                                ConnectInfo = new NetConnectionInfo()
+                                data.ClientObject.NetConnectionType = NetConnectionType.NetConnectionTypeClientServerTCP;
+
+                                data.ClientObject.Queue(new MediusServerAuthenticationResponse()
                                 {
-                                    AccessKey = data.ClientObject.Token,
-                                    SessionKey = data.ClientObject.SessionKey,
-                                    WorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId).Id,
-                                    ServerKey = Program.GlobalAuthPublic,
-                                    AddressList = new NetAddressList()
+                                    MessageID = mgclAuthRequest.MessageID,
+                                    Confirmation = MGCL_ERROR_CODE.MGCL_SUCCESS,
+                                    ConnectInfo = new NetConnectionInfo()
                                     {
-                                        AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
+                                        AccessKey = data.ClientObject.Token,
+                                        SessionKey = data.ClientObject.SessionKey,
+                                        WorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId).Id,
+                                        //The ServerKey need to be omitted of the connectInfo, a null serverkey throw a Network Error
+                                        //ServerKey = Program.GlobalAuthPublic,
+                                        AddressList = new NetAddressList()
                                         {
+                                            AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
+                                            {
                                             new NetAddress() { Address = Program.ProxyServer.IPAddress.ToString(), Port = Program.ProxyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal },
                                             new NetAddress() { AddressType = NetAddressType.NetAddressNone },
-                                        }
-                                    },
-                                    Type = NetConnectionType.NetConnectionTypeClientServerTCP
-                                }
-                            });
+                                            }
+                                        },
+                                        Type = NetConnectionType.NetConnectionTypeClientServerTCP
+                                    }
+                                });
+                            }
+                            else //reply
+                            {
+                                data.ClientObject.Queue(new MediusServerAuthenticationResponse()
+                                {
+                                    MessageID = mgclAuthRequest.MessageID,
+                                    Confirmation = MGCL_ERROR_CODE.MGCL_SUCCESS,
+                                    ConnectInfo = new NetConnectionInfo()
+                                    {
+                                        AccessKey = data.ClientObject.Token,
+                                        SessionKey = data.ClientObject.SessionKey,
+                                        WorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId).Id,
+                                        ServerKey = Program.GlobalAuthPublic,
+                                        AddressList = new NetAddressList()
+                                        {
+                                            AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
+                                            {
+                                            new NetAddress() { Address = Program.ProxyServer.IPAddress.ToString(), Port = Program.ProxyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal },
+                                            new NetAddress() { AddressType = NetAddressType.NetAddressNone },
+                                            }
+                                        },
+                                        Type = NetConnectionType.NetConnectionTypeClientServerTCP
+                                    }
+                                });
+                            }
                         }
+
                         break;
                     }
 
@@ -438,6 +455,7 @@ namespace Server.Medius
                     {
                         (data.ClientObject as DMEObject)?.OnServerReport(serverReport);
                         data.ClientObject.OnConnected();
+                        Logger.Info($"ServerReport SessionKey {serverReport.SessionKey} MaxWorlds {serverReport.MaxWorlds} MaxPlayersPerWorld {serverReport.MaxPlayersPerWorld} TotalWorlds {serverReport.ActiveWorldCount} TotalPlayers {serverReport.TotalActivePlayers} Alert {serverReport.AlertLevel} ConnIndex {data.ClientObject.DmeId} WorldID {data.ClientObject.WorldId}");
                         break;
                     }
 
@@ -602,12 +620,6 @@ namespace Server.Medius
                         if (data.ClientObject == null)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} is trying to end session without an Client Object");
 
-                        // Remove
-                        data.ClientObject.EndSession();
-
-                        // 
-                        data.ClientObject = null;
-
                         Queue(new RT_MSG_SERVER_APP()
                         {
                             Message = new MediusSessionEndResponse()
@@ -616,6 +628,17 @@ namespace Server.Medius
                                 StatusCode = MediusCallbackStatus.MediusSuccess,
                             }
                         }, clientChannel);
+
+                        // Remove
+                        data.ClientObject.EndSession();
+                        data.ClientObject = null;
+                        /*
+                        if (data.ClientObject.IsLoggedIn)
+                        {
+                            Logger.Info($"SessionEnd Success");
+                            await data.ClientObject.Logout();
+                        }
+                        */
                         break;
                     }
 
@@ -628,6 +651,7 @@ namespace Server.Medius
                         if (data.ClientObject == null)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {setLocalizationParamsRequest} without a session.");
 
+                        data.ClientObject.CharacterEncoding = setLocalizationParamsRequest.CharacterEncoding;
                         data.ClientObject.LanguageType = setLocalizationParamsRequest.Language;
 
                         data.ClientObject.Queue(new MediusStatusResponse()
@@ -645,6 +669,7 @@ namespace Server.Medius
                         if (data.ClientObject == null)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {setLocalizationParamsRequest1} without a session.");
 
+                        data.ClientObject.CharacterEncoding = setLocalizationParamsRequest1.CharacterEncoding;
                         data.ClientObject.LanguageType = setLocalizationParamsRequest1.Language;
                         data.ClientObject.TimeZone = setLocalizationParamsRequest1.TimeZone;
                         data.ClientObject.LocationId = setLocalizationParamsRequest1.LocationID;
@@ -663,6 +688,7 @@ namespace Server.Medius
                         if (data.ClientObject == null)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {setLocalizationParamsRequest2} without a session.");
 
+                        data.ClientObject.CharacterEncoding = setLocalizationParamsRequest2.CharacterEncoding;
                         data.ClientObject.LanguageType = setLocalizationParamsRequest2.Language;
                         data.ClientObject.TimeZone = setLocalizationParamsRequest2.TimeZone;
 
@@ -981,14 +1007,6 @@ namespace Server.Medius
                         // ERROR - Need a session
                         if (data.ClientObject == null)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {pickLocationRequest} without a session.");
-
-                        // ERROR -- Need to be logged in
-                        if (!data.ClientObject.IsLoggedIn)
-                        {
-                            Logger.Warn("PickLocation called before AccountLogin -Updating CachePlayer only");
-                            throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {pickLocationRequest} without being logged in.");
-
-                        }
 
                         data.ClientObject.LocationId = pickLocationRequest.LocationID;
 
@@ -1322,7 +1340,7 @@ namespace Server.Medius
                         if (!data.ClientObject.IsLoggedIn)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {accountUpdateStatsRequest} without being logged in.");
 
-                        _ = Program.Database.PostMediusStats(data.ClientObject.AccountId, accountUpdateStatsRequest.Stats).ContinueWith((r) =>
+                        _ = Program.Database.PostMediusStats(data.ClientObject.AccountId, Convert.ToBase64String(accountUpdateStatsRequest.Stats)).ContinueWith((r) =>
                         {
                             if (data == null || data.ClientObject == null || !data.ClientObject.IsConnected)
                                 return;
@@ -2031,7 +2049,7 @@ namespace Server.Medius
                         if (data.ClientObject == null)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {getMyIpRequest} without a session.");
 
-                        if (!data.ClientObject.IsLoggedIn && data.ClientObject.ApplicationId != 10414)
+                        if (!data.ClientObject.IsLoggedIn && data.ClientObject.ApplicationId != 10411)
                         {
                             Logger.Info($"Get My IP Request Handler Error: [{data.ClientObject}]: Player Not Privileged\nPlayer not logged in");
                             data.ClientObject.Queue(new MediusGetMyIPResponse()
@@ -2313,6 +2331,27 @@ namespace Server.Medius
             }
             */
             return new IPAddress(bytes).ToString();
+        }
+        #endregion
+
+        #region ConvertFromIntegerToIpAddress
+        /// <summary>
+        /// Convert from Binary Ip Address to UInt
+        /// </summary>
+        /// <param name="ipAddress">Binary formatted IP Address</param>
+        /// <returns></returns>
+        public static uint ConvertFromIpAddressToBinary(IPAddress ipAddress)
+        {
+            uint Uint = (uint)BitConverter.ToInt32(ipAddress.GetAddressBytes());
+
+            // flip little-endian to big-endian(network order)
+            /* NOT NEEDED
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+            */
+            return Uint;
         }
         #endregion
     }

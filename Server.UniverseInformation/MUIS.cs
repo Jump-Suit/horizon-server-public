@@ -575,7 +575,6 @@ namespace Server.UniverseInformation
                                         if (getUniverseInfo.InfoType.HasFlag(MediusUniverseVariableInformationInfoFilter.INFO_SVO_URL))
                                         {
                                             Logger.Info($"MUIS: send svo info:  [{Program.Settings.Logging.LogLevel}/{Program.Settings.Universes.ToArray().Length}]");
-                                            Logger.Warn("TEST");
                                             Queue(new RT_MSG_SERVER_APP()
                                             {
                                                 Message = new MediusUniverseSvoURLResponse()
@@ -690,11 +689,14 @@ namespace Server.UniverseInformation
 
                         // Deadlocked only uses this to connect to a non-game channel (lobby)
                         // So we'll filter by lobby here
+                        /*
                         var channels = Program.Manager.GetChannelList(
                             data.ApplicationId,
                             channelList_ExtraInfoRequest.PageID,
                             channelList_ExtraInfoRequest.PageSize,
                             ChannelType.Lobby);
+                        
+
 
                         foreach (var channel in channels)
                         {
@@ -716,6 +718,25 @@ namespace Server.UniverseInformation
                                 EndOfList = false
                             });
                         }
+                        */
+
+                        channelResponses.Add(new MediusChannelList_ExtraInfoResponse()
+                        {
+                            MessageID = channelList_ExtraInfoRequest.MessageID,
+                            StatusCode = MediusCallbackStatus.MediusSuccess,
+                            MediusWorldID = 1,
+                            LobbyName = "US",
+                            GameWorldCount = 0,
+                            PlayerCount = 0,
+                            MaxPlayers = 256,
+                            GenericField1 = 0,
+                            GenericField2 = 0,
+                            GenericField3 = 0,
+                            GenericField4 = 0,
+                            GenericFieldLevel = 0,
+                            SecurityLevel = MediusWorldSecurityLevelType.WORLD_SECURITY_NONE,
+                            EndOfList = false
+                        });
 
                         if (channelResponses.Count == 0)
                         {

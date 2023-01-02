@@ -8,7 +8,7 @@ namespace RT.Models
 
         public override byte PacketType => (byte)MediusDmeMessageIds.Ping;
 
-        public long TimeOfSend;
+        public uint TimeOfSend;
         public byte PingInstance;
         public bool RequestEcho;
 

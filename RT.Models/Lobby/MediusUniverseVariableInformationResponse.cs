@@ -36,7 +36,7 @@ namespace RT.Models
             //
             MessageID = reader.Read<MessageId>();
 
-            if(reader.MediusVersion >= 110 && reader.MediusVersion < 111)
+            if(reader.MediusVersion >= 110)
             {
                 reader.ReadBytes(3);
             }
@@ -47,7 +47,7 @@ namespace RT.Models
             
             if (reader.MediusVersion > 108 && reader.MediusVersion != 112 && reader.MediusVersion == 113)
             {
-                reader.ReadBytes(3);
+                //reader.ReadBytes(3);
             }
 
             if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_ID))
@@ -87,7 +87,7 @@ namespace RT.Models
 
             EndOfList = reader.ReadBoolean();
 
-            if (reader.MediusVersion >= 110 && reader.MediusVersion > 111)
+            if (reader.MediusVersion >= 110)
             {
                 reader.ReadBytes(3);
             }
@@ -100,7 +100,7 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
-            if (writer.MediusVersion == 110 && writer.MediusVersion > 111)
+            if (writer.MediusVersion == 110)
             {
                 writer.Write(new byte[3]);
             }
@@ -111,7 +111,7 @@ namespace RT.Models
 
             if (writer.MediusVersion > 108 && writer.MediusVersion < 112 && writer.MediusVersion == 113)
             {
-                writer.Write(new byte[3]);
+                //writer.Write(new byte[3]);
             }
 
             if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_ID))
@@ -150,7 +150,7 @@ namespace RT.Models
 
             writer.Write(EndOfList);
 
-            if (writer.MediusVersion >= 110 && writer.MediusVersion > 111)
+            if (writer.MediusVersion >= 110)
             {
                 writer.Write(new byte[3]);
             }

@@ -40,9 +40,9 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID}" + " " +
-                $"SessionKey:{SessionKey}" + " " +
-                $"Message:{Message}";
+                $"MessageID: {MessageID}" + " " +
+                $"SessionKey: {SessionKey}" + " " +
+                $"Message: {Message}";
         }
     }
 }

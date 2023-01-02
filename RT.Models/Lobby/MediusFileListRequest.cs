@@ -52,7 +52,7 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
-            writer.Write(3);
+            writer.Write(new byte[3]);
         }
 
 

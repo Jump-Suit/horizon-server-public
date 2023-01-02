@@ -11,10 +11,6 @@
         /// The account stats field contains up to this many bytes of binary data.
         /// </summary>
         public const int ACCOUNTSTATS_MAXLEN = 256;
-        /// <summary>
-        /// The player report stats field contains up to this many bytes of binary data.
-        /// </summary>
-        public const int PLAYERREPORTSTATS_MAXLEN = 512;
         #endregion
 
         /// <summary>

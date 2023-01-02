@@ -206,6 +206,7 @@ namespace Server.GHService
                             RsaPublicKey = Program.Settings.EncryptMessages ?
                             Program.Settings.DefaultKey.N : Org.BouncyCastle.Math.BigInteger.Zero
                         }, clientChannel);
+
                         Logger.Info("plugin: RT_MSG_SERVER_HELLO\n");
                         break;
                     }
@@ -228,7 +229,14 @@ namespace Server.GHService
                         gPluginState = GhsClientState.GhsClient_CONNECTING;
 
 
-                        Queue(new RT_MSG_SERVER_CONNECT_REQUIRE(), clientChannel);
+                        Queue(new RT_MSG_SERVER_STARTUP_INFO_NOTIFY()
+                        {
+                            GameHostType = (byte)MGCL_GAME_HOST_TYPE.MGCLGameHostClientServer,
+                            Timebase = (uint)WorldTimer.ElapsedMilliseconds
+                        }, clientChannel);
+                        
+
+                        Queue(new RT_MSG_SERVER_CONNECT_REQUIRE() { ReqServerPassword = 1, MaxPacketSize = 584 , MaxUdpPacketSize = 584}, clientChannel);
                         /*
                         Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP(){
                             IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address,
@@ -297,7 +305,7 @@ namespace Server.GHService
                     {
                         if (scertClient.MediusVersion >= 109 && scertClient.CipherService.EnableEncryption == true)
                         {
-                            //Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { Key = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
+                            //Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
                         }
                         Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
                         {
@@ -311,28 +319,22 @@ namespace Server.GHService
                     }
                 case RT_MSG_CLIENT_CONNECT_READY_TCP clientConnectReadyTcp:
                     {
-                        Queue(new RT_MSG_SERVER_STARTUP_INFO_NOTIFY()
-                        {
-                            GameHostType = (byte)MGCL_GAME_HOST_TYPE.MGCLGameHostClientServer,
-                            Timestamp = (uint)WorldTimer.ElapsedMilliseconds
-                        }, clientChannel);
-
                         Logger.Info("plugin: RT_MSG_CLIENT_CONNECT_READY_TCP\n");
                         Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
-                        gPluginState = GhsClientState.GhsClient_ONLINE;
 
-
+                        
                         Logger.Info("plugin: RT_MSG_SERVER_CONNECT_COMPLETE\n");
+                        /*
                         Queue(new RT_MSG_SERVER_APP()
                         {
-                            /*
-                            GhsMessage = new scertGhsTypeVersionRequest()
+                            GHSMessage = new scertGhsTypeVersionRequest()
                             {
-                                version = 0x01,
+                                maxMajorVersion = ReverseBytes16(0x0001),
+                                maxMinorVersion = 0,
                             }
-                            */
+                            
                         }, clientChannel);
-
+                        */
                         break;
                     }
                 case RT_MSG_SERVER_ECHO serverEchoReply:
@@ -348,7 +350,7 @@ namespace Server.GHService
                     }
                 case RT_MSG_CLIENT_APP_TOSERVER clientAppToServer:
                     {
-                        //await ProcessMediusMessage(clientAppToServer.GhsMessage, clientChannel, data);
+                        //await ProcessMediusGHSMessage(clientAppToServer.GhsMessage, clientChannel, data);
                         break;
                     }
                 case RT_MSG_CLIENT_APP_LIST clientAppList:
@@ -372,22 +374,25 @@ namespace Server.GHService
             return;
         }
         /*
-        protected virtual async Task ProcessMediusMessage(BaseMediusGhsMessage message, IChannel clientChannel, ChannelData data)
+        protected virtual async Task ProcessMediusGHSMessage(BaseMediusGHSMessage message, IChannel clientChannel, ChannelData data)
         {
             if (message == null)
                 return;
 
+            //var appSettings = Program.GetAppSettingsOrDefault(data.ApplicationId);
+
             switch (message)
             {
-                /*
-                case scertGhsTypeVersionRequest ghsTypeVersionRequest:
+                
+                case scertGhsTypeProtocolChoice ghsTypeProtocolChoice:
                     {
 
+                        Logger.Info($"ghsTypeProtocolChoice: {ghsTypeProtocolChoice.MajorVersion}.{ghsTypeProtocolChoice.MinorVersion}\n");
                         break;
                     }
                 default:
                     {
-                        Logger.Warn($"UNHANDLED MEDIUS MESSAGE: {message}");
+                        Logger.Warn($"UNHANDLED MEDIUS GHS MESSAGE: {message}");
                         break;
                     }
             }
@@ -426,6 +431,17 @@ namespace Server.GHService
 
         #endregion
 
+        #region ReverseBytes16
+        /// <summary>
+        /// Reverses UInt16 
+        /// </summary>
+        /// <param name="nValue"></param>
+        /// <returns></returns>
+        public static ushort ReverseBytes16(ushort nValue)
+        {
+            return (ushort)((ushort)((nValue >> 8)) | (nValue << 8));
+        }
+        #endregion
 
         protected uint GenerateNewScertClientId()
         {

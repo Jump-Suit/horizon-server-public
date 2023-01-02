@@ -664,7 +664,7 @@ namespace Server.Medius
 
             else
             {
-                Program.AntiCheatPlugin.mc_anticheat_event_msg(AnticheatEventCode.anticheatJOINGAME, request.MediusWorldID, client.AccountId, Program.AntiCheatClient, request, 4);
+                //Program.AntiCheatPlugin.mc_anticheat_event_msg(AnticheatEventCode.anticheatJOINGAME, request.MediusWorldID, client.AccountId, Program.AntiCheatClient, request, 4);
 
                 var dme = game.DMEServer;
 
@@ -711,7 +711,7 @@ namespace Server.Medius
                             {
                                 AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                 {
-                                    new NetAddress() { Address = request.AddressList.AddressList[0].Address, WorldId = request.AddressList.AddressList[0].WorldId, SignalId = request.AddressList.AddressList[0].SignalId, AddressType = NetAddressType.NetAddressTypeSignalAddress},
+                                    new NetAddress() { Address = request.AddressList.AddressList[0].Address, Port = request.AddressList.AddressList[0].Port, AddressType = NetAddressType.NetAddressTypeSignalAddress},
                                     new NetAddress() { AddressType = NetAddressType.NetAddressNone},
                                 }
                             },

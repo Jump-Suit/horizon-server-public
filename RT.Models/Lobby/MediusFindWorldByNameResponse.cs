@@ -66,6 +66,7 @@ namespace RT.Models
             ApplicationType = reader.Read<MediusApplicationType>();
             MediusWorldID = reader.ReadInt32();
             WorldName = reader.ReadString(Constants.WORLDNAME_MAXLEN);
+            WorldStatus = reader.Read<MediusWorldStatus>();
             EndOfList = reader.ReadBoolean();
             reader.ReadBytes(3);
         }
@@ -85,7 +86,8 @@ namespace RT.Models
             writer.Write(ApplicationName, Constants.APPNAME_MAXLEN);
             writer.Write(ApplicationType);
             writer.Write(MediusWorldID);
-            writer.Write(WorldName);
+            writer.Write(WorldName, Constants.WORLDNAME_MAXLEN);
+            writer.Write(WorldStatus);
             writer.Write(EndOfList);
             writer.Write(new byte[3]);
         }
@@ -99,6 +101,8 @@ namespace RT.Models
                 $"ApplicationName: {ApplicationName} " +
                 $"ApplicationType: {ApplicationType} " +
                 $"MediusWorldID: {MediusWorldID} " +
+                $"WorldName: {WorldName} " +
+                $"WorldStatus: {WorldStatus} " +
                 $"EndOfList: {EndOfList}";
         }
     }

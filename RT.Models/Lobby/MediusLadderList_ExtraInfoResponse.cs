@@ -1,5 +1,6 @@
 using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -72,7 +73,7 @@ namespace RT.Models
                 $"LadderStat: {LadderStat} " +
                 $"AccountID: {AccountID} " +
                 $"AccountName: {AccountName} " +
-                $"AccountStats: {AccountStats} " +
+                $"AccountStats: {BitConverter.ToString(AccountStats)} " +
                 $"OnlineState: {OnlineState} " +
                 $"EndOfList: {EndOfList}";
         }

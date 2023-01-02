@@ -17,9 +17,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="DotNetty.Handlers" Version="0.7.2" />
+		<PackageReference Include="DotNetty.Handlers" Version="0.7.5" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.1.1" />
-		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.15.1" />
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" />
 		<PackageReference Include="NReco.Logging.File" Version="1.0.5" />
 	</ItemGroup>
 

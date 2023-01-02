@@ -438,7 +438,7 @@ namespace Server.Medius.Models
                 await SetWorldStatus(MediusWorldStatus.WorldClosed);
                 ///Send database EndGameReport info
                 await EndGame();
-                Logger.Info($"Successfull local delete of game world [{report.MediusWorldID}]");
+                Logger.Info($"Successful local delete of game world [{report.MediusWorldID}]");
             } catch (Exception e)
             {
                 Logger.Warn($"Couldn't perform local delete of game world [{report.MediusWorldID}] with exception: {e}");

@@ -12,7 +12,7 @@ namespace RT.Models
         public int MediusWorldID;
         public int PlayerCount;
         public string GameName; // GAMENAME_MAXLEN
-        public byte[] GameStats = new byte[Constants.GAMESTATS_MAXLEN];
+        public byte[] GameStats = new byte[Constants.GAMESTATS_MAXLEN]; // GAMESTATS_MAXLEN
         public int MinPlayers;
         public int MaxPlayers;
         public int GameLevel;
@@ -86,7 +86,7 @@ namespace RT.Models
                 $"MediusWorldID: {MediusWorldID} " +
                 $"PlayerCount:{PlayerCount} " +
                 $"GameName: {GameName} " +
-                $"GameStats: {string.Join("", GameStats)} " +
+                $"GameStats: {BitConverter.ToString(GameStats)} " +
                 $"MinPlayers: {MinPlayers} " +
                 $"MaxPlayers: {MaxPlayers} " +
                 $"GameLevel: {GameLevel} " +

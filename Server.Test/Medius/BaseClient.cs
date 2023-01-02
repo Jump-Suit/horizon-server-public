@@ -32,7 +32,7 @@ namespace Server.Test.Medius
 
         protected abstract IInternalLogger Logger { get; }
 
-        public abstract PS2_RSA AuthKey { get; }
+        public abstract RsaKeyPair AuthKey { get; }
         public abstract int ApplicationId { get; }
 
         public ConcurrentQueue<BaseScertMessage> RecvQueue { get; } = new ConcurrentQueue<BaseScertMessage>();
@@ -72,7 +72,7 @@ namespace Server.Test.Medius
                 switch (context)
                 {
                     case CipherContext.RC_CLIENT_SESSION: return _sessionCipher;
-                    case CipherContext.RSA_AUTH: return AuthKey;
+                    case CipherContext.RSA_AUTH: return (ICipher)AuthKey;
                     default: return null;
                 }
             };

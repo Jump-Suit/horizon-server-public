@@ -9,56 +9,65 @@ namespace RT.Models
         public override RT_MSG_TYPE Id => RT_MSG_TYPE.RT_MSG_CLIENT_APP_TOSERVER;
 
         public BaseMediusMessage Message { get; set; } = null;
-
-        //public BaseMediusGhsMessage GhsMessage { get; set; } = null;
+        //public BaseMediusGHSMessage GhsMessage { get; set; } = null;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
+            Message = BaseMediusMessage.Instantiate(reader);
             /*
-            if(reader.AppId == 0)
+            if (Message != null)
             {
-                GhsMessage = BaseMediusGhsMessage.Instantiate(reader);
             } else
             {
-                Message = BaseMediusMessage.Instantiate(reader);
+                GhsMessage = BaseMediusGHSMessage.Instantiate(reader);
             }
             */
-            Message = BaseMediusMessage.Instantiate(reader);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
         {
+            writer.Write(Message.PacketClass);
+            writer.Write(Message.PacketType);
+            Message.Serialize(writer);
             /*
-            if(GhsMessage != null)
-            {
-                writer.Write(GhsMessage.PacketClass);
-                writer.Write(GhsMessage.PacketType);
-                GhsMessage.Serialize(writer);
-            } else if (Message != null)
-            {
-                writer.Write(Message.PacketClass);
-                writer.Write(Message.PacketType);
-                Message.Serialize(writer);
-            }
-            */
-
             if (Message != null)
             {
-                writer.Write(Message.PacketClass);
-                writer.Write(Message.PacketType);
-                Message.Serialize(writer);
+            } else
+            {
+                writer.Write(GhsMessage.msgSize);
+                writer.Write(ReverseBytes16((ushort)GhsMessage.GhsOpcode));
+                GhsMessage.Serialize(writer);
             }
+            */
         }
 
         public override bool CanLog()
         {
-            return base.CanLog() && (Message?.CanLog() ?? true);
+            return base.CanLog() && (Message?.CanLog() ?? true)/* && (GhsMessage?.CanLog() ?? true)*/;
         }
 
         public override string ToString()
         {
             return base.ToString() + " " +
                 $"Message: {Message}";
+            /*
+            if(Message != null)
+            {
+            } else {
+                return base.ToString() + " " +
+                    $"GhsMessage: {GhsMessage}";
+            }
+            */
+        }
+
+        /// <summary>
+        /// Reverses UInt16 
+        /// </summary>
+        /// <param name="nValue"></param>
+        /// <returns></returns>
+        public static ushort ReverseBytes16(ushort nValue)
+        {
+            return (ushort)((ushort)((nValue >> 8)) | (nValue << 8));
         }
     }
 }

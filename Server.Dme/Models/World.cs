@@ -1,7 +1,9 @@
 ﻿using DotNetty.Common.Internal.Logging;
 using Microsoft.Extensions.Logging;
+using Org.BouncyCastle.Asn1.X509;
 using RT.Common;
 using RT.Models;
+using Server.Common;
 using Server.Dme.PluginArgs;
 using Server.Plugins.Interface;
 using System;
@@ -9,6 +11,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,7 +23,7 @@ namespace Server.Dme.Models
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<World>();
 
         public const int MAX_WORLDS = 256;
-        public const int MAX_CLIENTS_PER_WORLD = 10;
+        public const int MAX_CLIENTS_PER_WORLD = 256; //Max number of Clients per Game Session
 
          #region Id Management
 
@@ -274,6 +277,8 @@ namespace Server.Dme.Models
         #endregion
 
         #region Message Handlers
+
+
 
         public void OnEndGameRequest(MediusServerEndGameRequest request)
         {

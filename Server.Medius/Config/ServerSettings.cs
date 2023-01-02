@@ -104,7 +104,7 @@ namespace Server.Medius.Config
         /// Port of the MAS server.
         /// </summary>
         public int MASPort { get; set; } = 10075;
-
+        //public int[] MASPorts { get; set; } = new int[] { 10075, 10080 };
         /// <summary>
         /// Port of the MLS server.
         /// </summary>
@@ -115,6 +115,7 @@ namespace Server.Medius.Config
         /// </summary>
         public int MPSPort { get; set; } = 10077;
         #endregion
+
         #endregion
 
         #region Medius Versions
@@ -323,6 +324,14 @@ namespace Server.Medius.Config
         // If enabled, allows for any member of a clan to post clan ladder scores via the API
         // MediusUpdateClanLadderStatsWide_Delta()
         public bool EnableClanLaddersDeltaOpenAccess = false;
+        #endregion
+
+        #region SFO
+
+        public int SFOOverrideClanLobbyMaxPlayers = 64;
+
+        public int SFOOverrideLobbyPlayerCountThreshold = 0;
+
         #endregion
 
         #region Keys

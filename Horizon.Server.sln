@@ -48,6 +48,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Server.SVO", "Server.SVO\Se
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Server.libAntiCheat", "Server.libAntiCheat\Server.libAntiCheat.csproj", "{08F57914-61AE-48BB-B589-34AC7CD6B619}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server.SimpleHTTPSVO", "Server.SimpleHTTPSVO\Server.SimpleHTTPSVO.csproj", "{96AFDC32-6C1F-4DA4-9844-256C446DE367}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -134,6 +136,10 @@ Global
 		{08F57914-61AE-48BB-B589-34AC7CD6B619}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{08F57914-61AE-48BB-B589-34AC7CD6B619}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{08F57914-61AE-48BB-B589-34AC7CD6B619}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96AFDC32-6C1F-4DA4-9844-256C446DE367}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96AFDC32-6C1F-4DA4-9844-256C446DE367}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96AFDC32-6C1F-4DA4-9844-256C446DE367}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96AFDC32-6C1F-4DA4-9844-256C446DE367}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

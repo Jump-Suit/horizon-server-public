@@ -3,6 +3,9 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// Request to move a game world from one host to this host using the 
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobbyReport, MediusMGCLMessageIds.ServerMoveGameWorldOnMeRequest)]
     public class MediusServerMoveGameWorldOnMeRequest : BaseMGCLMessage, IMediusRequest
     {

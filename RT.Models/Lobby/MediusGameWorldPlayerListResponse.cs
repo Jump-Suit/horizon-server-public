@@ -7,7 +7,6 @@ namespace RT.Models
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.GameWorldPlayerListResponse)]
     public class MediusGameWorldPlayerListResponse : BaseLobbyMessage, IMediusResponse
     {
-
         public override byte PacketType => (byte)MediusLobbyMessageIds.GameWorldPlayerListResponse;
 
         public bool IsSuccess => StatusCode >= 0;
@@ -17,7 +16,7 @@ namespace RT.Models
         public MediusCallbackStatus StatusCode;
         public int AccountID;
         public string AccountName; // ACCOUNTNAME_MAXLEN
-        public byte[] Stats = new byte[Constants.ACCOUNTSTATS_MAXLEN]; // ACCOUNTSTATS_MAXLEN
+        public byte[] Stats = new byte[Constants.ACCOUNTSTATS_MAXLEN];
         public MediusConnectionType ConnectionClass;
         public bool EndOfList;
 
@@ -59,7 +58,6 @@ namespace RT.Models
             writer.Write(new byte[3]);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
@@ -67,7 +65,7 @@ namespace RT.Models
                 $"StatusCode: {StatusCode} " +
                 $"AccountID: {AccountID} " +
                 $"AccountName: {AccountName} " +
-                $"Stats: {string.Join("", Stats)} " +
+                $"Stats: {Stats} " +
                 $"ConnectionClass: {ConnectionClass} " +
                 $"EndOfList: {EndOfList}";
         }

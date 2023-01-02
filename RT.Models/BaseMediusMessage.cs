@@ -38,9 +38,8 @@ namespace RT.Models
             MessageType = (byte)msgType;
         }
 
-        public MediusMessageAttribute(NetMessageClass msgClass, GhsOpcode msgType)
+        public MediusMessageAttribute(GhsOpcode msgType)
         {
-            MessageClass = msgClass;
             GhsMsgType = msgType;
         }
 
@@ -231,14 +230,14 @@ namespace RT.Models
     }
     #endregion
 
-
+    /*
     #region BaseMediusGHSMessage
     public abstract class BaseMediusGHSMessage
     {
         /// <summary>
         /// Message class.
         /// </summary>
-        public abstract NetMessageClass PacketClass { get; }
+        public abstract ushort msgSize { get; }
 
         /// <summary>
         /// Message type.
@@ -278,18 +277,20 @@ namespace RT.Models
 
         #region Logging
 
+        
         /// <summary>
         /// Whether or not this message passes the log filter.
         /// </summary>
         public virtual bool CanLog()
         {
-            switch (PacketClass)
+            switch (GhsOpcode)
             {
-                case NetMessageClass.MessageClassGHS: return LogSettings.Singleton?.IsLogGHSPlugin(GhsOpcode) ?? false;
+                case GhsOpcode.ghs_ServerProtocolNegotiation: return LogSettings.Singleton?.IsLogGHSPlugin(GhsOpcode) ?? false;
+                //case GhsOpcode.ghs_ClientProtocolChoice: return LogSettings.Singleton?.IsLogGHSPlugin(GhsOpcode) ?? false;
                 default: return true;
             }
         }
-
+        
         #endregion
 
         #region Dynamic Instantiation
@@ -339,23 +340,14 @@ namespace RT.Models
             // Init
             Initialize();
 
-            NetMessageClass msgClass = reader.Read<NetMessageClass>();
+            ushort msgSize = reader.ReadUInt16();
             GhsOpcode msgType = reader.Read<GhsOpcode>();
 
-            switch (msgClass)
-            {
-                case NetMessageClass.MessageClassGHS:
-                    {
-                        if (!_ghsMessageClassById.TryGetValue((GhsOpcode)msgType, out classType))
-                            classType = null;
-                        break;
-                    }
-
-            }
+            ReverseBytes16((ushort)msgType);
 
             // Instantiate
             if (classType == null)
-                msg = new RawGHSMediusMessage(msgClass, msgType);
+                msg = new RawGHSMediusMessage(msgType, msgSize);
             else
                 msg = (BaseMediusGHSMessage)Activator.CreateInstance(classType);
 
@@ -366,6 +358,17 @@ namespace RT.Models
 
         #endregion
 
+
+        /// <summary>
+        /// Reverses UInt16 
+        /// </summary>
+        /// <param name="nValue"></param>
+        /// <returns></returns>
+        public static ushort ReverseBytes16(ushort nValue)
+        {
+            return (ushort)((ushort)((nValue >> 8)) | (nValue << 8));
+        }
     }
     #endregion
+    */
 }

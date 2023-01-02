@@ -17,7 +17,7 @@ namespace RT.Models
         public MediusPlayerStatus PlayerStatus;
         public int AccountID;
         public string AccountName; // ACCOUNTNAME_MAXLEN
-        public string Stats; // ACCOUNTSTATS_MAXLEN
+        public byte[] Stats = new byte[Constants.ACCOUNTSTATS_MAXLEN]; // ACCOUNTSTATS_MAXLEN
         public MediusConnectionType ConnectionClass;
         public bool EndOfList;
 
@@ -35,7 +35,7 @@ namespace RT.Models
             PlayerStatus = reader.Read<MediusPlayerStatus>();
             AccountID = reader.ReadInt32();
             AccountName = reader.ReadString(Constants.ACCOUNTNAME_MAXLEN);
-            Stats = reader.ReadString(Constants.ACCOUNTSTATS_MAXLEN);
+            Stats = reader.ReadBytes(Constants.ACCOUNTSTATS_MAXLEN);
             ConnectionClass = reader.Read<MediusConnectionType>();
             EndOfList = reader.ReadBoolean();
             reader.ReadBytes(3);
@@ -55,7 +55,6 @@ namespace RT.Models
             writer.Write(PlayerStatus);
             writer.Write(AccountID);
             writer.Write(AccountName, Constants.ACCOUNTNAME_MAXLEN);
-
             writer.Write(Stats, Constants.ACCOUNTSTATS_MAXLEN);
             writer.Write(ConnectionClass);
             writer.Write(EndOfList);
@@ -70,7 +69,7 @@ namespace RT.Models
                 $"PlayerStatus: {PlayerStatus} " +
                 $"AccountID: {AccountID} " +
                 $"AccountName: {AccountName} " +
-                $"Stats: {string.Join("", Stats)} " +
+                $"Stats: {BitConverter.ToString(Stats)} " +
                 $"ConnectionClass: {ConnectionClass} " +
                 $"EndOfList: {EndOfList}";
         }

@@ -17,7 +17,7 @@ namespace RT.Models
 
         public MessageId(string value)
         {
-            this.Value = value;
+            Value = value;
         }
 
         #region Serialization

@@ -11,7 +11,7 @@ namespace Server.Test.Test
     {
         static readonly IInternalLogger _logger = InternalLoggerFactory.GetInstance<ClientLoginLogout>();
 
-        public override PS2_RSA AuthKey => Program.Settings.Medius.Key;
+        public override RsaKeyPair AuthKey => Program.Settings.Medius.Key;
 
         public override int ApplicationId => 11184;
 

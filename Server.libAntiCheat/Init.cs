@@ -4,6 +4,7 @@ using RT.Models;
 using RT.Models.AntiCheat;
 using Server.libAntiCheat.Models;
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Server.libAntiCheat.Main
@@ -37,7 +38,12 @@ namespace Server.libAntiCheat.Main
 
         #region AntiCheat 
 
-        public void mc_anticheat_event_msg(AnticheatEventCode anitCheatEventCode, int WorldID, int SourceClientIndex, ClientObject cachePlayer, IMediusRequest request, int msg_sza)
+        public void mc_anticheat_event(AnticheatEventCode anitCheatEventCode, int WorldID, int SourceClientIndex)
+        {
+
+        }
+
+        public void mc_anticheat_event_msg_PLAYERREPORT(AnticheatEventCode anitCheatEventCode, int WorldID, int SourceClientIndex, ClientObject cachePlayer, byte[] stats, int msg_sza)
         {
             AntiCheatEventInfo antiCheatEventSet;
 
@@ -72,7 +78,7 @@ namespace Server.libAntiCheat.Main
                     aInfo.acSessionkey = Constants.SESSIONKEY_MAXLEN.ToString();
                 }
 
-                if(request != null)
+                if(stats != null)
                 {
                     int mDataSize = msg_sza + 1;
                     aInfo.mData = mDataSize;
@@ -85,6 +91,115 @@ namespace Server.libAntiCheat.Main
                 antiCheatEventSet = aInfo;
             }
             
+
+        }
+
+        public void mc_anticheat_event_msg_CREATELOBBYWORLD(AnticheatEventCode anitCheatEventCode, int WorldID, int SourceClientIndex, ClientObject cachePlayer, AnticheatEvent_CreateLobbyWorld stats, int msg_sza)
+        {
+            AntiCheatEventInfo antiCheatEventSet;
+
+            if (sEventFcn != null)
+            {
+
+                int ApplicationId = 0;
+                int AccountID = 0;
+                bool AntiCheatEnabled = false;
+
+                aInfo.code = anitCheatEventCode;
+                if (cachePlayer.ApplicationId != 0)
+                {
+                    ApplicationId = cachePlayer.ApplicationId;
+                }
+                aInfo.AppId = ApplicationId;
+                aInfo.world_Index = WorldID;
+                aInfo.client_Index = SourceClientIndex;
+                if (cachePlayer.AccountId != 0)
+                {
+                    AccountID = cachePlayer.AccountId;
+                }
+                aInfo.iAccountID = AccountID;
+                if (cachePlayer.PassedAntiCheat != true)
+                {
+                    AntiCheatEnabled = cachePlayer.PassedAntiCheat;
+                }
+                aInfo.mPassedAntiCheat = AntiCheatEnabled;
+                if (cachePlayer.SessionKey != null)
+                {
+                    aInfo.acSessionkey = cachePlayer.SessionKey;
+                }
+                else
+                {
+                    aInfo.acSessionkey = Constants.SESSIONKEY_MAXLEN.ToString();
+                }
+
+                if (stats != null)
+                {
+                    int mDataSize = msg_sza + 1;
+                    aInfo.mData = mDataSize;
+
+                    antiCheatEventSet = sEventFcn;
+                }
+                else
+                {
+                    aInfo.mData = 0;
+                }
+                antiCheatEventSet = aInfo;
+            }
+
+        }
+
+        public void mc_anticheat_event_msg_UPDATEUSERSTATE(AnticheatEventCode anitCheatEventCode, int WorldID, int SourceClientIndex, ClientObject cachePlayer, MediusUpdateUserState userState, int msg_sza)
+        {
+            AntiCheatEventInfo antiCheatEventSet;
+
+            if (sEventFcn != null)
+            {
+
+                int ApplicationId = 0;
+                int AccountID = 0;
+                bool AntiCheatEnabled = false;
+
+                aInfo.code = anitCheatEventCode;
+                if (cachePlayer.ApplicationId != 0)
+                {
+                    ApplicationId = cachePlayer.ApplicationId;
+                }
+                aInfo.AppId = ApplicationId;
+                aInfo.world_Index = WorldID;
+                aInfo.client_Index = SourceClientIndex;
+                if (cachePlayer.AccountId != 0)
+                {
+                    AccountID = cachePlayer.AccountId;
+                }
+                aInfo.iAccountID = AccountID;
+                if (cachePlayer.PassedAntiCheat != true)
+                {
+                    AntiCheatEnabled = cachePlayer.PassedAntiCheat;
+                }
+                aInfo.mPassedAntiCheat = AntiCheatEnabled;
+                if (cachePlayer.SessionKey != null)
+                {
+                    aInfo.acSessionkey = cachePlayer.SessionKey;
+                }
+                else
+                {
+                    aInfo.acSessionkey = Constants.SESSIONKEY_MAXLEN.ToString();
+                }
+
+                if (userState != null)
+                {
+                    int mDataSize = msg_sza + 1;
+                    aInfo.mData = mDataSize;
+
+                    antiCheatEventSet = sEventFcn;
+                }
+                else
+                {
+                    aInfo.mData = 0;
+                }
+                antiCheatEventSet = aInfo;
+            }
+
 
         }
 
@@ -110,6 +225,8 @@ namespace Server.libAntiCheat.Main
         }
         #endregion
 
+
+
         /// <summary>
         /// Generates a incremental session key number
         /// </summary>
@@ -121,5 +238,11 @@ namespace Server.libAntiCheat.Main
                 return (++_sessionKeyCounter).ToString();
             }
         }
+    }
+
+    public class AnticheatEvent_CreateLobbyWorld
+    {
+        public string LobbyName = null;
+        public string LobbyPassword = null;
     }
 }

@@ -500,55 +500,6 @@ namespace Server.UniverseInformation.Models
         }
 
 
-        public async Task LoginAnonymous(MediusAnonymousLoginRequest anonymousLoginRequest, int iAccountID)
-        {
-            if (IsLoggedIn)
-                throw new InvalidOperationException($"{this} attempting to log into {anonymousLoginRequest.SessionDisplayName} but is already logged in!");
-
-            // Raise plugin event
-            await Program.Plugins.OnEvent(PluginEvent.MEDIUS_PLAYER_ON_LOGGED_IN, new OnPlayerArgs() { Player = this });
-
-            AccountName = anonymousLoginRequest.SessionDisplayName;
-            AccountDisplayName = anonymousLoginRequest.SessionDisplayName;
-            AccountStats = anonymousLoginRequest.SessionDisplayStats;
-            AccountId = iAccountID;
-            SessionKey = anonymousLoginRequest?.SessionKey;
-
-            // Login
-            _loginTime = Utils.GetHighPrecisionUtcTime();
-        }
-
-        public async Task Login(AccountDTO account)
-        {
-            if (IsLoggedIn)
-                throw new InvalidOperationException($"{this} attempting to log into {account} but is already logged in!");
-
-            if (account == null)
-                throw new InvalidOperationException($"{this} attempting to log into null account.");
-
-            // 
-            AccountId = account.AccountId;
-            AccountName = account.AccountName;
-            Metadata = account.Metadata;
-            ClanId = account.ClanId;
-            WideStats = account.AccountWideStats;
-            CustomWideStats = account.AccountCustomWideStats;
-
-            //
-            FriendsList = account.Friends?.ToDictionary(x => x.AccountId, x => x.AccountName) ?? new Dictionary<int, string>();
-
-            // Raise plugin event
-            await Program.Plugins.OnEvent(PluginEvent.MEDIUS_PLAYER_ON_LOGGED_IN, new OnPlayerArgs() { Player = this });
-
-            // Login
-            _loginTime = Utils.GetHighPrecisionUtcTime();
-
-            // Update last sign in date
-            _ = Program.Database.PostAccountSignInDate(AccountId, Common.Utils.GetHighPrecisionUtcTime());
-
-            // Update database status
-            PostStatus();
-        }
 
         public async Task RefreshAccount()
         {

@@ -11,7 +11,6 @@ namespace RT.Models
         public bool IsSuccess => StatusCode >= 0;
 
         public MessageId MessageID { get; set; }
-
         public MediusCallbackStatus StatusCode;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -40,12 +39,11 @@ namespace RT.Models
             writer.Write(StatusCode);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"StatusCode:{StatusCode} ";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} ";
         }
     }
 }

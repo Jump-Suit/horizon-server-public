@@ -1,5 +1,6 @@
 ﻿using DotNetty.Transport.Channels;
 using RT.Models;
+using Server.Pipeline.Attribute;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,14 +19,21 @@ namespace Server.Test.Medius
         /// </summary>
         protected override async Task OnConnected(IChannel channel)
         {
+            // Get ScertClient data
+            if (!channel.HasAttribute(Pipeline.Constants.SCERT_CLIENT))
+                channel.GetAttribute(Pipeline.Constants.SCERT_CLIENT).Set(new ScertClientAttribute());
+            var scertClient = channel.GetAttribute(Pipeline.Constants.SCERT_CLIENT).Get();
+            scertClient.RsaAuthKey = Program.Settings.Medius.Key;
+            scertClient.CipherService.GenerateCipher(scertClient.RsaAuthKey);
+
             // Send hello
             await channel.WriteAndFlushAsync(new RT_MSG_CLIENT_HELLO()
             {
                 Parameters = new ushort[]
                 {
                     2,
-                    0x6e,
-                    0x6d,
+                    0x71,
+                    0x6E,
                     1,
                     1
                 }

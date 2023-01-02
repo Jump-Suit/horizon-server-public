@@ -47,15 +47,14 @@ namespace RT.Models
             writer.Write(Message, Constants.CHATMESSAGE_MAXLEN);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-                $"SessionKey:{SessionKey} " +
-                $"MessageType:{MessageType} " +
-                $"TargetID:{TargetID} " +
-                $"Message:{Message}";
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey} " +
+                $"MessageType: {MessageType} " +
+                $"TargetID: {TargetID} " +
+                $"Message: {Message}";
         }
     }
 }
