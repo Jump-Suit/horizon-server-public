@@ -1,0 +1,42 @@
+name: Docker Image CI
+
+on:
+
+    workflow_dispatch:
+        inputs:
+            choice:
+              type: choice
+              description: Choose the stack to build
+              options:
+              - Server.Dme
+              - Server.MUM
+              - Server.Medius
+              - Server.NAT
+              - Server.UniverseInformation
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Get current date
+      id: date
+      run: echo "::set-output name=date::$(date +'%Y_%m_%d')"
+      
+    - name: Get to the lowercase
+      id: string
+      uses: ASzc/change-string-case-action@58a73efb94b4f743e29a1b7f86794f4adb096410
+      with:
+        string: ${{inputs.choice}}
+    
+    - name: Build the Docker image
+      run: docker build . --file ${{inputs.choice}}/Dockerfile --tag ${{ steps.string.outputs.lowercase }}:latest_${{steps.date.outputs.date}}
+
+    - name: Upload image
+      uses: ishworkh/docker-image-artifact-upload@44d2be71d9d366aec2f19670ff531949e19439e8
+      with:
+        image: "${{ steps.string.outputs.lowercase }}:latest_${{steps.date.outputs.date}}"
+        retention_days: "2"
