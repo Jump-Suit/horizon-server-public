@@ -8,7 +8,6 @@ using RT.Models;
 using Server.Common;
 using Server.Common.Logging;
 using Server.Database;
-using Server.libAntiCheat.Main;
 using Server.Plugins;
 using Server.UniverseInformation.Config;
 using System;
@@ -34,9 +33,6 @@ namespace Server.UniverseInformation
 
         public static ServerSettings Settings = new ServerSettings();
         public static DbController Database = null;
-
-        public static AntiCheat AntiCheatPlugin = new AntiCheat();
-        public static libAntiCheat.Models.ClientObject AntiCheatClient = new libAntiCheat.Models.ClientObject();
 
         public static MediusManager Manager = new MediusManager();
         public static PluginsManager Plugins = null;

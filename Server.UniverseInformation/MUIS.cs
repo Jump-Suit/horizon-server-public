@@ -7,7 +7,6 @@ using DotNetty.Transport.Channels.Sockets;
 using RT.Common;
 using RT.Cryptography;
 using RT.Models;
-using Server.Common;
 using Server.Pipeline.Tcp;
 using System;
 using System.Collections.Concurrent;
@@ -16,8 +15,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Server.UniverseInformation.Config;
-using Server.UniverseInformation.Models;
-
+    
 namespace Server.UniverseInformation
 {
     /// <summary>
