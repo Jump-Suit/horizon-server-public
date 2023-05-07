@@ -97,15 +97,15 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"StatusCode:{StatusCode} " +
-$"ApplicationID:{ApplicationID} " +
-$"ApplicationName:{ApplicationName} " +
-$"ApplicationType:{ApplicationType} " +
-$"MediusWorldID:{MediusWorldID} " +
-$"AccountID:{AccountID} " +
-$"AccountName:{AccountName} " +
-$"EndOfList:{EndOfList}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
+                $"ApplicationID: {ApplicationID} " +
+                $"ApplicationName: {ApplicationName} " +
+                $"ApplicationType: {ApplicationType} " +
+                $"MediusWorldID: {MediusWorldID} " +
+                $"AccountID: {AccountID} " +
+                $"AccountName: {AccountName} " +
+                $"EndOfList: {EndOfList}";
         }
     }
 }

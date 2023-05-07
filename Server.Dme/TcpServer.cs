@@ -32,6 +32,8 @@ namespace Server.Dme
 
         public int Port => Program.Settings.TCPPort;
 
+        public List<ushort> clientTokens = new List<ushort>();
+
         protected IEventLoopGroup _bossGroup = null;
         protected IEventLoopGroup _workerGroup = null;
         protected IChannel _boundChannel = null;
@@ -489,8 +491,8 @@ namespace Server.Dme
                     }
                 case RT_MSG_CLIENT_SET_AGG_TIME setAggTime:
                     {
+                        Logger.Info($"rt_msg_server_process_client_set_agg_time_msg: new agg time = {setAggTime.AggTime}");
                         if (scertClient.MediusVersion >= 109) {
-                            Logger.Info($"rt_msg_server_process_client_set_agg_time_msg: new agg time = {setAggTime.AggTime}");
                             data.ClientObject.AggTimeMs = setAggTime.AggTime;
                         } // We don't set AggTime here YET, the client object isn't created! for Pre-108 clients
                         break;
@@ -533,7 +535,7 @@ namespace Server.Dme
                     }
                 case RT_MSG_CLIENT_TOKEN_MESSAGE tokenMessage:
                     {
-
+                        await ProcessRTTHostTokenMessage(tokenMessage, clientChannel, data);
                         break;
                     }
                 case RT_MSG_CLIENT_APP_BROADCAST clientAppBroadcast:
@@ -553,7 +555,7 @@ namespace Server.Dme
                     }
                 case RT_MSG_CLIENT_APP_TOSERVER clientAppToServer:
                     {
-                        await   ProcessMediusMessage(clientAppToServer.Message, clientChannel, data);
+                        await ProcessMediusMessage(clientAppToServer.Message, clientChannel, data);
                         break;
                     }
 
@@ -622,6 +624,37 @@ namespace Server.Dme
             return Task.CompletedTask;
         }
 
+        protected virtual Task ProcessRTTHostTokenMessage(RT_MSG_CLIENT_TOKEN_MESSAGE clientTokenMsg, IChannel clientChannel, ChannelData data)
+        {
+            Logger.Info($"rt_msg_server_process_client_token_msg: msg type {clientTokenMsg.RT_TOKEN_MESSAGE_TYPE}, client {data.ClientObject.ScertId}, target token = {clientTokenMsg.targetToken}");
+
+            bool isTokenValid = rt_token_is_valid(clientTokenMsg.targetToken);
+
+            if (!isTokenValid)
+            {
+                Logger.Info($"rt_msg_server_process_client_token_msg: bad target token {clientTokenMsg.targetToken}");
+            } else
+            {
+                switch (clientTokenMsg.RT_TOKEN_MESSAGE_TYPE)
+                {
+                    case RT_TOKEN_MESSAGE_TYPE.RT_TOKEN_CLIENT_REQUEST:
+                        {
+                            clientTokens.Add(clientTokenMsg.targetToken);
+
+                            rt_token_build_token_msg(clientTokenMsg.targetToken, clientChannel, clientTokenMsg.RT_TOKEN_MESSAGE_TYPE);
+                            return Task.CompletedTask;
+                        }
+                    default:
+                        {
+                            Logger.Warn($"UNHANDLED RT TOKEN MESSAGE: {clientTokenMsg.RT_TOKEN_MESSAGE_TYPE}");
+                            break;
+                        }
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+        
         #endregion
 
         #region Channel
@@ -746,6 +779,31 @@ namespace Server.Dme
         protected ushort GenerateNewScertClientId()
         {
             return _clientCounter++;
+        }
+
+        public bool rt_token_is_valid(ushort TokenId)
+        {
+            return TokenId <= 65534;
+        }
+
+        public void rt_token_build_token_msg(ushort TokenId, IChannel channel, RT_TOKEN_MESSAGE_TYPE MsgType)
+        {
+            if((int)MsgType == 1 || (int)MsgType == 2 || (int)MsgType == 3 || (int)MsgType == 7 || (int)MsgType == 8 || (int)MsgType == 0xA || (int)MsgType == 9)
+            {
+                /*
+                // send force disconnect message
+                await channel.WriteAndFlushAsync(new RT_MSG_SERVER_TOKEN_MESSAGE()
+                {
+                    tokenId = TokenId,
+                });
+
+                // close channel
+                await channel.CloseAsync();
+                */
+            } else
+            {
+                Logger.Warn("((RT_TOKEN_CLIENT_QUERY == MsgType) || (RT_TOKEN_CLIENT_REQUEST == MsgType) || (RT_TOKEN_CLIENT_RELEASE == MsgType) || (RT_TOKEN_SERVER_OWNED == MsgType) || (RT_TOKEN_SERVER_GRANTED == MsgType) || (RT_TOKEN_SERVER_RELEASED == MsgType) || (RT_TOKEN_SERVER_FREED == MsgType))");
+            }
         }
     }
 }

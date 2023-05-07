@@ -1,5 +1,6 @@
 ﻿using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -14,9 +15,9 @@ namespace RT.Models
         public int TargetAccountID;
         public int TargetRoutingDmeWorldID;
         public int SourceDmeWorldID;
-        public ushort msgType;
+        public MediusCrossChatMessageType msgType;
 
-
+        public byte[] Contents;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -29,11 +30,14 @@ namespace RT.Models
             // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             reader.ReadBytes(2);
+
+            //
             TargetAccountID = reader.ReadInt32();
             TargetRoutingDmeWorldID = reader.ReadInt32();
             SourceDmeWorldID = reader.ReadInt32();
 
-            msgType = reader.ReadByte();
+            msgType = reader.Read<MediusCrossChatMessageType>();
+            Contents = reader.ReadRest();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -47,22 +51,26 @@ namespace RT.Models
             // 
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
             writer.Write(new byte[2]);
+
+            //
             writer.Write(TargetAccountID);
             writer.Write(TargetRoutingDmeWorldID);
             writer.Write(SourceDmeWorldID);
 
             writer.Write(msgType);
+            writer.Write(Contents);
         }
 
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-                $"SessionKey:{SessionKey} " +
-                $"TargetAccountID:{TargetAccountID} " +
-                $"TargetRoutingDmeWorldID:{TargetRoutingDmeWorldID} " +
-                $"SourceDmeWorldID:{SourceDmeWorldID} " + 
-                $"msgType: {msgType} ";
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey} " +
+                $"TargetAccountID: {TargetAccountID} " +
+                $"TargetRoutingDmeWorldID: {TargetRoutingDmeWorldID} " +
+                $"SourceDmeWorldID: {SourceDmeWorldID} " + 
+                $"MsgType: {msgType} " +
+                $"Contents: {BitConverter.ToString(Contents)}";
         }
     }
 }

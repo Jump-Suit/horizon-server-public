@@ -1,5 +1,6 @@
 ﻿using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -82,26 +83,25 @@ namespace RT.Models
             writer.Write(GameHostType);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-                $"StatusCode:{StatusCode} " +
-                $"ApplicationID:{ApplicationID} " +
-                $"MinPlayers:{MinPlayers} " +
-                $"MaxPlayers:{MaxPlayers} " +
-                $"GameLevel:{GameLevel} " +
-                $"PlayerSkillLevel:{PlayerSkillLevel} " +
-                $"PlayerCount:{PlayerCount} " +
-                $"GameStats:{GameStats} " +
-                $"GameName:{GameName} " +
-                $"RulesSet:{RulesSet} " +
-                $"GenericField1:{GenericField1:X8} " +
-                $"GenericField2:{GenericField2:X8} " +
-                $"GenericField3:{GenericField3:X8} " +
-                $"WorldStatus:{WorldStatus} " +
-                $"GameHostType:{GameHostType}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
+                $"ApplicationID: {ApplicationID} " +
+                $"MinPlayers: {MinPlayers} " +
+                $"MaxPlayers: {MaxPlayers} " +
+                $"GameLevel: {GameLevel} " +
+                $"PlayerSkillLevel: {PlayerSkillLevel} " +
+                $"PlayerCount: {PlayerCount} " +
+                $"GameStats: {BitConverter.ToString(GameStats)} " +
+                $"GameName: {GameName} " +
+                $"RulesSet: {RulesSet} " +
+                $"GenericField1: {GenericField1:X8} " +
+                $"GenericField2: {GenericField2:X8} " +
+                $"GenericField3: {GenericField3:X8} " +
+                $"WorldStatus: {WorldStatus} " +
+                $"GameHostType: {GameHostType}";
         }
     }
 }

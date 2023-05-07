@@ -3,10 +3,10 @@ using Server.Common;
 
 namespace RT.Models
 {
-    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.MatchCloseLateJoinRequest)] // Set GameState
+    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.MatchSetGameStateRequest)] // Set GameState
     public class MediusMatchSetGameStateRequest : BaseLobbyExtMessage, IMediusRequest
     {
-        public override byte PacketType => (byte)MediusLobbyExtMessageIds.MatchCloseLateJoinRequest; // Set GameState
+        public override byte PacketType => (byte)MediusLobbyExtMessageIds.MatchSetGameStateRequest; // Set GameState
 
         public MessageId MessageID { get; set; }
         public string SessionKey; // SESSIONKEY_MAXLEN

@@ -3,8 +3,6 @@ using Haukcode.HighResolutionTimer;
 using Microsoft.Extensions.Logging.Console;
 using Newtonsoft.Json;
 using NReco.Logging.File;
-using Org.BouncyCastle.Math;
-using RT.Cryptography;
 using RT.Models;
 using Server.Common;
 using Server.Common.Logging;
@@ -18,11 +16,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 
 namespace Server.Dme
 {
@@ -47,7 +41,7 @@ namespace Server.Dme
 
         public static string DME_SERVER_VERSION = "3.05.0000";
 
-        public static Dictionary<int, MediusManager> Managers = new Dictionary<int, MediusManager>();
+        public static Dictionary<int, DMEMediusManager> Managers = new Dictionary<int, DMEMediusManager>();
         public static TcpServer TcpServer = new TcpServer();
         public static PluginsManager Plugins = null;
 
@@ -240,7 +234,7 @@ namespace Server.Dme
             // build and start medius managers per app id
             foreach (var applicationId in Settings.ApplicationIds)
             {
-                var manager = new MediusManager(applicationId);
+                var manager = new DMEMediusManager(applicationId);
                 //ogger.Info($"Starting MPS for appid {applicationId}.");
                 //await manager.Start();
                 //Logger.Info($"MPS started.");
@@ -453,7 +447,7 @@ namespace Server.Dme
             }
         }
 
-        public static MediusManager GetManager(int applicationId, bool useDefaultOnMissing)
+        public static DMEMediusManager GetManager(int applicationId, bool useDefaultOnMissing)
         {
             if (Managers.TryGetValue(applicationId, out var manager))
                 return manager;

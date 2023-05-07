@@ -56,10 +56,10 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-                $"StatusCode:{StatusCode} " +
-                $"Policy:{Policy} " +
-                $"EndOfText:{EndOfText}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
+                $"Policy: {Policy} " +
+                $"EndOfText: {EndOfText}";
         }
 
         public static List<MediusGetPolicyResponse> FromText(MessageId messageId, string policy)

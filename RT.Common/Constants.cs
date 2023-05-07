@@ -29,6 +29,7 @@
         /// </summary>
         public const int CLANSTATS_MAXLEN = 256;
         public const int CLANMSG_MAXLEN = 200;
+        public const int CLANMSG_MAXLEN_113 = 2048;
         #endregion
 
         /// <summary>

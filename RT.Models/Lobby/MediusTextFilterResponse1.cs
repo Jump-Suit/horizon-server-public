@@ -1,5 +1,6 @@
 using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -67,7 +68,7 @@ namespace RT.Models
                 $"MessageID: {MessageID} " +
                 $"StatusCode: {StatusCode} " +
                 $"TextSize: {TextSize} " +
-                $"Text: {Text}";
+                $"Text: {Convert.ToString(Text)}";
         }
     }
 }

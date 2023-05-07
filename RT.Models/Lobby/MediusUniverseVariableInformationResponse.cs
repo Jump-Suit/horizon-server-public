@@ -1,5 +1,7 @@
+using Microsoft.Extensions.Logging;
 using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -36,19 +38,9 @@ namespace RT.Models
             //
             MessageID = reader.Read<MessageId>();
 
-            if(reader.MediusVersion >= 110)
-            {
-                reader.ReadBytes(3);
-            }
-
             // 
             StatusCode = reader.Read<MediusCallbackStatus>();
             InfoFilter = reader.Read<MediusUniverseVariableInformationInfoFilter>();
-            
-            if (reader.MediusVersion > 108 && reader.MediusVersion != 112 && reader.MediusVersion == 113)
-            {
-                //reader.ReadBytes(3);
-            }
 
             if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_ID))
                 UniverseID = reader.ReadUInt32();
@@ -82,15 +74,11 @@ namespace RT.Models
             if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_EXTRAINFO))
                 ExtendedInfo = reader.ReadString(Constants.UNIVERSE_EXTENDED_INFO_MAXLEN);
 
-            if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_SVO_URL))
-                SvoURL = reader.ReadString(Constants.UNIVERSE_SVO_URL_MAXLEN);
+            //if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_SVO_URL))
+            //    SvoURL = reader.ReadString(Constants.UNIVERSE_SVO_URL_MAXLEN);
 
             EndOfList = reader.ReadBoolean();
 
-            if (reader.MediusVersion >= 110)
-            {
-                reader.ReadBytes(3);
-            }
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -100,20 +88,12 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
-            if (writer.MediusVersion == 110)
-            {
-                writer.Write(new byte[3]);
-            }
 
-            // 
+            //writer.Write(new byte[3]);
+
             writer.Write(StatusCode);
             writer.Write(InfoFilter);
-
-            if (writer.MediusVersion > 108 && writer.MediusVersion < 112 && writer.MediusVersion == 113)
-            {
-                //writer.Write(new byte[3]);
-            }
-
+            
             if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_ID))
                 writer.Write(UniverseID);
 
@@ -145,15 +125,18 @@ namespace RT.Models
             if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_EXTRAINFO))
                 writer.Write(ExtendedInfo, Constants.UNIVERSE_EXTENDED_INFO_MAXLEN);
 
-            if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_SVO_URL))
-                writer.Write(SvoURL, Constants.UNIVERSE_SVO_URL_MAXLEN);
+            if(writer.AppId == 20371 &&
+                writer.AppId == 20374 &&
+                writer.AppId != 20474 &&
+                writer.AppId != 22920 &&
+                writer.AppId != 20060 &&
+                writer.AppId != 22500)
+            {
+                if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_SVO_URL))
+                    writer.Write(SvoURL, Constants.UNIVERSE_SVO_URL_MAXLEN);
+            }
 
             writer.Write(EndOfList);
-
-            if (writer.MediusVersion >= 110)
-            {
-                writer.Write(new byte[3]);
-            }
         }
 
         public override string ToString()

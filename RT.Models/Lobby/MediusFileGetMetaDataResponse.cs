@@ -41,6 +41,7 @@ namespace RT.Models
             // 
             writer.Write(MediusFileInfo);
             writer.Write(MediusMetaDataResponseKey);
+            writer.Write(StatusCode);
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
@@ -52,8 +53,10 @@ namespace RT.Models
         {
             return base.ToString() + " " +
              $"MessageID: {MessageID} " +
+             $"StatusCode: {StatusCode} " +
              $"MediusFileInfo: {MediusFileInfo} " +
-             $"MediusFileMetaData: {MediusMetaDataResponseKey}";
+             $"MediusFileMetaData: {MediusMetaDataResponseKey} " +
+             $"EndOfList: {EndOfList}";
         }
     }
 }

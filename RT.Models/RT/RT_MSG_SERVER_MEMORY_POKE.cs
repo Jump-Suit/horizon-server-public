@@ -9,24 +9,24 @@ namespace RT.Models
     {
         public override RT_MSG_TYPE Id => RT_MSG_TYPE.RT_MSG_SERVER_MEMORY_POKE;
 
-        public long MsgDataLen;
+        public int MsgDataLen;
         public long start_Address = 0;
-        public byte[] Payload;
+        public byte[] Payload = new byte[00000000];
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
             start_Address = reader.ReadUInt32();
-            MsgDataLen = reader.ReadUInt32();
-            Payload = reader.ReadBytes((int)MsgDataLen);
+            //MsgDataLen = reader.ReadInt32();
+            Payload = reader.ReadBytes(MsgDataLen);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
         {
             writer.Write(start_Address);
 
-            writer.Write(Payload?.Length ?? 0);
-            if (Payload != null)
-                writer.Write(Payload);
+            //writer.Write(Payload?.Length ?? 0);
+            writer.Write(Payload);
+            //if (Payload != null)
             
         }
 

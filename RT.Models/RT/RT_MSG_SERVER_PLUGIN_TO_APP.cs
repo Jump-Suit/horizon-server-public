@@ -1,5 +1,7 @@
 ﻿using RT.Common;
 using Server.Common;
+using System;
+using System.Linq;
 
 namespace RT.Models
 {
@@ -9,6 +11,8 @@ namespace RT.Models
         public override RT_MSG_TYPE Id => RT_MSG_TYPE.RT_MSG_SERVER_PLUGIN_TO_APP;
 
         public BaseMediusPluginMessage Message { get; set; } = null;
+
+
 
         public override bool SkipEncryption
         {
@@ -22,23 +26,32 @@ namespace RT.Models
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
-            Message = BaseMediusPluginMessage.Instantiate(reader);
+            Message = BaseMediusPluginMessage.InstantiateServerPlugin(reader);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
         {
             if (Message != null)
             {
-                writer.Write(Message.PacketClass);
-                writer.Write(new byte[3]);
-                writer.Write(Message.PacketType);
+                writer.Write(Message.IncomingMessage);
+                writer.Write(new byte[1]);
+
+                var msgSizeInt = Convert.ToInt16(Message.Size);
+                var msgSizeReverse = ReverseBytes(msgSizeInt);
+                writer.Write(Message.Size);
+                writer.Write(Message.PluginId);
+
+                var msgTypeInt = Convert.ToInt32(Message.PacketType);
+                var msgTypeReverse = ReverseBytes(msgTypeInt);
+                
+                writer.Write(msgTypeReverse);
                 Message.SerializePlugin(writer);
             }
         }
 
         public override bool CanLog()
         {
-            return base.CanLog() && (Message?.CanLog() ?? true);
+            return base.CanLog();
         }
 
         public override string ToString()
@@ -47,5 +60,10 @@ namespace RT.Models
                 $"Message: {Message}";
         }
 
+        public static int ReverseBytes(int value)
+        {
+            return (int)((value & 0x000000FFU) << 24 | (value & 0x0000FF00U) << 8 |
+                (value & 0x00FF0000U) >> 8 | (value & 0xFF000000U) >> 24);
+        }
     }
 }

@@ -178,22 +178,12 @@ namespace Server.UniverseInformation.Models
         /// <summary>
         /// 
         /// </summary>
-        public List<GameListFilter> GameListFilters = new List<GameListFilter>();
-
-        /// <summary>
-        /// 
-        /// </summary>
         public Channel CurrentChannel { get; protected set; } = null;
 
         /// <summary>
         /// 
         /// </summary>
         public Game CurrentGame { get; protected set; } = null;
-
-        /// <summary>
-        /// Current Party
-        /// </summary>
-        public Party CurrentParty { get; protected set; } = null;
 
         /// <summary>
         /// 
@@ -464,8 +454,6 @@ namespace Server.UniverseInformation.Models
                 ChannelId = CurrentChannel?.Id,
                 GameId = CurrentGame?.Id,
                 GameName = CurrentGame?.GameName,
-                PartyId = CurrentParty?.Id,
-                PartyName = CurrentParty?.PartyName,
                 WorldId = CurrentGame?.Id ?? CurrentChannel?.Id
             });
         }
@@ -513,30 +501,6 @@ namespace Server.UniverseInformation.Models
 
         #endregion
 
-        #region Party
-
-        public async Task LeaveParty(Party party)
-        {
-            if (CurrentParty != null && CurrentParty == party)
-            {
-                await LeaveCurrentParty();
-
-                // Tell database
-                PostStatus();
-            }
-        }
-
-        private async Task LeaveCurrentParty()
-        {
-            if (CurrentParty != null)
-            {
-                await CurrentParty.RemovePlayer(this);
-                CurrentParty = null;
-            }
-            DmeClientId = null;
-        }
-
-        #endregion
 
         #region Game
 
@@ -640,100 +604,6 @@ namespace Server.UniverseInformation.Models
         public void EndSession()
         {
             _hasActiveSession = false;
-        }
-
-        #endregion
-
-        #region Game List Filter
-
-        public Task SetLobbyWorldFilter(MediusSetLobbyWorldFilterRequest request)
-        {
-            FilterMask1 = request.FilterMask1;
-            FilterMask2 = request.FilterMask2;
-            FilterMask3 = request.FilterMask3;
-            FilterMask4 = request.FilterMask4;
-            LobbyFilterType = request.LobbyFilterType;
-            FilterMaskLevel = request.FilterMaskLevel;
-
-            return Task.CompletedTask;
-        }
-
-        public Task SetLobbyWorldFilter(MediusSetLobbyWorldFilterRequest1 request)
-        {
-            FilterMask1 = request.FilterMask1;
-            FilterMask2 = request.FilterMask2;
-            FilterMask3 = request.FilterMask3;
-            FilterMask4 = request.FilterMask4;
-            LobbyFilterType = request.LobbyFilterType;
-            FilterMaskLevel = request.FilterMaskLevel;
-
-            return Task.CompletedTask;
-        }
-
-        public GameListFilter SetGameListFilter(MediusSetGameListFilterRequest request)
-        {
-            GameListFilter result;
-
-            GameListFilters.Add(result = new GameListFilter()
-            {
-                FieldID = _gameListFilterIdCounter++,
-                Mask = request.Mask,
-                BaselineValue = request.BaselineValue,
-                ComparisonOperator = request.ComparisonOperator,
-                FilterField = request.FilterField
-            });
-
-            /*
-            if (request.FilterField == MediusGameListFilterField.MEDIUS_FILTER_LOBBY_WORLDID)
-            {
-                GameListFilters.Add(result = new GameListFilter()
-                {
-                    FieldID = _gameListFilterIdCounter++,
-                    Mask = request.Mask,
-                    BaselineValue = (int)WorldId,
-                    ComparisonOperator = MediusComparisonOperator.EQUAL_TO,
-                    FilterField = request.FilterField
-                });
-            }
-            else
-            {
-                GameListFilters.Add(result = new GameListFilter()
-                {
-                    FieldID = _gameListFilterIdCounter++,
-                    Mask = request.Mask,
-                    BaselineValue = request.BaselineValue,
-                    ComparisonOperator = request.ComparisonOperator,
-                    FilterField = request.FilterField
-                });
-            }
-            */
-
-            return result;
-        }
-
-        public GameListFilter SetGameListFilter(MediusSetGameListFilterRequest0 request)
-        {
-            GameListFilter result;
-            GameListFilters.Add(result = new GameListFilter()
-            {
-                FieldID = _gameListFilterIdCounter++,
-                Mask = 0xFFFFFFF,
-                BaselineValue = request.BaselineValue,
-                ComparisonOperator = request.ComparisonOperator,
-                FilterField = request.FilterField
-            });
-
-            return result;
-        }
-
-        public void ClearGameListFilter(uint filterID)
-        {
-            GameListFilters.RemoveAll(x => x.FieldID == filterID);
-        }
-
-        public bool IsGameMatch(Game game)
-        {
-            return !GameListFilters.Any(x => !x.IsMatch(game));
         }
 
         #endregion

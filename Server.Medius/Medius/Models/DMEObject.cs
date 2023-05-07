@@ -26,11 +26,11 @@ namespace Server.Medius.Models
         #region DMEObjects
 
         #region Peer to Peer
-        public DMEObject(ClientObject client, MediusServerCreateGameOnSelfRequest request)
+        public DMEObject(MediusServerCreateGameOnSelfRequest request)
         {
             ApplicationId = request.ApplicationID;
             WorldId = request.WorldID;
-            IP = client.IP;
+            SetIp(request.AddressList.AddressList[0].Address);
 
             // Generate new session key
             SessionKey = Program.GenerateSessionKey();
@@ -41,11 +41,11 @@ namespace Server.Medius.Models
             Token = Convert.ToBase64String(tokenBuf);
         }
 
-        public DMEObject(ClientObject client, MediusServerCreateGameOnSelfRequest0 request)
+        public DMEObject(MediusServerCreateGameOnSelfRequest0 request)
         {
             ApplicationId = request.ApplicationID;
             WorldId = request.WorldID;
-            IP = client.IP;
+            SetIp(request.AddressList.AddressList[0].Address);
 
             // Generate new session key
             SessionKey = Program.GenerateSessionKey();
@@ -56,11 +56,10 @@ namespace Server.Medius.Models
             Token = Convert.ToBase64String(tokenBuf);
         }
 
-        public DMEObject(ClientObject client, MediusServerCreateGameOnMeRequest request)
+        public DMEObject(MediusServerCreateGameOnMeRequest request)
         {
             ApplicationId = request.ApplicationID;
             WorldId = request.WorldID;
-            IP = client.IP;
 
             // Generate new session key
             SessionKey = Program.GenerateSessionKey();

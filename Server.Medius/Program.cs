@@ -24,7 +24,6 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.ServiceModel;
 
 namespace Server.Medius
 {
@@ -95,8 +94,7 @@ namespace Server.Medius
                     float error = MathF.Abs(Settings.TickRate - tps) / Settings.TickRate;
 
                     if (error > 0.1f)
-                        Logger.Error($"Average TPS: {tps} is {error * 100}% off of target {Settings.TickRate}");
-
+                        Logger.Error($"Average TickRate Per Second: {tps} is {error * 100}% off of target {Settings.TickRate}");
                     //var dt = DateTime.UtcNow - Utils.GetHighPrecisionUtcTime();
                     //if (Math.Abs(dt.TotalMilliseconds) > 50)
                     //    Logger.Error($"System clock and local clock are out of sync! delta ms: {dt.TotalMilliseconds}");
@@ -119,6 +117,7 @@ namespace Server.Medius
                     else
                     {
                         _lastSuccessfulDbAuth = Utils.GetHighPrecisionUtcTime();
+                        Logger.Info("Successfully authenticated with the db middleware server");
 
                         // pass to manager
                         await Manager.OnDatabaseAuthenticated();
@@ -1065,10 +1064,10 @@ namespace Server.Medius
                             Name = channel.Name,
                             ApplicationId = channel.AppId,
                             MaxPlayers = channel.MaxPlayers,
-                            GenericField1 = (uint)channel.GenericField1,
-                            GenericField2 = (uint)channel.GenericField2,
-                            GenericField3 = (uint)channel.GenericField3,
-                            GenericField4 = (uint)channel.GenericField4,
+                            GenericField1 = channel.GenericField1,
+                            GenericField2 = channel.GenericField2,
+                            GenericField3 = channel.GenericField3,
+                            GenericField4 = channel.GenericField4,
                             GenericFieldLevel = (MediusWorldGenericFieldLevelType)channel.GenericFieldFilter,
                             Type = ChannelType.Lobby
                         });
@@ -1193,7 +1192,13 @@ namespace Server.Medius
                 return null;
 
             var rootPath = Path.GetFullPath(Settings.MediusFileServerRootPath);
-            var path = Path.GetFullPath(Path.Combine(Settings.MediusFileServerRootPath, appId.ToString()));
+            var path = Path.Combine(rootPath, appId.ToString());
+
+            if(!Directory.Exists(path))
+            {
+                Logger.Warn($"Path being created! {path} for appId {appId}");
+                Directory.CreateDirectory(path);
+            }
 
             // prevent filename from moving up directories
             if (!path.StartsWith(rootPath))

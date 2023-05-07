@@ -1,5 +1,7 @@
 ﻿using DotNetty.Common.Internal.Logging;
 using DotNetty.Transport.Channels;
+using Microsoft.VisualBasic;
+using RT.Common;
 using RT.Cryptography;
 using RT.Models;
 using RT.Models.ServerPlugins;
@@ -147,7 +149,7 @@ namespace Server.Medius
 
             switch (message)
             {
-
+                
                 case NetMessageHello netMessageHello:
                     {
                         data.ClientObject = Program.ProfileServer.ReserveClient(netMessageHello);
@@ -157,16 +159,66 @@ namespace Server.Medius
                         data.ClientObject.MediusVersion = (int)scertClient.MediusVersion;
                         data.ClientObject.OnConnected();
 
-                        data.ClientObject.Queue(new NetMessageProtocolInfo()
+                        var ProtoBytesReversed = ReverseBytes(1725);
+                        data.ClientObject.Queue(new NetMessageTypeProtocolInfo()
                         {
-                            protocolInfo = 1725,
+                            protocolInfo = ProtoBytesReversed, //1725
+                            //protocolInfo = 1958,
                             buildNumber = 0
                         });
 
                         break;
                     }
 
+                case NetMessageTypeProtocolInfo protocolInfo:
+                    {
+                        //Time
+                        DateTime time = DateTime.Now;
+                        var timeBS = time.Ticks >> 1;
 
+
+                        //bool finBs = true >> 1;
+                        //Content string bitshift
+                        string newsBs = ShiftString("Test News");
+                        string eulaBs = ShiftString("Test Eula");
+                        // News/Eula Type bitshifted
+                        var newsBS = Convert.ToInt32(NetMessageNewsEulaResponseContentType.News) >> 1;
+                        var eulaBS = Convert.ToInt32(NetMessageNewsEulaResponseContentType.Eula) >> 1;
+
+                        data.ClientObject.Queue(new NetMessageNewsEulaResponse()
+                        {
+                            m_finished = 1 >> 1,
+                            m_content = newsBs,
+                            m_type = (NetMessageNewsEulaResponseContentType)newsBS,
+                            m_timestamp = timeBS
+                        });
+
+                        data.ClientObject.Queue(new NetMessageNewsEulaResponse()
+                        {
+                            m_finished = 1 >> 1,
+                            m_content = eulaBs,
+                            m_type = (NetMessageNewsEulaResponseContentType)eulaBS,
+                            m_timestamp = timeBS
+                        });
+                        break;
+                    }
+                    
+                case NetMessageTypeKeepAlive keepAlive:
+                    {
+                        data.ClientObject.KeepAliveUntilNextConnection();
+                        break;
+                    }
+                    
+                case NetMessageAccountLogoutRequest accountLogoutRequest:
+                    {
+                        /*
+                        data.ClientObject.Queue(new NetMessageAccountLogoutResponse()
+                        {
+                            m_success = 0x0,
+                        });
+                        */
+                        break;
+                    }
 
                 default:
                     {
@@ -175,6 +227,29 @@ namespace Server.Medius
                     }
             }
         }
+
+        public static string ShiftString(string t)
+        {
+            return t.Substring(1, t.Length - 1) + t.Substring(0, 1);
+        }
+
+        public static int ReverseBytes(int value)
+        {
+            return (int)((value & 0x000000FFU) << 24 | (value & 0x0000FF00U) << 8 |
+                (value & 0x00FF0000U) >> 8 | (value & 0xFF000000U) >> 24);
+        }
+
+        #region ReverseBytes16
+        /// <summary>
+        /// Reverses UInt16 
+        /// </summary>
+        /// <param name="nValue"></param>
+        /// <returns></returns>
+        public static ushort ReverseBytes16(ushort nValue)
+        {
+            return (ushort)((ushort)((nValue >> 8)) | (nValue << 8));
+        }
+        #endregion
 
         public ClientObject ReserveClient(NetMessageHello request)
         {

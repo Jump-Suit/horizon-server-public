@@ -216,7 +216,7 @@ namespace Server.Common.Logging
         /// <summary>
         /// 
         /// </summary>
-        public static LogSettings Singleton { get; set; } = null;
+        public static DMELogSettings Singleton { get; set; } = null;
 
         /// <summary>
         /// Path to the log file.
@@ -251,12 +251,53 @@ namespace Server.Common.Logging
         /// <summary>
         /// 
         /// </summary>
-        public static LogSettings Singleton { get; set; } = null;
+        public static NATLogSettings Singleton { get; set; } = null;
 
         /// <summary>
         /// Path to the log file.
         /// </summary>
         public string LogPath { get; set; } = "logs/nat.log";
+
+        /// <summary>
+        /// Whether to also log to the console.
+        /// </summary>
+        public bool LogToConsole { get; set; } = true;
+
+        /// <summary>
+        /// Size in bytes for each log file.
+        /// </summary>
+        public int RollingFileSize = 1024 * 1024 * 1;
+
+        /// <summary>
+        /// Max number of files before rolling back to the first log file.
+        /// </summary>
+        public int RollingFileCount = 100;
+
+        /// <summary>
+        /// Log level.
+        /// </summary>
+        public LogLevel LogLevel { get; set; } = LogLevel.Information;
+
+
+    }
+
+
+    public class SVOLogSettings
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        public static SVOLogSettings Singleton { get; set; } = null;
+
+        /// <summary>
+        /// Path to the log file.
+        /// </summary>
+        public string LogPath { get; set; } = "logs/svo.log";
+
+        /// <summary>
+        /// Whether to output metric information.
+        /// </summary>
+        public bool LogMetrics { get; set; } = false;
 
         /// <summary>
         /// Whether to also log to the console.

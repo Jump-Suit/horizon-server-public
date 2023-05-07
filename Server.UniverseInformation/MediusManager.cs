@@ -35,9 +35,6 @@ namespace Server.UniverseInformation
             public Dictionary<int, Channel> ChannelIdToChannel = new Dictionary<int, Channel>();
             public Dictionary<string, Channel> ChanneNameToChannel = new Dictionary<string, Channel>();
             public Dictionary<int, Game> GameIdToGame = new Dictionary<int, Game>();
-
-            public Dictionary<int, Clan> ClanIdToClan = new Dictionary<int, Clan>();
-            public Dictionary<string, Clan> ClanNameToClan = new Dictionary<string, Clan>();
         }
 
         private Dictionary<string, int[]> _appIdGroups = new Dictionary<string, int[]>();
@@ -311,35 +308,6 @@ namespace Server.UniverseInformation
             return gameCount;
         }
 
-        public IEnumerable<Game> GetGameList(int appId, int pageIndex, int pageSize, IEnumerable<GameListFilter> filters)
-        {
-            var appIdsInGroup = GetAppIdsInGroup(appId);
-
-            return _lookupsByAppId.Where(x => appIdsInGroup.Contains(x.Key))
-                            .SelectMany(x => x.Value.GameIdToGame.Select(x => x.Value))
-                            .Where(x => (x.WorldStatus == MediusWorldStatus.WorldActive || x.WorldStatus == MediusWorldStatus.WorldStaging) &&
-                                        (filters.Count() == 0 || filters.Any(y => y.IsMatch(x))))
-                            .Skip((pageIndex - 1) * pageSize)
-                            .Take(pageSize);
-        }
-
-        public IEnumerable<Game> GetGameListTest(int appId, int pageIndex, int pageSize)
-        {
-            var appIdsInGroup = GetAppIdsInGroup(appId);
-
-            return _lookupsByAppId.Where(x => appIdsInGroup.Contains(x.Key))
-                            .SelectMany(x => x.Value.GameIdToGame.Select(x => x.Value));
-        }
-
-        public IEnumerable<Game> GetGameListAppId(int appId, int pageIndex, int pageSize)
-        {
-            var appIdsInGroup = GetAppIdsInGroup(appId);
-
-            return _lookupsByAppId.Where(x => appIdsInGroup.Contains(x.Key))
-                            .SelectMany(x => x.Value.GameIdToGame.Select(x => x.Value))
-                            .Skip((pageIndex - 1) * pageSize)
-                            .Take(pageSize);
-        }
 
         #region Channels
 
@@ -1112,43 +1080,5 @@ namespace Server.UniverseInformation
 
         #endregion
 
-        #region Matchmaking
-        public int CalculateSizeOfMatchRoster(MediusMatchRosterInfo roster)
-        {
-            int rosterSize;
-            uint v3;
-            uint partySize;
-
-            MediusMatchPartyInfo mediusMatchPartyInfo = new MediusMatchPartyInfo();
-
-            if (roster == null)
-                return 0;
-            rosterSize = 4 * roster.NumParties + 8;
-            partySize = (uint)roster.Parties;
-            v3 = (uint)(4 * roster.NumParties + partySize - 4);
-            while (partySize <= v3)
-            {
-                rosterSize += CalculateSizeOfMatchParty(mediusMatchPartyInfo);
-                partySize += 4;
-            }
-
-            return rosterSize;
-        }
-
-        public int CalculateSizeOfMatchParty(MediusMatchPartyInfo party)
-        {
-            int MatchPartySize;
-            if (party != null)
-            {
-                MatchPartySize = 8 * party.NumPlayers + 8;
-            }
-            else
-            {
-                MatchPartySize = 0;
-            }
-
-            return MatchPartySize;
-        }
-        #endregion
     }
 }

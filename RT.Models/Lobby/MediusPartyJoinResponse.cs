@@ -3,10 +3,10 @@ using Server.Common;
 
 namespace RT.Models
 {
-    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.PartyJoinResponse)] // Set GameState
-    public class MediusPartyJoinResponse : BaseLobbyExtMessage, IMediusResponse
+    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.PartyJoinByIndexResponse)]
+    public class MediusPartyJoinByIndexResponse : BaseLobbyExtMessage, IMediusResponse
     {
-        public override byte PacketType => (byte)MediusLobbyExtMessageIds.PartyJoinResponse; // Set GameState
+        public override byte PacketType => (byte)MediusLobbyExtMessageIds.PartyJoinByIndexResponse;
 
         public bool IsSuccess => StatusCode >= 0;
 
@@ -27,6 +27,10 @@ namespace RT.Models
         /// </summary>
         public NetConnectionInfo ConnectionInfo;
 
+        public int partyIndex;
+
+        public int maxPlayers;
+
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
             // 
@@ -40,6 +44,8 @@ namespace RT.Models
             StatusCode = reader.Read<MediusCallbackStatus>();
             PartyHostType = reader.Read<MediusGameHostType>();
             ConnectionInfo = reader.Read<NetConnectionInfo>();
+            partyIndex = reader.ReadInt32();
+            maxPlayers = reader.ReadInt32();
             //MatchGameState = reader.Read<MediusMatchGameState>();
         }
 
@@ -56,6 +62,8 @@ namespace RT.Models
             writer.Write(StatusCode);
             writer.Write(PartyHostType);
             writer.Write(ConnectionInfo);
+            writer.Write(partyIndex);
+            writer.Write(maxPlayers);
             //writer.Write(MatchGameState);
         }
 
@@ -65,7 +73,9 @@ namespace RT.Models
                 $"MessageID: {MessageID} " +
                 $"StatusCode: {StatusCode} " +
                 $"PartyHostType: {PartyHostType} " +
-                $"ConnectionInfo: {ConnectionInfo} ";
+                $"ConnectionInfo: {ConnectionInfo} " +
+                $"partyIndex: {partyIndex} " +
+                $"maxPlayers: {maxPlayers}";
             //$"GameState: {MatchGameState}";
         }
     }

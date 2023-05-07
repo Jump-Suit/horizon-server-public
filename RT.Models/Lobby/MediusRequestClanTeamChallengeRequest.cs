@@ -24,6 +24,8 @@ namespace RT.Models
             MessageID = reader.Read<MessageId>();
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             reader.ReadBytes(2);
+
+            //
             ClanID = reader.ReadInt32();
             Message = reader.ReadString(Constants.CLANMSG_MAXLEN);
         }
@@ -37,6 +39,8 @@ namespace RT.Models
             writer.Write(MessageID ?? MessageId.Empty);
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
             writer.Write(new byte[2]);
+
+            //
             writer.Write(ClanID);
             writer.Write(Message, Constants.CLANMSG_MAXLEN);
         }
@@ -45,10 +49,10 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID}" + " " +
-                $"SessionKey:{SessionKey}" + " " +
-                $"ClanID:{ClanID}" + " " +
-                $"Message:{Message}";
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey} " +
+                $"ClanID: {ClanID} " +
+                $"Message: {Message}";
         }
     }
 }

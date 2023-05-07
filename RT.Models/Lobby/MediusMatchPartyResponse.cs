@@ -27,7 +27,7 @@ namespace RT.Models
         public MediusGameHostType GameHostType;
         public NetAddressList AddressList;
         public int ApplicationDataSizeJAS;
-        public char[] ApplicationDataJAS;
+        public string ApplicationDataJAS;
         public int MatchRoster;
 
         // MatchRosterInfo
@@ -41,7 +41,7 @@ namespace RT.Models
         //MediusMatchTypeHostGame
         public int MatchGameID;
         public int ApplicationDataSizeHG;
-        public char[] ApplicationDataHG;
+        public string ApplicationDataHG;
 
         // MediusMatchTypeReferral
         /// <summary>
@@ -60,7 +60,6 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
-            //reader.ReadBytes(3);
 
             //
             StatusCode = reader.Read<MediusCallbackStatus>();
@@ -74,7 +73,7 @@ namespace RT.Models
                 GameHostType = reader.Read<MediusGameHostType>();
                 AddressList = reader.Read<NetAddressList>();
                 ApplicationDataSizeJAS = reader.ReadInt32();
-                ApplicationDataJAS = reader.ReadChars(ApplicationDataSizeJAS);
+                ApplicationDataJAS = reader.ReadString(ApplicationDataSizeJAS);
                 MatchRoster = reader.ReadInt32();
 
                 //MediusMatchRosterInfoMarshal
@@ -92,7 +91,7 @@ namespace RT.Models
             {
                 MatchGameID = reader.ReadInt32();
                 ApplicationDataSizeHG = reader.ReadInt32();
-                ApplicationDataHG = reader.ReadChars(ApplicationDataSizeHG);
+                ApplicationDataHG = reader.ReadString(ApplicationDataSizeHG);
             }
 
             //MediusMatchTypeReferral
@@ -111,7 +110,6 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
-            //writer.Write(new byte[3]);
 
             //
             writer.Write(StatusCode);
@@ -124,7 +122,7 @@ namespace RT.Models
                 writer.Write(GameHostType);
                 writer.Write(AddressList);
                 writer.Write(ApplicationDataSizeJAS);
-                writer.Write(ApplicationDataJAS);
+                writer.Write(ApplicationDataJAS, ApplicationDataSizeJAS);
                 writer.Write(MatchRoster);
 
                 writer.Write(NumPlayers);
@@ -138,7 +136,7 @@ namespace RT.Models
             {
                 writer.Write(MatchGameID);
                 writer.Write(ApplicationDataSizeHG);
-                writer.Write(ApplicationDataHG);
+                writer.Write(ApplicationDataHG, ApplicationDataSizeHG);
             }
 
             if (StatusCode == MediusCallbackStatus.MediusMatchTypeReferral)
@@ -161,7 +159,7 @@ namespace RT.Models
                 $"GameHostType: {GameHostType} " +
                 $"AddressList: {AddressList} " +
                 $"ApplicationDataSize: {ApplicationDataSizeJAS} " +
-                $"ApplicationData: {string.Join(" ", ApplicationDataJAS)} " +
+                $"ApplicationData: {ApplicationDataJAS} " +
                 $"MatchRoster: {MatchRoster} " +
                 $"NumPlayers: {NumPlayers} " +
                 $"Players: {Players} " +
@@ -177,7 +175,7 @@ namespace RT.Models
                 $"PluginSpecificStatusCode: {PluginSpecificStatusCode} " +
                 $"MatchGameID: {MatchGameID} " + 
                 $"ApplicationDataSize: {ApplicationDataSizeHG} " +
-                $"ApplicationData: {string.Join(" ", ApplicationDataHG)}";
+                $"ApplicationData: {ApplicationDataHG}";
             }
 
             if (StatusCode == MediusCallbackStatus.MediusMatchTypeReferral)

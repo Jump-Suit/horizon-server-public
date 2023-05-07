@@ -7,6 +7,7 @@ using DotNetty.Common.Internal.Logging;
 using DotNetty.Transport.Channels;
 using RT.Common;
 using RT.Models;
+using RT.Cryptography;
 using System;
 using System.Collections.Generic;
 

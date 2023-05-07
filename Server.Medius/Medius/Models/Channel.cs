@@ -36,10 +36,11 @@ namespace Server.Medius.Models
         public int RuleSet = 0;
         public MediusApplicationType AppType = MediusApplicationType.MediusAppTypeGame;
         public MediusWorldSecurityLevelType SecurityLevel = MediusWorldSecurityLevelType.WORLD_SECURITY_NONE;
-        public uint GenericField1 = 0;
-        public uint GenericField2 = 0;
-        public uint GenericField3 = 0;
-        public uint GenericField4 = 0;
+        public MediusLobbyFilterMaskLevelType LobbyFilterMaskLevelType = MediusLobbyFilterMaskLevelType.MediusLobbyFilterMaskLevel0;
+        public ulong GenericField1 = 0;
+        public ulong GenericField2 = 0;
+        public ulong GenericField3 = 0;
+        public ulong GenericField4 = 0;
         public MediusWorldGenericFieldLevelType GenericFieldLevel = MediusWorldGenericFieldLevelType.MediusWorldGenericFieldLevel0;
         public MediusGameHostType GameHostType;
         public MediusWorldStatus WorldStatus;

@@ -11,7 +11,7 @@ namespace RT.Models
         public override RT_MSG_TYPE Id => RT_MSG_TYPE.RT_MSG_SERVER_HELLO;
 
         //PS2
-        public ushort protocolVersion = 0x006E;
+        public ushort protocolVersion = 0x007A;
         public ushort encryptionVersion = 0x0001;
 
         //PS3 
@@ -55,7 +55,18 @@ namespace RT.Models
             //If PS3 Medius Version 112/113, and is MLS, Send PS3 MLS Cert for Encryption/Decryption
             else if ((writer.MediusVersion == 112 || writer.MediusVersion == 113) && MLS == true)
             {
-                writer.Write(EncryptFlagDisable);
+                // serialize rsa modulus
+                // this is sent in server hello at offset 0x194
+                // we're going to overwrite the cert at that offset to store the rsa modulus
+                var rsakey = RsaPublicKey.ToByteArrayUnsigned();
+
+                // fix to 64 bytes (512 bit)
+                Array.Resize(ref rsakey, 0x40);
+
+                // copy to cert
+                Array.Copy(rsakey, 0, MLSCert, 0x194, rsakey.Length);
+
+                //writer.Write(EncryptFlagDisable);
                 writer.Write(MLSCert);
             }
             else //Send PS2 Server Hello
@@ -69,7 +80,8 @@ namespace RT.Models
         {
             return base.ToString() + " " +
                 $"protocolVersion: {protocolVersion} " +
-                $"encryptionVersion: {encryptionVersion}";
+                $"encryptionVersion: {encryptionVersion} " +
+                $"rsakey: {RsaPublicKey}";
         }
     }
 }

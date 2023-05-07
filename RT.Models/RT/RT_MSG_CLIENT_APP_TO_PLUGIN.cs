@@ -1,5 +1,7 @@
-﻿using RT.Common;
+﻿using Microsoft.Extensions.Logging;
+using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -12,7 +14,7 @@ namespace RT.Models
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
-            Message = BaseMediusPluginMessage.Instantiate(reader);
+            Message = BaseMediusPluginMessage.InstantiateClientPlugin(reader);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -20,6 +22,8 @@ namespace RT.Models
 
             if (Message != null)
             {
+                writer.Write(Message.Size);
+                //writer.Write(new byte[2]);
                 writer.Write(Message.PacketType);
                 Message.SerializePlugin(writer);
             }
@@ -28,13 +32,13 @@ namespace RT.Models
 
         public override bool CanLog()
         {
-            return base.CanLog() && (Message?.CanLog() ?? true);
+            return base.CanLog();
         }
 
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"Message: {Message} ";
+                $"Message: {Message}";
         }
     }
 }

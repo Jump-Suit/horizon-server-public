@@ -33,6 +33,8 @@ namespace RT.Models
             // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             reader.ReadBytes(2);
+
+            //
             ApplicationID = reader.ReadInt32();
             MaxPlayers = reader.ReadInt32();
             LobbyName = reader.ReadString(Constants.LOBBYNAME_MAXLEN);
@@ -55,6 +57,8 @@ namespace RT.Models
             // 
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
             writer.Write(new byte[2]);
+
+            //
             writer.Write(ApplicationID);
             writer.Write(MaxPlayers);
             writer.Write(LobbyName, Constants.LOBBYNAME_MAXLEN);
@@ -70,17 +74,17 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"SessionKey:{SessionKey} " +
-$"ApplicationID:{ApplicationID} " +
-$"MaxPlayers:{MaxPlayers} " +
-$"LobbyName:{LobbyName} " +
-$"LobbyPassword:{LobbyPassword} " +
-$"GenericField1:{GenericField1:X8} " +
-$"GenericField2:{GenericField2:X8} " +
-$"GenericField3:{GenericField3:X8} " +
-$"GenericField4:{GenericField4:X8} " +
-$"GenericFieldLevel:{GenericFieldLevel}";
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey} " +
+                $"ApplicationID: {ApplicationID} " +
+                $"MaxPlayers: {MaxPlayers} " +
+                $"LobbyName: {LobbyName} " +
+                $"LobbyPassword: {LobbyPassword} " +
+                $"GenericField1: {GenericField1:X8} " +
+                $"GenericField2: {GenericField2:X8} " +
+                $"GenericField3: {GenericField3:X8} " +
+                $"GenericField4: {GenericField4:X8} " +
+                $"GenericFieldLevel: {GenericFieldLevel}";
         }
     }
 }

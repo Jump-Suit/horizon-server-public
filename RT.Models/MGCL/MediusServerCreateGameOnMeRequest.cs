@@ -1,5 +1,6 @@
 using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -98,7 +99,7 @@ namespace RT.Models
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
                 $"GameName: {GameName} " +
-                $"GameStats: {GameStats} " +
+                $"GameStats: {BitConverter.ToString(GameStats)} " +
                 $"GamePassword: {GamePassword} " +
                 $"ApplicationID: {ApplicationID} " +
                 $"MaxClients: {MaxClients} " +

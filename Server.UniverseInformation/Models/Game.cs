@@ -242,11 +242,6 @@ namespace Server.UniverseInformation.Models
             GenericField1 = serverCreateGameOnSelf.GenericField1;
             GenericField2 = serverCreateGameOnSelf.GenericField2;
             GenericField3 = serverCreateGameOnSelf.GenericField3;
-            GenericField4 = serverCreateGameOnSelf.GenericField4;
-            GenericField5 = serverCreateGameOnSelf.GenericField5;
-            GenericField6 = serverCreateGameOnSelf.GenericField6;
-            GenericField7 = serverCreateGameOnSelf.GenericField7;
-            GenericField8 = serverCreateGameOnSelf.GenericField8;
             GAME_HOST_TYPE = serverCreateGameOnSelf.GameHostType;
             netAddressList = serverCreateGameOnSelf.AddressList;
             WorldID = serverCreateGameOnSelf.WorldID;

@@ -158,7 +158,7 @@ namespace Server.Medius.Models
         /// <summary>
         /// 
         /// </summary>
-        public int? ClanId { get; set; }
+        public int? ClanId { get; set; } = -1;
 
         /// <summary>
         /// 
@@ -170,6 +170,21 @@ namespace Server.Medius.Models
         /// </summary>
         public int SignalId { get; set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public string requestData { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int appDataSize { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string appData { get; set; }
+
         #region Lobby World Filters
 
         public uint FilterMask1;
@@ -178,6 +193,8 @@ namespace Server.Medius.Models
         public uint FilterMask4;
         public MediusLobbyFilterType LobbyFilterType;
         public MediusLobbyFilterMaskLevelType FilterMaskLevel;
+
+        public List<ChannelListFilter> ChannelListFilters = new List<ChannelListFilter>();
 
         #endregion
 
@@ -200,6 +217,8 @@ namespace Server.Medius.Models
         /// Current Party
         /// </summary>
         public Party CurrentParty { get; protected set; } = null;
+
+        public int? PartyIndex { get; protected set; } = null;
 
         /// <summary>
         /// 
@@ -374,18 +393,12 @@ namespace Server.Medius.Models
         {
             // older medius doesn't use server echo
             // so instead we'll increment our timeout dates by the client echo
-            var echoTime = DateTime.UtcNow;
-            if (echoTime > _lastServerEchoValue)
+            if (MediusVersion <= 108)
             {
-                if (MediusVersion <= 108)
-                {
-                    _lastServerEchoValue = echoTime;
-                    UtcLastServerEchoReply = Utils.GetHighPrecisionUtcTime();
-                    UtcLastServerEchoSent = Utils.GetHighPrecisionUtcTime();
-                    LatencyMs = (uint)(UtcLastServerEchoReply - echoTime).TotalMilliseconds;
-                }
+                UtcLastServerEchoSent = Utils.GetHighPrecisionUtcTime().AddSeconds(-1);
+                UtcLastServerEchoReply = Utils.GetHighPrecisionUtcTime();
             }
-            
+
         }
 
         public virtual void OnFileDownloadResponse(MediusFileDownloadResponse statsRequest)
@@ -505,7 +518,7 @@ namespace Server.Medius.Models
             await LeaveCurrentChannel();
 
             // Logout
-            _logoutTime = Common.Utils.GetHighPrecisionUtcTime();
+            _logoutTime = Utils.GetHighPrecisionUtcTime();
 
             // Tell database
             PostStatus();
@@ -515,7 +528,7 @@ namespace Server.Medius.Models
         public async Task LoginAnonymous(MediusAnonymousLoginRequest anonymousLoginRequest, int iAccountID)
         {
             if (IsLoggedIn)
-                throw new InvalidOperationException($"{this} attempting to log into {anonymousLoginRequest.SessionDisplayName} but is already logged in!");
+                throw new InvalidOperationException($"{this} attempting to log into temp session as {anonymousLoginRequest.SessionDisplayName} but is already logged in!");
 
             // Raise plugin event
             await Program.Plugins.OnEvent(PluginEvent.MEDIUS_PLAYER_ON_LOGGED_IN, new OnPlayerArgs() { Player = this });
@@ -528,6 +541,8 @@ namespace Server.Medius.Models
 
             // Login
             _loginTime = Utils.GetHighPrecisionUtcTime();
+            
+            // WE ARE ANONYMOUS SO DON'T POST TO DATABASE!!!!
         }
 
         public async Task Login(AccountDTO account)
@@ -576,6 +591,19 @@ namespace Server.Medius.Models
 
         #region Party
 
+        public async Task JoinParty(Party party, int partyIndex)
+        {
+            // Leave current game
+            await LeaveCurrentParty();
+
+            CurrentParty = party;
+            PartyIndex = partyIndex;
+            CurrentParty.AddPlayer(this);
+
+            // Tell database
+            PostStatus();
+        }
+
         public async Task LeaveParty(Party party)
         {
             if (CurrentParty != null && CurrentParty == party)
@@ -594,7 +622,7 @@ namespace Server.Medius.Models
                 await CurrentParty.RemovePlayer(this);
                 CurrentParty = null;
             }
-            DmeClientId = null;
+            PartyIndex = null;
         }
 
         #endregion
@@ -730,8 +758,8 @@ namespace Server.Medius.Models
 
             return Task.CompletedTask;
         }
-
-        public GameListFilter SetGameListFilter(MediusSetGameListFilterRequest request)
+        /*
+        public GameListFilter SetLobbyWorldFilter(MediusSetLobbyWorldFilterRequest1 request)
         {
             GameListFilter result;
 
@@ -740,6 +768,47 @@ namespace Server.Medius.Models
                 FieldID = _gameListFilterIdCounter++,
                 Mask = request.Mask,
                 BaselineValue = request.BaselineValue,
+                ComparisonOperator = request.ComparisonOperator,
+                FilterField = request.FilterField
+            });
+
+            /*
+            if (request.FilterField == MediusGameListFilterField.MEDIUS_FILTER_LOBBY_WORLDID)
+            {
+                GameListFilters.Add(result = new GameListFilter()
+                {
+                    FieldID = _gameListFilterIdCounter++,
+                    Mask = request.Mask,
+                    BaselineValue = (int)WorldId,
+                    ComparisonOperator = MediusComparisonOperator.EQUAL_TO,
+                    FilterField = request.FilterField
+                });
+            }
+            else
+            {
+                GameListFilters.Add(result = new GameListFilter()
+                {
+                    FieldID = _gameListFilterIdCounter++,
+                    Mask = request.Mask,
+                    BaselineValue = request.BaselineValue,
+                    ComparisonOperator = request.ComparisonOperator,
+                    FilterField = request.FilterField
+                });
+            }
+
+            return result;
+        }
+        
+            */
+        public GameListFilter SetGameListFilter(MediusSetGameListFilterRequest request)
+        {
+            GameListFilter result;
+
+            GameListFilters.Add(result = new GameListFilter()
+            {
+                FieldID = _gameListFilterIdCounter++,
+                Mask = request.Mask,
+                BaselineValue = (ulong)request.BaselineValue,
                 ComparisonOperator = request.ComparisonOperator,
                 FilterField = request.FilterField
             });
@@ -779,7 +848,7 @@ namespace Server.Medius.Models
             {
                 FieldID = _gameListFilterIdCounter++,
                 Mask = 0xFFFFFFF,
-                BaselineValue = request.BaselineValue,
+                BaselineValue = (ulong)request.BaselineValue,
                 ComparisonOperator = request.ComparisonOperator,
                 FilterField = request.FilterField
             });

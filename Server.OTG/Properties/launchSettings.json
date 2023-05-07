@@ -1,0 +1,10 @@
+﻿{
+  "profiles": {
+    "Server.GHS": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

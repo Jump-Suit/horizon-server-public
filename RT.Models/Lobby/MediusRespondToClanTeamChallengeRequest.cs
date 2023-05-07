@@ -8,8 +8,6 @@ namespace RT.Models
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.RespondToClanTeamChallenge;
 
-
-
         public MessageId MessageID { get; set; }
         public string SessionKey; // SESSIONKEY_MAXLEN
         public int ClanChallengeID;
@@ -48,11 +46,11 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID}" + " " +
-                $"SessionKey:{SessionKey}" + " " +
-                $"ClanChallengeID:{ClanChallengeID}" + " " +
-                $"ChallengeStatus:{ChallengeStatus}" + " " +
-                $"Message:{Message}";
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey} " + 
+                $"ClanChallengeID: {ClanChallengeID} " +
+                $"ChallengeStatus: {ChallengeStatus} " +
+                $"Message: {Message}";
         }
     }
 }

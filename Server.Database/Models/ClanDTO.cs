@@ -12,6 +12,7 @@ namespace Server.Database.Models
         public List<AccountDTO> ClanMemberAccounts { get; set; }
         public List<ClanInvitationDTO> ClanMemberInvitations { get; set; }
         public List<ClanMessageDTO> ClanMessages { get; set; }
+        public List<ClanTeamChallengeDTO> ClanTeamChallenges { get; set; }
         public int AppId { get; set; }
         public bool IsDisbanded { get; set; }
         public string ClanMediusStats { get; set; }
@@ -80,5 +81,16 @@ namespace Server.Database.Models
         public int ClanId { get; set; }
         public int AccountId { get; set; }
         public int NewLeaderAccountId { get; set; }
+    }
+
+    public class ClanTeamChallengeDTO
+    {
+        public int ChallengerClanID { get; set; }
+        public int AgainstClanID { get; set; }
+        public int Status { get; set; }
+        public int ResponseTime { get; set; }
+        public string ChallengeMsg { get; set; }
+        public string ResponseMessage { get; set; }
+        public int ClanChallengeId { get; set; }
     }
 }

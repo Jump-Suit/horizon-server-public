@@ -51,7 +51,7 @@ namespace RT.Models
         {
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
-                $"VersionServer: {VersionServer}";
+                $"Returning: {VersionServer}";
         }
     }
 }

@@ -1,5 +1,6 @@
 using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -57,13 +58,13 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"FilterMask1:{FilterMask1} " +
-$"FilterMask2:{FilterMask2} " +
-$"FilterMask3:{FilterMask3} " +
-$"FilterMask4:{FilterMask4} " +
-$"LobbyFilterType:{LobbyFilterType} " +
-$"FilterMaskLevel:{FilterMaskLevel}";
+                $"MessageID: {MessageID} " +
+                $"FilterMask1: {FilterMask1} " +
+                $"FilterMask2: {FilterMask2} " +
+                $"FilterMask3: {FilterMask3} " +
+                $"FilterMask4: {FilterMask4} " +
+                $"LobbyFilterType: {LobbyFilterType} " +
+                $"FilterMaskLevel: {Convert.ToInt32(FilterMaskLevel)}:{FilterMaskLevel}";
         }
     }
 }

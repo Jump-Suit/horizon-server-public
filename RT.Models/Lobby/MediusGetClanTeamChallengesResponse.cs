@@ -18,7 +18,7 @@ namespace RT.Models
         public int ResponseTime;
         public string ChallengeMsg; // CLANMSG_MAXLEN
         public string ResponseMsg; // CLANMSG_MAXLEN
-        public char EndOfList;
+        public bool EndOfList;
         public int ClanChallengeID;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -36,7 +36,8 @@ namespace RT.Models
             ResponseTime = reader.ReadInt32();
             ChallengeMsg = reader.ReadString(Constants.CLANMSG_MAXLEN);
             ResponseMsg = reader.ReadString(Constants.CLANMSG_MAXLEN);
-            EndOfList = reader.ReadChar();
+            EndOfList = reader.ReadBoolean();
+            reader.ReadBytes(3);
             ClanChallengeID = reader.ReadInt32();
         }
 
@@ -56,6 +57,7 @@ namespace RT.Models
             writer.Write(ChallengeMsg, Constants.CLANMSG_MAXLEN);
             writer.Write(ResponseMsg, Constants.CLANMSG_MAXLEN);
             writer.Write(EndOfList);
+            writer.Write(new byte[3]);
             writer.Write(ClanChallengeID);
         }
 
@@ -63,16 +65,16 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID}" + " " +
-                $"StatusCode:{StatusCode}" + " " +
-                $"ChallengerClanID:{ChallengerClanID}" + " " +
-                $"AgainstClanID:{AgainstClanID}" + " " +
-                $"Status:{Status}" + " " +
-                $"ResponseTime:{ResponseTime}" + " " +
-                $"ChallengeMsg:{ChallengeMsg}" + " " +
-                $"ResponseMsg:{ResponseMsg}" + " " +
-                $"EndOfList:{EndOfList}" + " " +
-                $"ClanChallengeID:{ClanChallengeID}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
+                $"ChallengerClanID: {ChallengerClanID} " +
+                $"AgainstClanID: {AgainstClanID} " +
+                $"Status: {Status} " +
+                $"ResponseTime: {ResponseTime} " + 
+                $"ChallengeMsg: {ChallengeMsg} " + 
+                $"ResponseMsg: {ResponseMsg} " + 
+                $"EndOfList: {EndOfList} " + 
+                $"ClanChallengeID: {ClanChallengeID}";
         }
     }
 }

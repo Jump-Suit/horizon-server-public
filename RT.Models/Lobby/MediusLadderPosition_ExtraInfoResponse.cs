@@ -50,10 +50,10 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"StatusCode:{StatusCode} " +
-$"LadderPosition:{LadderPosition} " +
-$"TotalRankings:{TotalRankings}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
+                $"LadderPosition: {LadderPosition} " +
+                $"TotalRankings: {TotalRankings}";
         }
     }
 }

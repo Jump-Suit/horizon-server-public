@@ -1,12 +1,12 @@
-﻿namespace RT.Models
+﻿using RT.Common;
+using Server.Common;
+
+namespace RT.Models
 {
-    /*
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.RevokeClanTeamChallenge)]
     public class MediusRevokeClanTeamChallengeRequest : BaseLobbyMessage, IMediusRequest
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.RevokeClanTeamChallenge;
-
-
 
         public MessageId MessageID { get; set; }
         public string SessionKey; // SESSIONKEY_MAXLEN
@@ -36,14 +36,12 @@
             writer.Write(ClanChallengeID);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID}" + " " +
-                $"SessionKey:{SessionKey}" + " " +
-                $"ClanChallengeID:{ClanChallengeID}";
+                $"MessageID: {MessageID} " + 
+                $"SessionKey: {SessionKey} " +
+                $"ClanChallengeID: {ClanChallengeID}";
         }
     }
-    */
 }

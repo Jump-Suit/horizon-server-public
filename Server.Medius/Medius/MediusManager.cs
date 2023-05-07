@@ -1,5 +1,6 @@
 ﻿using DotNetty.Common.Internal.Logging;
 using DotNetty.Transport.Channels;
+using Org.BouncyCastle.Asn1.Ocsp;
 using RT.Common;
 using RT.Models;
 using Server.Common;
@@ -38,6 +39,7 @@ namespace Server.Medius
             public Dictionary<int, Channel> ChannelIdToChannel = new Dictionary<int, Channel>();
             public Dictionary<string, Channel> ChanneNameToChannel = new Dictionary<string, Channel>();
             public Dictionary<int, Game> GameIdToGame = new Dictionary<int, Game>();
+            public Dictionary<int, Party> PartyIdToGame = new Dictionary<int, Party>();
 
             public Dictionary<int, Clan> ClanIdToClan = new Dictionary<int, Clan>();
             public Dictionary<string, Clan> ClanNameToClan = new Dictionary<string, Clan>();
@@ -328,6 +330,7 @@ namespace Server.Medius
 
             return _lookupsByAppId.Where(x => appIdsInGroup.Contains(x.Key))
                             .SelectMany(x => x.Value.GameIdToGame.Select(x => x.Value))
+                            .Where(x => (x.WorldStatus == MediusWorldStatus.WorldActive || x.WorldStatus == MediusWorldStatus.WorldStaging))
                             .Skip((pageIndex - 1) * pageSize)
                             .Take(pageSize);
         }
@@ -380,6 +383,11 @@ namespace Server.Medius
             // Create and add
             try
             {
+                if(client.ApplicationId == 10994)
+                {
+
+                }
+
                 var game = new Game(client, request, client.CurrentChannel, dme);
                 await AddGame(game);
 
@@ -407,7 +415,9 @@ namespace Server.Medius
                 });
             }
         }
+        #endregion
 
+        #region CreateGame1
         public async Task CreateGame1(ClientObject client, IMediusRequest request)
         {
             if (!_lookupsByAppId.TryGetValue(client.ApplicationId, out var quickLookup))
@@ -480,6 +490,91 @@ namespace Server.Medius
                 });
             }
         }
+        #endregion
+
+        #region MatchCreateGame
+        public async Task MatchCreateGame(ClientObject client, MediusMatchCreateGameRequest matchCreateGameRequest)
+        {
+            if (!_lookupsByAppId.TryGetValue(client.ApplicationId, out var quickLookup))
+                _lookupsByAppId.Add(client.ApplicationId, quickLookup = new QuickLookup());
+
+            var appIdsInGroup = GetAppIdsInGroup(client.ApplicationId);
+            string gameName = null;
+            if (matchCreateGameRequest is MediusMatchCreateGameRequest r)
+                gameName = r.GameName;
+
+            var existingGames = _lookupsByAppId.Where(x => appIdsInGroup.Contains(client.ApplicationId)).SelectMany(x => x.Value.GameIdToGame.Select(g => g.Value));
+
+            // Ensure the name is unique
+            // If the host leaves then we unreserve the name
+            if (existingGames.Any(x => x.WorldStatus != MediusWorldStatus.WorldClosed && x.WorldStatus != MediusWorldStatus.WorldInactive && x.GameName == gameName && x.Host != null && x.Host.IsConnected))
+            {
+                client.Queue(new RT_MSG_SERVER_APP()
+                {
+                    Message = new MediusMatchCreateGameResponse()
+                    {
+                        MessageID = matchCreateGameRequest.MessageID,
+                        MediusWorldID = -1,
+                        StatusCode = MediusCallbackStatus.MediusGameNameExists
+                    }
+                });
+                return;
+            }
+
+            // Try to get next free dme server
+            // If none exist, return error to clist
+            var dme = Program.ProxyServer.GetFreeDme(client.ApplicationId);
+            if (dme == null)
+            {
+                client.Queue(new MediusMatchCreateGameResponse()
+                {
+                    MessageID = matchCreateGameRequest.MessageID,
+                    MediusWorldID = -1,
+                    StatusCode = MediusCallbackStatus.MediusExceedsMaxWorlds
+                });
+                return;
+            }
+
+            // Create and add
+            try
+            {
+                var game = new Game(client, matchCreateGameRequest, client.CurrentChannel, dme);
+
+                game.MaxPlayers = matchCreateGameRequest.MaxPlayers;
+                game.GameHostType = matchCreateGameRequest.GameHostType;
+                game.GameName = matchCreateGameRequest.GameName;
+                await AddGame(game);
+
+                client.requestData = matchCreateGameRequest.RequestData;
+                client.appDataSize = matchCreateGameRequest.ApplicationDataSize;
+                client.appData = matchCreateGameRequest.ApplicationData;
+
+                // Send create game request to dme server
+                dme.Queue(new MediusServerCreateGameWithAttributesRequest()
+                {
+                    MessageID = new MessageId($"{game.Id}-{client.AccountId}-{matchCreateGameRequest.MessageID}"),
+                    MediusWorldUID = (uint)game.Id,
+                    Attributes = game.Attributes,
+                    ApplicationID = client.ApplicationId,
+                    MaxClients = game.MaxPlayers
+                });
+            }
+            catch (Exception e)
+            {
+                // 
+                Logger.Error(e);
+
+                // Failure adding game for some reason
+                client.Queue(new MediusMatchCreateGameResponse()
+                {
+                    MessageID = matchCreateGameRequest.MessageID,
+                    MediusWorldID = -1,
+                    StatusCode = MediusCallbackStatus.MediusFail
+                });
+            }
+        }
+        #endregion
+
 
         #region Create Game P2P
 
@@ -492,6 +587,7 @@ namespace Server.Medius
             var appIdsInGroup = GetAppIdsInGroup(client.ApplicationId);
             string gameName = null;
             NetAddressList gameNetAddressList = null;
+            int worldId = -1;
 
             var p2pHostAddress = (channel.RemoteAddress as IPEndPoint).Address.ToString();
             string p2pHostAddressRemoved = p2pHostAddress.Remove(0, 7);
@@ -500,16 +596,19 @@ namespace Server.Medius
             {
                 gameName = r.GameName;
                 gameNetAddressList = r.AddressList;
+                worldId = r.WorldID;
             }
             else if (request is MediusServerCreateGameOnSelfRequest r1)
             {
                 gameName = r1.GameName;
                 gameNetAddressList = r1.AddressList;
+                worldId = r1.WorldID;
             }
             else if (request is MediusServerCreateGameOnSelfRequest0 r2)
             {
                 gameName = r2.GameName;
                 gameNetAddressList = r2.AddressList;
+                worldId = r2.WorldID;
             }
 
             var existingGames = _lookupsByAppId.Where(x => appIdsInGroup.Contains(client.ApplicationId)).SelectMany(x => x.Value.GameIdToGame.Select(g => g.Value));
@@ -558,6 +657,7 @@ namespace Server.Medius
 
                 //Set game host type to PeerToPeer for those speci
                 game.GameHostType = MediusGameHostType.MediusGameHostPeerToPeer;
+                game.ApplicationId = client.ApplicationId;
 
                 // Join game
                 await client.JoinGameP2P(game);
@@ -568,9 +668,9 @@ namespace Server.Medius
                 //Send Success response
                 client.Queue(new MediusServerCreateGameOnMeResponse()
                 {
-                    MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
+                    MessageID = request.MessageID,
                     Confirmation = MGCL_ERROR_CODE.MGCL_SUCCESS,
-                    MediusWorldID = game.Id,
+                    MediusWorldID = worldId,
                 });
             }
             catch (Exception e)
@@ -607,7 +707,13 @@ namespace Server.Medius
             }
             */
             #endregion
-
+            /*
+            if(client.ApplicationId == 10994)
+            {
+                Logger.Warn("JaKXO: Overriding request GameHostType"); //Change request for CLAN_CHAT in Jak X
+                request.GameHostType = MediusGameHostType.MediusGameHostClientServerAuxUDP;
+            }
+            */
             var game = GetGameByGameId(request.MediusWorldID); // MUM original fetches GameWorldData
             if (game == null)
             {
@@ -668,30 +774,6 @@ namespace Server.Medius
 
                 var dme = game.DMEServer;
 
-                /*
-                dme.Queue(new MediusServerJoinGameRequest()
-                {
-                    MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
-                    ConnectInfo = new NetConnectionInfo()
-                    {
-                        Type = NetConnectionType.NetConnectionTypePeerToPeerUDP,
-                        WorldID = game.DMEWorldId,
-                        SessionKey = client.SessionKey,
-                        ServerKey = Program.GlobalAuthPublic,
-                        AccessKey = client.Token,
-                        AddressList = new NetAddressList()
-                        {
-                            AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
-                                {
-                                    new NetAddress() { Address = game.netAddressList.AddressList[1].Address, Port = game.netAddressList.AddressList[1].Port, AddressType = NetAddressType.NetAddressTypeExternal},
-                                    new NetAddress() { AddressType = NetAddressType.NetAddressNone},
-                                }
-                        },
-                    }
-                });
-                */
-
-
                 // if This is a Peer to Peer Player Host as DME we treat differently
                 if (game.GAME_HOST_TYPE == MGCL_GAME_HOST_TYPE.MGCLGameHostPeerToPeer 
                     && game.netAddressList.AddressList[0].AddressType == NetAddressType.NetAddressTypeSignalAddress)
@@ -748,18 +830,34 @@ namespace Server.Medius
                 // Else send normal Connection type to DME
                 else
                 {
-                    dme.Queue(new MediusServerJoinGameRequest()
+                    if(client.MediusVersion > 108)
                     {
-                        MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
-                        ConnectInfo = new NetConnectionInfo()
+                        dme.Queue(new MediusServerJoinGameRequest()
                         {
-                            Type = NetConnectionType.NetConnectionTypeClientServerTCPAuxUDP,
-                            WorldID = game.DMEWorldId,
-                            AccessKey = client.Token,
-                            SessionKey = client.SessionKey,
-                            ServerKey = Program.GlobalAuthPublic
-                        }
-                    });
+                            MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
+                            ConnectInfo = new NetConnectionInfo()
+                            {
+                                Type = NetConnectionType.NetConnectionTypeClientServerTCPAuxUDP,
+                                WorldID = game.DMEWorldId,
+                                AccessKey = client.Token,
+                                SessionKey = client.SessionKey,
+                                ServerKey = Program.GlobalAuthPublic
+                            }
+                        });
+                    } else {
+                        dme.Queue(new MediusServerJoinGameRequest()
+                        {
+                            MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
+                            ConnectInfo = new NetConnectionInfo()
+                            {
+                                Type = NetConnectionType.NetConnectionTypeClientServerTCP,
+                                WorldID = game.DMEWorldId,
+                                AccessKey = client.Token,
+                                SessionKey = client.SessionKey,
+                                ServerKey = Program.GlobalAuthPublic
+                            }
+                        });
+                    }
                 }
                 
             }
@@ -912,13 +1010,19 @@ namespace Server.Medius
                 }
             }
 
-            // create default
-            channel = new Channel()
+            if(appId == 20371 || appId == 20374)
             {
-                ApplicationId = appId,
-                Name = "Default",
-                Type = ChannelType.Lobby
-            };
+                Logger.Info("Not creating default channel for PS Home");
+            } else {
+                // create default
+                channel = new Channel()
+                {
+                    ApplicationId = appId,
+                    Name = "Default",
+                    Type = ChannelType.Lobby
+                };
+            }
+
             _ = AddChannel(channel);
 
             return channel;
@@ -942,6 +1046,45 @@ namespace Server.Medius
             await channel.OnChannelCreate(channel);
         }
 
+        /// <summary>
+        /// Filter Worlds by AppId, and if set by client WorldFilters
+        /// </summary>
+        /// <param name="appId">ApplicationId</param>
+        /// <param name="pageIndex"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="type"></param>
+        /// <param name="FieldMask1"></param>
+        /// <param name="FieldMask2"></param>
+        /// <param name="FieldMask3"></param>
+        /// <param name="FieldMask4"></param>
+        /// <param name="filterMaskLevelType"></param>
+        /// <returns></returns>
+        public IEnumerable<Channel> GetChannelListFiltered(int appId, int pageIndex, int pageSize, ChannelType type, ulong FieldMask1, ulong FieldMask2, ulong FieldMask3, ulong FieldMask4, int filterMaskLevelType)
+        {
+            var appIdsInGroup = GetAppIdsInGroup(appId);
+
+            return _lookupsByAppId
+                .Where(x => appIdsInGroup.Contains(x.Key))
+                .SelectMany(x => x.Value.ChannelIdToChannel.Select(x => x.Value))
+                .Where(x => x.Type == type &&
+                    x.ApplicationId == appId &&
+                    x.GenericField1 == FieldMask1 &&
+                    x.GenericField2 == FieldMask2 &&
+                    x.GenericField3 == FieldMask3 &&
+                    x.GenericField4 == FieldMask4 &&
+                    x.GenericFieldLevel == (MediusWorldGenericFieldLevelType)filterMaskLevelType)
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize);
+        }
+
+        /// <summary>
+        /// Filter Worlds by AppId, and if set by client WorldFilters
+        /// </summary>
+        /// <param name="appId">ApplicationId</param>
+        /// <param name="pageIndex"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public IEnumerable<Channel> GetChannelList(int appId, int pageIndex, int pageSize, ChannelType type)
         {
             var appIdsInGroup = GetAppIdsInGroup(appId);
@@ -949,23 +1092,270 @@ namespace Server.Medius
             return _lookupsByAppId
                 .Where(x => appIdsInGroup.Contains(x.Key))
                 .SelectMany(x => x.Value.ChannelIdToChannel.Select(x => x.Value))
-                .Where(x => x.Type == type)
+                .Where(x => x.Type == type &&
+                    x.ApplicationId == appId)
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize);
         }
         #endregion
 
+        #region Party
+
+        public Task joinParty(ClientObject client, MediusPartyJoinByIndexRequest request, IChannel channel)
+        {
+            #region Client
+            /*
+            if (client == null)
+            {
+                Logger.Warn($"Join Game Request Handler Error: Player is not priviliged [{client}]");
+                client.Queue(new MediusJoinGameResponse()
+                {
+                    MessageID = request.MessageID,
+                    StatusCode = MediusCallbackStatus.MediusGameNotFound
+                });
+            }
+            */
+            #endregion
+
+            var party = GetPartyByPartyId(request.MediusWorldID); // MUM original fetches GameWorldData
+            if (party == null)
+            {
+                Logger.Warn($"Join Game Request Handler Error: Error in retrieving party info from MUM cache [{request.MediusWorldID}]");
+                client.Queue(new MediusPartyJoinByIndexResponse()
+                {
+                    MessageID = request.MessageID,
+                    StatusCode = MediusCallbackStatus.MediusNoResult
+                });
+            }
+
+            #region Password
+            else if (party.PartyPassword != null && party.PartyPassword != string.Empty && party.PartyPassword != request.PartyPassword)
+            {
+                Logger.Warn($"Join Game Request Handler Error: This party's password {party.PartyPassword} doesn't match the requested party Password {request.PartyPassword}");
+                client.Queue(new MediusPartyJoinByIndexResponse()
+                {
+                    MessageID = request.MessageID,
+                    StatusCode = MediusCallbackStatus.MediusInvalidPassword
+                });
+            }
+            #endregion
+            /*
+            #region MaxPlayers
+            else if (party.PlayerCount >= party.MaxPlayers)
+            {
+                Logger.Warn($"Join Game Request Handler Error: This game does not allow more than {party.MaxPlayers}. Current player count: {party.PlayerCount}");
+                client.Queue(new MediusPartyJoinByIndexResponse()
+                {
+                    MessageID = request.MessageID,
+                    StatusCode = MediusCallbackStatus.MediusWorldIsFull
+                });
+            }
+            #endregion
+            */
+            #region GameHostType check
+            else if (request.PartyHostType != party.PartyHostType)
+            {
+                Logger.Warn($"PartyJoinByIndex Request Handler Error: This party's HostType {party.PartyHostType} does not match the Requests HostType {request.PartyHostType}");
+                client.Queue(new MediusPartyJoinByIndexResponse()
+                {
+                    MessageID = request.MessageID,
+                    StatusCode = MediusCallbackStatus.MediusRequestDenied
+                });
+            }
+            #endregion
+
+            else
+            {
+                var p2pHostAddress = (channel as IPEndPoint).Address.ToString();
+                var p2pHostPort = (channel as IPEndPoint).Port.ToString();
+                string p2pHostAddressRemoved = p2pHostAddress.Remove(0, 7);
+
+
+                // Join game DME
+                client.JoinParty(party, party.Id);
+
+                // 
+                client?.Queue(new MediusPartyJoinByIndexResponse()
+                {
+                    MessageID = request.MessageID,
+                    StatusCode = MediusCallbackStatus.MediusSuccess,
+                    PartyHostType = party.PartyHostType,
+                    ConnectionInfo = new NetConnectionInfo()
+                    {
+                        AccessKey = client.Token,
+                        SessionKey = client.SessionKey,
+                        WorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(client.ApplicationId).Id,
+                        ServerKey = Program.GlobalAuthPublic,
+                        AddressList = new NetAddressList()
+                        {
+                            AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
+                            {
+                                new NetAddress() { Address = p2pHostAddressRemoved, Port = Convert.ToUInt32(p2pHostPort), AddressType = NetAddressType.NetAddressTypeExternal},
+                                new NetAddress() { AddressType = NetAddressType.NetAddressNone},
+                            }
+                        },
+                        Type = NetConnectionType.NetConnectionTypeClientServerUDP
+                    },
+                    partyIndex = party.Id,
+                    maxPlayers = party.MaxPlayers
+                });
+
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public Party GetPartyByPartyId(int partyId)
+        {
+            foreach (var lookupByAppId in _lookupsByAppId)
+            {
+                lock (lookupByAppId.Value.PartyIdToGame)
+                {
+                    if (lookupByAppId.Value.PartyIdToGame.TryGetValue(partyId, out var party))
+                        return party;
+                }
+            }
+
+            return null;
+        }
+
+        public async Task AddParty(Party party)
+        {
+            if (!_lookupsByAppId.TryGetValue(party.ApplicationId, out var quickLookup))
+                _lookupsByAppId.Add(party.ApplicationId, quickLookup = new QuickLookup());
+
+            quickLookup.PartyIdToGame.Add(party.Id, party);
+            await Program.Database.CreateParty(party.ToPartyDTO());
+        }
+
+        public async Task CreateParty(ClientObject client, IMediusRequest request)
+        {
+            if (!_lookupsByAppId.TryGetValue(client.ApplicationId, out var quickLookup))
+                _lookupsByAppId.Add(client.ApplicationId, quickLookup = new QuickLookup());
+
+            var appIdsInGroup = GetAppIdsInGroup(client.ApplicationId);
+            string partyName = null;
+            if (request is MediusPartyCreateRequest r)
+                partyName = r.PartyName;
+            
+            var existingParties = _lookupsByAppId.Where(x => appIdsInGroup.Contains(client.ApplicationId)).SelectMany(x => x.Value.PartyIdToGame.Select(g => g.Value));
+            /*
+            // Ensure the name is unique
+            // If the host leaves then we unreserve the name
+            if (existingGames.Any(x => x.WorldStatus != MediusWorldStatus.WorldClosed && x.WorldStatus != MediusWorldStatus.WorldInactive && x. == partyName && x.Host != null && x.Host.IsConnected))
+            {
+                client.Queue(new RT_MSG_SERVER_APP()
+                {
+                    Message = new MediusCreateGameResponse()
+                    {
+                        MessageID = request.MessageID,
+                        MediusWorldID = -1,
+                        StatusCode = MediusCallbackStatus.MediusGameNameExists
+                    }
+                });
+                return;
+            }
+
+            // Try to get next free dme server
+            // If none exist, return error to clist
+            var dme = Program.ProxyServer.GetFreeDme(client.ApplicationId);
+            if (dme == null)
+            {
+                client.Queue(new MediusCreateGameResponse()
+                {
+                    MessageID = request.MessageID,
+                    MediusWorldID = -1,
+                    StatusCode = MediusCallbackStatus.MediusExceedsMaxWorlds
+                });
+                return;
+            }
+            */
+            // Create and add
+
+            // Try to get next free dme server
+            // If none exist, return error to clist
+            /*
+            var dme = Program.ProxyServer.GetFreeDme(client.ApplicationId);
+            if (dme == null)
+            {
+                client.Queue(new MediusPartyCreateResponse()
+                {
+                    MessageID = request.MessageID,
+                    MediusWorldID = -1,
+                    StatusCode = MediusCallbackStatus.MediusExceedsMaxWorlds
+                });
+                return;
+            }
+            */
+            // Create and add
+            try
+            {
+                var party = new Party(client, request, client.CurrentChannel);
+                await AddParty(party);
+
+                await client.JoinParty(party, party.Id);
+
+                // Failure adding game for some reason
+                client.Queue(new MediusPartyCreateResponse()
+                {
+                    MessageID = request.MessageID,
+                    MediusWorldID = party.Id,
+                    StatusCode = MediusCallbackStatus.MediusSuccess
+                });
+            }
+            catch (Exception e)
+            {
+                // 
+                Logger.Error(e);
+
+                // Failure adding game for some reason
+                client.Queue(new MediusPartyCreateResponse()
+                {
+                    MessageID = request.MessageID,
+                    MediusWorldID = -1,
+                    StatusCode = MediusCallbackStatus.MediusFail
+                });
+            }
+
+            try
+            {
+
+            }
+            catch (Exception e)
+            {
+                // 
+                Logger.Error(e);
+
+                // Failure adding game for some reason
+                client.Queue(new MediusPartyCreateResponse()
+                {
+                    MessageID = request.MessageID,
+                    StatusCode = MediusCallbackStatus.MediusFail,
+                    MediusWorldID = -1,
+                });
+            }
+        }
+
         #endregion
 
         #region MFS
-        public IEnumerable<MediusFile> GetFilesList(string path, string filenameBeginsWith, uint pageSize, uint startingEntryNumber)
+        public IEnumerable<MediusFile> GetFilesList(string path, string filenameBeginsWith, uint pageSize, uint startingEntryNumber, int appId)
         {
             lock (_mediusFiles)
             {
 
                 string[] files = null;
                 int counter = 0;
+                /*
+                if (appId == 11203 || appId == 10994 || appId == 11204)
+                {
 
+                    string JakXPath = path + filenameBeginsWith.Split("*");
+                } else
+                {
+
+                }
+                */
                 if (filenameBeginsWith.ToString() == "*")
                 {
                     files = Directory.GetFiles(path).Select(file => Path.GetFileName(file)).ToArray();
@@ -1007,7 +1397,7 @@ namespace Server.Medius
             }
         }
 
-        public IEnumerable<MediusFile> GetFilesListExt(string path, string filenameBeginsWith, uint pageSize, uint startingEntryNumber)
+        public IEnumerable<MediusFile> GetFilesListExt(string path, string filenameBeginsWith, uint pageSize, uint startingEntryNumber, int appId)
         {
             lock (_mediusFiles)
             {
@@ -1015,51 +1405,106 @@ namespace Server.Medius
                     return _mediusFiles;
 
                 int counter = 0;
-                string filenameBeginsWithAppended = filenameBeginsWith.Remove(filenameBeginsWith.Length - 1);
 
-                string[] filesArray = Directory.GetFiles(path);
-
-                //files = Directory.GetFiles(path).Select(file => Path.GetFileName(filenameBeginsWith)).ToArray();
-
-                if (filesArray.Length < pageSize)
+                //JakX FileNameBeginsWith requires extra handling for folders
+                if(appId == 11203 || appId == 10994 || appId == 11204)
                 {
-                    counter = filesArray.Count() - 1;
-                }
-                else
-                {
-                    counter = (int)pageSize - 1;
-                }
 
-                for (int i = (int)(startingEntryNumber - 1); i < counter; i++)
-                {
-                    //string[] pathArray = path.TrimStart('[').TrimEnd(']').Split(',');
+                    string JakXPath = path + filenameBeginsWith.Split("*");
 
-                    //string[] fileName = filesArray[i].Split(path, path.Length, options: StringSplitOptions.None);
-                    //string FileNameAppended = UsingStringJoin(fileName);
+                    string[] filesArray = Directory.GetFiles(JakXPath);
 
-                    try
+                    //files = Directory.GetFiles(path).Select(file => Path.GetFileName(filenameBeginsWith)).ToArray();
+
+                    if (filesArray.Length < pageSize)
                     {
-                        string fileName = filesArray[i];
-                        FileInfo fi = new FileInfo(fileName);
+                        counter = filesArray.Count() - 1;
+                    }
+                    else
+                    {
+                        counter = (int)pageSize - 1;
+                    }
 
-                        _mediusFiles.Where(x => x.FileName == fileName.StartsWith(filenameBeginsWithAppended).ToString()).ToList();
+                    for (int i = (int)(startingEntryNumber - 1); i < counter; i++)
+                    {
+                        //string[] pathArray = path.TrimStart('[').TrimEnd(']').Split(',');
 
-                        /*
-                        _mediusFiles.Add(new MediusFile()
+                        //string[] fileName = filesArray[i].Split(path, path.Length, options: StringSplitOptions.None);
+                        //string FileNameAppended = UsingStringJoin(fileName);
+
+                        try
                         {
-                            FileName = filenameBeginsWithAppended.ToString(),
-                            FileID = (uint)i,
-                            FileSize = (uint)fi.Length,
-                            CreationTimeStamp = Utils.ToUnixTime(fi.CreationTime),
-                        });
-                        */
+                            string fileName = filesArray[i];
+                            FileInfo fi = new FileInfo(fileName);
+
+                            Logger.Info($"Medius Files Count: {_mediusFiles.Count}");
+
+                            _mediusFiles.Add(new MediusFile()
+                            {
+                                FileName = fileName.ToString(),
+                                FileID = i,
+                                FileSize = (int)fi.Length,
+                                CreationTimeStamp = (int)Utils.ToUnixTime(fi.CreationTime),
+                            });
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Warn($"MFS FileListExt Exception:\n{e}");
+                        }
                     }
-                    catch (Exception e)
+                    return _mediusFiles;
+                } else
+                {
+
+                    string filenameBeginsWithAppended = filenameBeginsWith.Remove(filenameBeginsWith.Length - 1);
+
+
+                    string[] filesArray = Directory.GetFiles(path);
+
+                    //files = Directory.GetFiles(path).Select(file => Path.GetFileName(filenameBeginsWith)).ToArray();
+
+                    if (filesArray.Length < pageSize)
                     {
-                        Logger.Warn($"MFS FileListExt Exception:\n{e}");
+                        counter = filesArray.Count() - 1;
                     }
+                    else
+                    {
+                        counter = (int)pageSize - 1;
+                    }
+
+                    for (int i = (int)(startingEntryNumber - 1); i < counter; i++)
+                    {
+                        //string[] pathArray = path.TrimStart('[').TrimEnd(']').Split(',');
+
+                        //string[] fileName = filesArray[i].Split(path, path.Length, options: StringSplitOptions.None);
+                        //string FileNameAppended = UsingStringJoin(fileName);
+
+                        try
+                        {
+                            string fileName = filesArray[i];
+                            FileInfo fi = new FileInfo(fileName);
+
+                            _mediusFiles.Where(x => x.FileName == fileName.StartsWith(filenameBeginsWithAppended).ToString()).ToList();
+
+                            /*
+                            _mediusFiles.Add(new MediusFile()
+                            {
+                                FileName = filenameBeginsWithAppended.ToString(),
+                                FileID = (uint)i,
+                                FileSize = (uint)fi.Length,
+                                CreationTimeStamp = Utils.ToUnixTime(fi.CreationTime),
+                            });
+                            */
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Warn($"MFS FileListExt Exception:\n{e}");
+                        }
+                    }
+                    return _mediusFiles;
                 }
-                return _mediusFiles;
+
+
             }
         }
 
@@ -1393,7 +1838,8 @@ namespace Server.Medius
 
         #region AnonymouseAccountIdGenerator
         /// <summary>
-        /// Generates a Random Anonymous AccountID for MediusAnonymouseAccountRequest
+        /// Generates a Random Anonymous AccountID for MediusAnonymouseAccountRequest <br></br>
+        /// Or if one doesn't exist in Database
         /// </summary>
         /// <param name="AnonymousIDRangeSeed">Config Value for changing the MAS</param>
         /// <returns></returns>

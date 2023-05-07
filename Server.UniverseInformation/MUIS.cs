@@ -216,6 +216,8 @@ namespace Server.UniverseInformation
                 case RT_MSG_CLIENT_CONNECT_TCP clientConnectTcp:
                     {
                         data.ApplicationId = clientConnectTcp.AppId;
+                        scertClient.ApplicationID = clientConnectTcp.AppId;
+
 
                         //
                         if (scertClient.MediusVersion <= 109) 
@@ -329,11 +331,11 @@ namespace Server.UniverseInformation
                     {
                         // ERROR - Need a session
                         if (data == null)
-                            throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {versionServerRequest} without channeldata .");
+                            throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {versionServerRequest} without channeldata.");
 
                         if (Settings.MediusServerVersionOverride == true)
                         {
-                            #region Killzone TCES
+                            #region Killzone TCES/Pubeta Version Override
                             // Killzoze TCES/Pubeta
                             if (data.ApplicationId == 10442)
                             {
@@ -345,10 +347,11 @@ namespace Server.UniverseInformation
                                         VersionServer = "Medius Universe Information Server Version 1.50.0009",
                                         StatusCode = MediusCallbackStatus.MediusSuccess,
                                     }
+
+
                                 }, clientChannel);
                             }
                             #endregion
-
                         }
                         else
                         {
@@ -362,7 +365,9 @@ namespace Server.UniverseInformation
                                     StatusCode = MediusCallbackStatus.MediusSuccess,
                                 }
                             }, clientChannel);
+
                         }
+
 
                         break;
                     }
@@ -505,6 +510,7 @@ namespace Server.UniverseInformation
                     {
                         int compAppId = Program.Settings.CompatibleApplicationIds.Find(appId => appId == data.ApplicationId);
 
+                        //Check if Client AppId equals the Appid in CompatibleAppId list
                         if (data.ApplicationId == compAppId)
                         {
                             if (Program.Settings.Universes.TryGetValue(data.ApplicationId, out var infos))
@@ -553,6 +559,7 @@ namespace Server.UniverseInformation
                                     }
                                     else
                                     {
+                                        #region InfoFilter = Null
                                         if (getUniverseInfo.InfoType == 0)
                                         {
                                             Logger.Warn("InfoType not specified to return anything.");
@@ -567,12 +574,13 @@ namespace Server.UniverseInformation
                                                 }
                                             }, clientChannel);
                                         }
+                                        #endregion
 
                                         #region SVOUrl
-                                        // 
                                         if (getUniverseInfo.InfoType.HasFlag(MediusUniverseVariableInformationInfoFilter.INFO_SVO_URL))
                                         {
                                             Logger.Info($"MUIS: send svo info:  [{Program.Settings.Logging.LogLevel}/{Program.Settings.Universes.ToArray().Length}]");
+
                                             Queue(new RT_MSG_SERVER_APP()
                                             {
                                                 Message = new MediusUniverseSvoURLResponse()

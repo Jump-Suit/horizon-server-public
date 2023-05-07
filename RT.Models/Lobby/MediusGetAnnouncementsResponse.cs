@@ -35,7 +35,7 @@ namespace RT.Models
             if (reader.MediusVersion <= 112)
             {
                 Announcement = reader.ReadString(Constants.ANNOUNCEMENT_MAXLEN);
-            } else if (reader.MediusVersion == 113 && reader.AppId != 21731 && reader.AppId != 21741) {
+            } else if (reader.MediusVersion == 113 && reader.AppId == 21731 && reader.AppId == 21741) {
                 Announcement = reader.ReadString(Constants.ANNOUNCEMENT1_MAXLEN);
             } else {
                 Announcement = reader.ReadString(Constants.ANNOUNCEMENT_MAXLEN);
@@ -62,7 +62,7 @@ namespace RT.Models
             if (writer.MediusVersion <= 112)
             {
                 writer.Write(Announcement, Constants.ANNOUNCEMENT_MAXLEN);
-            } else if (writer.MediusVersion == 113 && writer.AppId != 21731 && writer.AppId != 21741) {
+            } else if (writer.MediusVersion == 113 && writer.AppId == 21731 || writer.AppId == 21741 || writer.AppId == 22920) {
                 writer.Write(Announcement, Constants.ANNOUNCEMENT1_MAXLEN);
             } else {
                 writer.Write(Announcement, Constants.ANNOUNCEMENT_MAXLEN);

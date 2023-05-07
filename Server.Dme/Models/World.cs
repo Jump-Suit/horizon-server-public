@@ -83,6 +83,8 @@ namespace Server.Dme.Models
 
         public int MaxPlayers { get; protected set; } = 0;
 
+        public int SessionMaster { get; protected set; } = 0;
+
         public bool SelfDestructFlag { get; protected set; } = false;
 
         public bool ForceDestruct { get; protected set; } = false;
@@ -94,9 +96,9 @@ namespace Server.Dme.Models
 
         public ConcurrentDictionary<int, ClientObject> Clients = new ConcurrentDictionary<int, ClientObject>();
 
-        public MediusManager Manager { get; } = null;
+        public DMEMediusManager Manager { get; } = null;
         
-        public World(MediusManager manager, int appId, int maxPlayers)
+        public World(DMEMediusManager manager, int appId, int maxPlayers)
         {
             Manager = manager;
             ApplicationId = appId;
@@ -210,7 +212,7 @@ namespace Server.Dme.Models
             }
         }
 
-        public void SendTcpAppList(ClientObject source, IEnumerable<int> targetDmeIds, byte[] Payload)
+        public void SendTcpAppList(ClientObject source, List<int> targetDmeIds, byte[] Payload)
         {
             foreach (var targetId in targetDmeIds)
             {
@@ -219,16 +221,16 @@ namespace Server.Dme.Models
                     if (client == null || !client.IsAuthenticated || !client.IsConnected || !client.HasRecvFlag(RT_RECV_FLAG.RECV_LIST))
                         continue;
 
-                    client.EnqueueTcp(new RT_MSG_CLIENT_APP_SINGLE()
+                    client.EnqueueTcp(new RT_MSG_CLIENT_APP_LIST()
                     {
-                        TargetOrSource = (short)source.DmeId,
+                        SourceIn = (short)source.DmeId,
                         Payload = Payload
                     });
                 }
             }
         }
 
-        public void SendUdpAppList(ClientObject source, IEnumerable<int> targetDmeIds, byte[] Payload)
+        public void SendUdpAppList(ClientObject source, List<int> targetDmeIds, byte[] Payload)
         {
             foreach (var targetId in targetDmeIds)
             {
@@ -237,9 +239,9 @@ namespace Server.Dme.Models
                     if (client == null || !client.IsAuthenticated || !client.IsConnected || !client.HasRecvFlag(RT_RECV_FLAG.RECV_LIST))
                         continue;
 
-                    client.EnqueueUdp(new RT_MSG_CLIENT_APP_SINGLE()
+                    client.EnqueueUdp(new RT_MSG_CLIENT_APP_LIST()
                     {
-                        TargetOrSource = (short)source.DmeId,
+                        SourceIn = (short)source.DmeId,
                         Payload = Payload
                     });
                 }
@@ -326,6 +328,16 @@ namespace Server.Dme.Models
                 Player = player,
                 Game = this
             });
+
+            if (player.MediusVersion == 109)
+            {
+                //Migrate session master
+                if (player.DmeId == SessionMaster)
+                {
+                    SessionMaster++;
+                    Logger.Warn($"Session master migrated to client {SessionMaster}");
+                }
+            }
 
             // Tell other clients
             foreach (var client in Clients)

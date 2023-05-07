@@ -1,29 +1,40 @@
 ﻿using RT.Common;
 using Server.Common;
+using Server.Common.Stream;
 using System.IO;
 
-namespace RT.Models.ServerPlugins
+namespace RT.Models
 {
-    public class NetMessageNewsEulaResponse : IStreamSerializer
-    {
 
-        public bool m_finished;
+    //[MediusMessage(NetMessageClass.MessageClassApplication, NetMessageTypeIds.NetMessageNewsEulaResponse)]
+    public class NetMessageNewsEulaResponse : BaseApplicationMessage
+    {
+        public override NetMessageTypeIds PacketType => NetMessageTypeIds.kNetGameMessageTypeStart;
+
+        public override byte IncomingMessage => 0;
+        public override byte Size => 10;
+
+        public override byte PluginId => 30;
+
+
+        public byte m_finished;
         public NetMessageNewsEulaResponseContentType m_type;
         public string m_content;
-        public uint m_timestamp;
+        public long m_timestamp;
 
-        public void Deserialize(BinaryReader reader)
+        public override void DeserializePlugin(MessageReader reader)
         {
-            m_finished = reader.ReadBoolean();
+            m_finished = reader.ReadByte();
+            reader.ReadBytes(3);
             m_type = reader.Read<NetMessageNewsEulaResponseContentType>();
             m_content = reader.ReadString();
-            m_timestamp = reader.ReadUInt32();
+            m_timestamp = reader.ReadInt32();
 
         }
-
-        public void Serialize(BinaryWriter writer)
+        public override void SerializePlugin(MessageWriter writer)
         {
             writer.Write(m_finished);
+            writer.Write(new byte[3]);
             writer.Write(m_type);
             writer.Write(m_content);
             writer.Write(m_timestamp);

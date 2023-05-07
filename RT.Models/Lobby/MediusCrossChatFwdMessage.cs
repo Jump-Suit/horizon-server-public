@@ -1,5 +1,6 @@
 ﻿using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -14,6 +15,10 @@ namespace RT.Models
         public int TargetRoutingDmeWorldID;
         public int SourceDmeWorldID;
 
+        public MediusCrossChatMessageType msgType;
+
+        public byte[] Contents;
+
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
             // 
@@ -27,6 +32,9 @@ namespace RT.Models
             OriginatorAccountID = reader.ReadInt32();
             TargetRoutingDmeWorldID = reader.ReadInt32();
             SourceDmeWorldID = reader.ReadInt32();
+
+            msgType = reader.Read<MediusCrossChatMessageType>();
+            Contents = reader.ReadRest();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -42,6 +50,9 @@ namespace RT.Models
             writer.Write(OriginatorAccountID);
             writer.Write(TargetRoutingDmeWorldID);
             writer.Write(SourceDmeWorldID);
+
+            writer.Write(msgType);
+            writer.Write(Contents);
         }
 
 
@@ -51,7 +62,9 @@ namespace RT.Models
                 $"MessageID: {MessageID} " +
                 $"OriginatorAccountID: {OriginatorAccountID} " +
                 $"TargetRoutingDmeWorldID: {TargetRoutingDmeWorldID} " +
-                $"SourceDmeWorldID: {SourceDmeWorldID}";
+                $"SourceDmeWorldID: {SourceDmeWorldID} " +
+                $"MsgType: {msgType} " +
+                $"Contents: {BitConverter.ToString(Contents)}";
         }
     }
 }

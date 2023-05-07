@@ -138,6 +138,26 @@ namespace RT.Common
         RT_MEMORY_ALLOC_ERROR = 64,
     }
 
+    public enum RT_TOKEN_MESSAGE_TYPE : byte
+    {
+        RT_TOKEN_UNKNOWN_MESSAGE = 0,
+        RT_TOKEN_CLIENT_QUERY = 1,
+        RT_TOKEN_CLIENT_REQUEST = 2,
+        RT_TOKEN_CLIENT_RELEASE = 3,
+        RT_TOKEN_CLIENT_LIST_QUERY = 4,
+        RT_TOKEN_CLIENT_LIST_REQUEST = 5,
+        RT_TOKEN_CLIENT_LIST_RELEASE = 6,
+        RT_TOKEN_SERVER_OWNED = 7,
+        RT_TOKEN_SERVER_GRANTED = 8,
+        RT_TOKEN_SERVER_FREED = 9,
+        RT_TOKEN_SERVER_RELEASED = 0xA,
+        RT_TOKEN_SERVER_LIST_OWNED = 0xB,
+        RT_TOKEN_SERVER_LIST_GRANTED = 0xC,
+        RT_TOKEN_SERVER_LIST_FREED = 0xD,
+        RT_TOKEN_SERVER_LIST_RELEASED = 0xE,
+        RT_TOKEN_SERVER_OWNER_REMOVED = 0xF
+    }
+
     #endregion
 
     public enum SECURITY_MODE : int
@@ -484,7 +504,7 @@ namespace RT.Common
         /// </summary>
         MediusVulgarityFound = 10,
         /// <summary>
-        /// Matchmaking already in progress
+        /// Matchmaking in progress
         /// </summary>
         MediusMatchingInProgress = 11,
     }
@@ -687,10 +707,6 @@ namespace RT.Common
         /// The chan has been disbanded
         /// </summary>
         ClanDisbanded = -1,
-        /// <summary>
-        /// Placeholder to normalize the field size on different compilers
-        /// </summary>
-        ExtraMediusClanStatus = 0xffffff
     }
     #endregion
 
@@ -849,6 +865,20 @@ namespace RT.Common
         PlayerAccountName,
     }
 
+    public enum MediusCrossChatMessageType : int
+    {
+        StatusRequest,
+        StatusResponse,
+        StatusUnavailable,
+        ChatRequest,
+        ChatAccept,
+        ChatRequestJoin,
+        ChatAcceptJoin,
+        ChatUnavailable,
+        BinarySignal,
+        MaxMsgType
+    }
+
     public enum MediusBinaryMessageType : int
     {
         BroadcastBinaryMsg,
@@ -980,10 +1010,23 @@ namespace RT.Common
     #endregion
 
     #region MediusMatchGameState
+    /// <summary>
+    /// Medius Match Options 
+    /// Introduced in Medius Client/Server library 3.03
+    /// </summary>
     public enum MediusMatchGameState : int
     {
+        /// <summary>
+        /// Suspend MatchGame
+        /// </summary>
         MatchGameStateSuspend,
+        /// <summary>
+        /// Resume MatchGame
+        /// </summary>
         MatchGameStateResume,
+        /// <summary>
+        /// Stop MatchGame
+        /// </summary>
         MatchGameStateStop,
     }
     #endregion
@@ -1389,6 +1432,10 @@ namespace RT.Common
         /// Lobby filtering rules. Lobby&Filter = Filter.
         /// </summary>
         MediusLobbyFilterEqualsFilter,
+        /// <summary>
+        ///  Lobby filtering rules. Lobby&Filter = FILTER_EQUALS.
+        /// </summary>
+        FILTER_EQUALS
     }
     #endregion
 
@@ -1406,15 +1453,15 @@ namespace RT.Common
         /// <summary>
         /// use only filter mask 1
         /// </summary>
-        MediusLobbyFilterMaskLevel1 = (1 << 0),
+        MediusLobbyFilterMaskLevel1 = 1 << 0,
         /// <summary>
         /// use only filter mask 2
         /// </summary>
-        MediusLobbyFilterMaskLevel2 = (1 << 1),
+        MediusLobbyFilterMaskLevel2 = 1 << 1,
         /// <summary>
         /// use only filter mask 3
         /// </summary>
-        MediusLobbyFilterMaskLevel3 = (1 << 2),
+        MediusLobbyFilterMaskLevel3 = 1 << 2,
         /// <summary>
         /// use only filter mask 4
         /// </summary>
@@ -2157,6 +2204,7 @@ namespace RT.Common
         AccessLevelInfoUnsolicitedResponse = 0x43,
         FileListExtRequest = 0x44,
         FileListExtResponse = 0x45,
+        FileUpdateAuxMetaDataRequest = 0x46,
         UtilGetTotalGamesFilteredRequest = 0x48,
         UtilGetTotalGamesFilteredResponse = 0x49,
         AccountLoginRequest1 = 0x4A,
@@ -2173,7 +2221,7 @@ namespace RT.Common
         BuddySetListResponse = 0x55,
         IgnoreSetListRequest = 0x56,
         IgnoreSetListResponse = 0x57,
-        TicketLogin = 0x58, //Account Update Stats (Open Access)
+        TicketLogin = 0x58, //Account Update Stats (Open Access) DEPRECATED past 2.10
         TicketLoginResponse = 0x59,
         SetLocalizationParamsRequest2 = 0x5A,
         BinaryMessage1 = 0x5B,
@@ -2206,8 +2254,8 @@ namespace RT.Common
         MediusTextFilterResponse1 = 0x76,
         GetMyClanMessagesResponse = 0x77,
         MatchPartyRequest2 = 0x78,
-        MatchCloseLateJoinRequest = 0x79, //MediusMatchSetGameStateRequestMarshal
-        MatchCloseLateJoinResponse = 0x7A, //MatchSetGameStateResponse
+        MatchSetGameStateRequest = 0x79, //MatchCloseLateJoinRequest
+        MatchSetGameStateResponse = 0x7A, // MatchCloseLateJoinResponse
         SetLocalizationParamsRequest1 = 0x7B,
         ClanRenameRequest = 0x7C,
         ClanRenameStatusResponse = 0x7D,
@@ -2220,7 +2268,7 @@ namespace RT.Common
         SetGameListSortPriorityRequest = 0x84,
         SetGameListSortPriorityStatusResponse = 0x85,
         SetLobbyWorldFilter1 = 0x86,
-        SetLobbyWorldFilterResponse1 = 0x87, //PartyJoinByIndexRequest
+        PartyJoinByIndexRequest = 0x87, // SetLobbyWorldFilterResponse1 = 0x87, //PartyJoinByIndexRequest
         MatchFindGameRequest = 0x88,
         MatchFindGameStatusResponse = 0x89,
         AssignedGameToJoinMessage = 0x8A,
@@ -2385,7 +2433,9 @@ namespace RT.Common
         /// </summary>
         MGCL_SHUTDOWN_ERROR = -7,
         MGCL_NETWORK_ERROR = -8,
+
         MGCL_AUTHENTICATION_FAILED = -9,
+
         MGCL_SESSIONBEGIN_FAILED = -10,
         MGCL_SESSIONEND_FAILED = -11,
         MGCL_UNSUCCESSFUL = -12,
@@ -2634,6 +2684,7 @@ namespace RT.Common
 
     #endregion
 
+    #region MediusUniverseVariableInformationInfoFilter
     [Flags]
     public enum MediusUniverseVariableInformationInfoFilter : uint
     {
@@ -2648,6 +2699,7 @@ namespace RT.Common
         INFO_EXTRAINFO = (1 << 8),
         INFO_SVO_URL = (1 << 9),
     }
+    #endregion
 
     /// <summary>
     /// Status of an outstanding clan challenge
@@ -2677,7 +2729,7 @@ namespace RT.Common
     }
 
 
-
+    #region MediusClanInvitationsResponseStatus
     /// <summary>
     /// Status of an outstanding clan challenge
     /// </summary>
@@ -2700,7 +2752,9 @@ namespace RT.Common
         /// </summary>
         ClanInvitationRevoked,
     }
+    #endregion
 
+    #region MediusClanMessageStatus
     /// <summary>
     /// Status of a clan message
     /// </summary>
@@ -2723,7 +2777,9 @@ namespace RT.Common
         /// </summary>
         ClanMessageRead,
     }
+    #endregion
 
+    #region MediusClanPlayerStatus
     public enum MediusClanPlayerStatus : int
     {
         /// <summary>
@@ -2739,6 +2795,7 @@ namespace RT.Common
         /// </summary>
         PlayerRemovedFromClan,
     }
+    #endregion
 
     public enum MediusTokenActionType : int
     {
@@ -2979,8 +3036,9 @@ namespace RT.Common
         GameTypeNone = 0xFFFFFFF
     }
 
-    public enum NetMessageTypeIds : ushort
+    public enum NetMessageTypeIds : int
     {
+        /*
         kNetKernelMessageTypeStart = 0,
         NetMessageTypeHello = 1,
         NetMessageTypeProtocolInfo = 2,
@@ -3067,7 +3125,107 @@ namespace RT.Common
         NetMessageNewsEUlaResponse = 575,
         NetMessageServerStatusRequest = 587,
         NetMessageServerStatusResponse = 588, //Needs Debug Check
+        */
 
+
+        // SOCOM 4
+        
+        kNetKernelMessageTypeStart = 0,
+        NetMessageTypeHello = 1,
+        NetMessageTypeProtocolInfo = 2,
+        NetMessageTypeKeepAlive = 3,
+        NetMessageTypeClientClaimReservation = 4,
+        NetMessageTypeClientCompleteReservation = 5,
+        NetMessageTypeClientGameInfo = 6,
+        NetMessageTypeClientReady = 7,
+        NetMessageTypeClientEnterGame = 8,
+        NetMessageTypeFieldUpdate = 9,
+        NetMessageTypeCorrectionAck = 0xA,
+        NetMessageTypeDebugText = 0xB,
+        NetMessageTypeTransportHandshake = 0xC,
+        NetMessageTypeNetTimeRequest = 0xD,
+        NetMessageTypeNetTimeResponse = 0xE,
+        NetMessageTypePeerPlugin = 0xF,
+        NetMessageTypeSendToGroup = 0x10,
+        NetMessageTypeGroupMessage = 0x11,
+        NetMessageTypeVoice = 0x12,
+        NetMessageTypeVoiceIn = 0x13,
+        NetMessageTypeVoiceOut = 0x14,
+        NetMessageTypePluginId = 0x15,
+        NetMessageTypeJoinGameRequest = 0x16,
+        NetMessageTypeJoinGameResponse = 0x17,
+        NetMessageTypeJoinGameUpdate = 0x18,
+        NetMessageTypeCancelJoinRequest = 0x19,
+        NetMessageTypeCancelJoinResponse = 0x1A,
+        NetMessageTypeCancelReservation = 0x1B,
+        NetMessageTypeQueueControlsRequest = 0x1C,
+        NetMessageTypeQueueControlsResponse = 0x1D,
+        NetMessageTypePartyInvite = 0x1E,
+        NetMessageTypePartyInviteResponse = 0x1F,
+        NetMessageTypePartyLeave = 0x20,
+        NetMessageTypePartyQueue = 0x21,
+        NetMessageTypePartyCancelQueue = 0x22,
+        NetMessageTypePartyEventJoin = 0x23,
+        NetMessageTypePartyEventLeave = 0x24,
+        NetMessageTypePartyEventUpdate = 0x25,
+        NetMessageTypePartyEventDecline = 0x26,
+        NetMessageTypePartyStatusUpdate = 0x27,
+        NetMessageTypePartyOpenInvite = 0x28,
+        NetMessageTypePartyRejoinRequest = 0x29,
+        NetMessageTypePartyRejoinResponse = 0x2A,
+        NetMessageTypePartyPromoteToLeader = 0x2B,
+        NetMessageTypePartyKickMember = 0x2C,
+        NetMessageTypeVoiceDmeRemoveParty = 0x2D,
+        NetMessageTypeVoiceDmeShutdown = 0x2E,
+        NetMessageTypeVoiceIndexAcctMap = 0x2F,
+        NetMessageTypeVoiceSetGroup = 0x30,
+        NetMessageTypePlayerKicked = 0x31,
+        NetMessageTypeTrainingCompleted = 0x32,
+        NetMessageTypeNATTypeUpdate = 0x33,
+        NetMessageTypeClanTagUpdate = 0x34,
+        NetMessageTypeAccountLoginRequest = 0x35,
+        NetMessageTypeAccountLoginResponse = 0x36,
+        NetMessageTypeAccountLogoutRequest = 0x37,
+        NetMessageTypeAccountLogoutResponse = 0x38,
+        NetMessageTypeCreateAccountRequest = 0x39,
+        NetMessageTypeCreateAccountResponse = 0x3A,
+        NetMessageTypeNPAuthenticateRequest = 0x3B,
+        NetMessageTypeNPAuthenticateResponse = 0x3C,
+        NetMessageTypeMAPSHelloMessage = 0x3D,
+        NetMessageTypeUniverseListRequest = 0x3E,
+        NetMessageTypeUniverseListResponse = 0x3F,
+        NetMessageTypeJoinGameConfirm = 0x40,
+        NetMessageTypeQueueControls = 0x41,
+        NetMessageTypeServerStatus = 0x42,
+        kNetGameMessageTypeStart = 0x1F4,
+        NetMessageTypePatchRequest = 0x1F5,
+        NetMessageTypePatchSettings = 0x1F6,
+        NetMessageTypePatchURL = 0x1F7,
+        NetMessageTypeClientReportingInfo = 0x1F8,
+        NetMessageTypeClientReport = 0x1F9,
+        NetMessageTypeFeatureGuard = 0x1FA,
+        NetMessageTypeGameErrorNotification = 0x1FB,
+        NetMessageTypeInvulnerability = 0x1FC,
+        kNetMessageTypeClans = 0x1FD,
+        NetMessageTypePauseGame = 0x1FE,
+        NetMessageTypePartyReservation = 0x1FF,
+        kNetGameMessageTypeEnd = 0x200,
+        kNetObjectMessageTypeStart = 0x3E8,
+        kNetObjectMessageTypeEnd = 0x3E9,
+        kNetGroupMessageTypeStart = 0x5DC,
+        kNetGroupMessageTypeEnd = 0x5DD,
+        kNetPluginMessageTypeStart = 0x7D0,
+        NetMessageTypeMUMIntroMessage = 0x7D1,
+        NetMessageTypePluginRegister = 0x7D2,
+        NetMessageTypeAppSpecLoadRequest = 0x7D3,
+        NetMessageTypeAppSpecLoadResponse = 0x7D4,
+        NetMessageTypeQueueEntityRequest = 0x7D5,
+        NetMessageTypeUnqueueEntityRequest = 0x7D6,
+        NetMessageTypeForcePlayerIntoGame = 0x7D7,
+        NetMessageTypeForcePlayerIntoGameResponse = 0x7D8,
+        NetMessageTypeShutdownGameServer = 0x7D9,
+        kNetPluginMessageTypeEnd = 0x7DA,
+        
     }
     #endregion
 
@@ -3147,7 +3305,7 @@ namespace RT.Common
         kAutoTestFirePrimary
     }
 
-    public enum NetMessageNewsEulaResponseContentType : int
+    public enum NetMessageNewsEulaResponseContentType : byte
     {
         News,
         Eula

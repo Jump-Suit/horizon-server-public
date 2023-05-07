@@ -49,7 +49,6 @@ namespace Server.UniverseInformation.Models
         public int GameCount => _games.Count;
 
         protected List<Game> _games = new List<Game>();
-        protected List<Party> _parties = new List<Party>();
         protected bool _removeChannel = false;
         protected DateTime _timeCreated = Utils.GetHighPrecisionUtcTime();
 
@@ -130,26 +129,6 @@ namespace Server.UniverseInformation.Models
         {
             Clients.RemoveAll(x => x == client);
         }
-
-        #region Parties
-
-        public virtual void RegisterParty(Party party)
-        {
-            _parties.Add(party);
-        }
-
-        public virtual void UnregisterParty(Party party)
-        {
-            // Remove game
-            _parties.Remove(party);
-
-            // If empty, just end channel
-            if (_parties.Count == 0)
-            {
-                _removeChannel = true;
-            }
-        }
-        #endregion
 
         #region Games
         public virtual void RegisterGame(Game game)

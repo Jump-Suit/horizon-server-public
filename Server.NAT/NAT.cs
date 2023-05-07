@@ -1,4 +1,5 @@
-﻿using DotNetty.Handlers.Logging;
+﻿using DotNetty.Common.Internal.Logging;
+using DotNetty.Handlers.Logging;
 using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
@@ -16,6 +17,8 @@ namespace Server.NAT
     {
         public int Port => Program.Settings.Port;
         public bool IsRunning => _boundChannel != null && _boundChannel.Active;
+
+        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<NAT>();
 
         protected IEventLoopGroup _workerGroup = null;
         protected IChannel _boundChannel = null;

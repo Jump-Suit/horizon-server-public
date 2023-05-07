@@ -1,5 +1,4 @@
 ﻿using DotNetty.Common.Internal.Logging;
-using Haukcode.HighResolutionTimer;
 using Microsoft.Extensions.Logging.Console;
 using Newtonsoft.Json;
 using NReco.Logging.File;

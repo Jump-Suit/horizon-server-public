@@ -1,8 +1,10 @@
-﻿namespace RT.Models
+﻿using RT.Common;
+using Server.Common;
+
+namespace RT.Models
 {
-    /*
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.RespondToClanTeamChallengeResponse)]
-    public class MediusRespondToClanTeamChallengeResponse : BaseLobbyMessage, IMediusResponse
+    public class MediusRespondClanTeamChallengeResponse : BaseLobbyMessage, IMediusResponse
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.RespondToClanTeamChallengeResponse;
 
@@ -37,9 +39,8 @@
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID}" + " " +
-                $"StatusCode:{StatusCode}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode}";
         }
     }
-    */
 }

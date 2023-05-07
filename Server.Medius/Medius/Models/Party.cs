@@ -28,6 +28,7 @@ namespace Server.Medius.Models
         }
 
         public int Id = 0;
+        public int DMEWorldId = -1;
         public int ApplicationId = 0;
         public List<PartyClient> Clients = new List<PartyClient>();
         public string PartyName;
@@ -112,6 +113,7 @@ namespace Server.Medius.Models
 
         private void FromPartyCreateRequest(MediusPartyCreateRequest partyCreate)
         {
+
             ApplicationId = partyCreate.ApplicationID;
             PartyName = partyCreate.PartyName;
             PartyPassword = partyCreate.PartyPassword;
@@ -130,7 +132,7 @@ namespace Server.Medius.Models
 
         public string GetActivePlayerList()
         {
-            return String.Join(",", this.Clients?.Select(x => x.Client.AccountId.ToString()).Where(x => x != null));
+            return string.Join(",", Clients?.Select(x => x.Client.AccountId.ToString()).Where(x => x != null));
         }
 
         public virtual async Task Tick()
@@ -175,9 +177,7 @@ namespace Server.Medius.Models
             }
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         protected virtual async Task OnPlayerJoined(PartyClient player)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             player.InGame = true;
 
@@ -192,7 +192,7 @@ namespace Server.Medius.Models
                 return;
 
             // 
-            Logger.Info($"Game {Id}: {PartyName}: {client} added.");
+            Logger.Info($"Party {Id}: {PartyName}: {client} added.");
 
             Clients.Add(new PartyClient()
             {

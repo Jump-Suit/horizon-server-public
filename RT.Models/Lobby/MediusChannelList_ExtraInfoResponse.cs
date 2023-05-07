@@ -52,7 +52,7 @@ namespace RT.Models
             GenericField1 = reader.ReadUInt32();
 
             //WRC4 uses these fields
-            if (reader.MediusVersion > 108 || reader.AppId != 10304 || reader.AppId == 10202)
+            if (reader.MediusVersion > 108 || reader.AppId == 10304 || reader.AppId == 10202)
             {
                 GenericField2 = reader.ReadUInt32();
                 GenericField3 = reader.ReadUInt32();
@@ -89,7 +89,7 @@ namespace RT.Models
             writer.Write(SecurityLevel);
             writer.Write(GenericField1);
 
-            if (writer.MediusVersion > 108 || writer.AppId != 10304 || writer.AppId == 10202)
+            if (writer.MediusVersion > 108 || writer.AppId == 10304 || writer.AppId == 10202)
             {
                 writer.Write(GenericField2);
                 writer.Write(GenericField3);

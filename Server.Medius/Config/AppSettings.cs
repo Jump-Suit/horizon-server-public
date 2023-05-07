@@ -68,7 +68,7 @@ namespace Server.Medius.Config
         /// <summary>
         /// When true, server will encrypt all messages.
         /// </summary>
-        public bool EnableEncryption { get; private set; } = false;
+        public bool EnableEncryption { get; private set; } = true;
 
         /// <summary>
         /// When true, will enable medius file services and will allow messages like MediusCreateFile, MediusUploadFile, MediusDownloadFile, MediusFileListFiles
@@ -94,7 +94,7 @@ namespace Server.Medius.Config
         /// <summary>
         /// Time since last echo before timing the client out.
         /// </summary>
-        public int ClientTimeoutSeconds { get; private set; } = 25;
+        public int ClientTimeoutSeconds { get; private set; } = 40;
 
         /// <summary>
         /// Time since game created and host never connected to close the game world.

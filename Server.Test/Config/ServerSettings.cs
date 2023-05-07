@@ -37,6 +37,11 @@ namespace Server.Test.Config
         /// <summary>
         /// The port that the Authentication server is bound to.
         /// </summary>
+        public short UniverseInfoPort { get; set; } = 10071;
+
+        /// <summary>
+        /// The port that the Authentication server is bound to.
+        /// </summary>
         public short AuthPort { get; set; } = 10075;
 
         /// <summary>

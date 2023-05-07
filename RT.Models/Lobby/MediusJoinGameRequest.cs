@@ -60,14 +60,14 @@ namespace RT.Models
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"SessionKey:{SessionKey} " +
-$"MediusWorldID:{MediusWorldID} " +
-$"JoinType:{JoinType} " +
-$"GamePassword:{GamePassword} " +
-$"GameHostType:{GameHostType} " +
-$"pubKey:{pubKey} " +
-$"AddressList:{AddressList}";
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey} " +
+                $"MediusWorldID: {MediusWorldID} " +
+                $"JoinType: {JoinType} " +
+                $"GamePassword: {GamePassword} " +
+                $"GameHostType: {GameHostType} " +
+                $"pubKey: {pubKey} " +
+                $"AddressList: {AddressList}";
         }
     }
 }

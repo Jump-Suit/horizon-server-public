@@ -20,7 +20,7 @@ namespace RT.Models
             MediusLobbyWorldID = reader.ReadInt32();
             MediusGameWorldID = reader.ReadInt32();
             LobbyName = reader.ReadString(Constants.WORLDNAME_MAXLEN);
-            GameName = reader.ReadString(Constants.WORLDNAME_MAXLEN);
+            GameName = reader.ReadString(Constants.GAMENAME_MAXLEN);
         }
 
         public void Serialize(BinaryWriter writer)
@@ -29,7 +29,7 @@ namespace RT.Models
             writer.Write(MediusLobbyWorldID);
             writer.Write(MediusGameWorldID);
             writer.Write(LobbyName, Constants.WORLDNAME_MAXLEN);
-            writer.Write(GameName, Constants.WORLDNAME_MAXLEN);
+            writer.Write(GameName, Constants.GAMENAME_MAXLEN);
         }
 
         public override string ToString()

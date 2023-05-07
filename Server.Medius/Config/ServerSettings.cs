@@ -320,16 +320,11 @@ namespace Server.Medius.Config
         // Set this to 1 to enable this override.
         // Or to 0 (the default) to maintain strict clan leader control.
         public bool EnableNonClanLeaderToGetTeamChallenges = false;
-
-        // If enabled, allows for any member of a clan to post clan ladder scores via the API
-        // MediusUpdateClanLadderStatsWide_Delta()
-        public bool EnableClanLaddersDeltaOpenAccess = false;
         #endregion
 
-        #region SFO
+        #region Syphon Filter - The Omega Strain
 
         public int SFOOverrideClanLobbyMaxPlayers = 64;
-
         public int SFOOverrideLobbyPlayerCountThreshold = 0;
 
         #endregion

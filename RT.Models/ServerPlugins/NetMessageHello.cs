@@ -8,6 +8,11 @@ namespace RT.Models.ServerPlugins
     {
         public override NetMessageTypeIds PacketType => NetMessageTypeIds.NetMessageTypeHello;
 
+        public override byte IncomingMessage => 0;
+        public override byte Size => 0;
+
+        public override byte PluginId => 0;
+
         public override void DeserializePlugin(MessageReader reader)
         {
 
@@ -16,6 +21,11 @@ namespace RT.Models.ServerPlugins
         public override void SerializePlugin(MessageWriter writer)
         {
 
+        }
+
+        public override string ToString()
+        {
+            return base.ToString() + " ";
         }
     }
 }

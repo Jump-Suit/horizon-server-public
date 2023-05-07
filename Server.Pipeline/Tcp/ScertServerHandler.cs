@@ -45,8 +45,12 @@ namespace Server.Pipeline.Tcp
                 OnChannelInactive?.Invoke(ctx.Channel);
             });
 
-            // Add to channels list
-            g.Add(ctx.Channel);
+            if(g != null)
+            {
+                // Add to channels list
+                g.Add(ctx.Channel);
+            }
+
 
             // Send event upstream
             OnChannelActive?.Invoke(ctx.Channel);

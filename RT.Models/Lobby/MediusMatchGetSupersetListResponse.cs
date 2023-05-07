@@ -39,7 +39,7 @@ namespace RT.Models
         /// <summary>
         /// Superset ExtraInfo
         /// </summary>
-        public string SupersetExtraInfo;
+        public string ExtraInfo;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -48,7 +48,6 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
-
             //reader.ReadBytes(3);
 			
             //
@@ -61,7 +60,7 @@ namespace RT.Models
             SupersetID = reader.ReadInt32();
             SupersetName = reader.ReadString(Constants.SUPERSETNAME_MAXLEN);
             SupersetDescription = reader.ReadString(Constants.SUPERSETDESCRIPTION_MAXLEN);
-            SupersetExtraInfo = reader.ReadString(Constants.SUPERSETEXTRAINFO_MAXLEN);
+            ExtraInfo = reader.ReadString(Constants.SUPERSETEXTRAINFO_MAXLEN);
 
             //reader.ReadBytes(2);
         }
@@ -73,7 +72,6 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
-
             //writer.Write(new byte[3]);
 
             // 
@@ -87,7 +85,7 @@ namespace RT.Models
             writer.Write(SupersetID);
             writer.Write(SupersetName, Constants.SUPERSETNAME_MAXLEN);
             writer.Write(SupersetDescription, Constants.SUPERSETDESCRIPTION_MAXLEN);
-            writer.Write(SupersetExtraInfo, Constants.SUPERSETEXTRAINFO_MAXLEN);
+            writer.Write(ExtraInfo, Constants.SUPERSETEXTRAINFO_MAXLEN);
 
             //writer.Write(new byte[2]);
 
@@ -101,7 +99,7 @@ namespace RT.Models
                 $"SupersetID: {SupersetID} " +
                 $"SupersetName: {SupersetName} " +
                 $"SupersetDescription: {SupersetDescription} " +
-                $"SupersetExtraInfo: {SupersetExtraInfo} " +
+                $"SupersetExtraInfo: {ExtraInfo} " +
                 $"EndOfList: {EndOfList}";
         }
     }

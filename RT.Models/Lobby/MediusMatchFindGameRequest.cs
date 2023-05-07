@@ -44,7 +44,7 @@ namespace RT.Models
         /// <summary>
         /// GameHostTypeBitField
         /// </summary>
-        public char[] GameHostTypeBitField;
+        public int GameHostTypeBitField;
         /// <summary>
         /// Game Specific Match Options
         /// </summary>
@@ -56,7 +56,7 @@ namespace RT.Models
         /// <summary>
         /// Game Specific Request Data
         /// </summary>
-        public char[] RequestData;
+        public string RequestData;
         /// <summary>
         /// GroupMemberListSize
         /// </summary>
@@ -68,11 +68,11 @@ namespace RT.Models
         /// <summary>
         /// GroupMemberAccountIDList
         /// </summary>
-        public char[] GroupMemberAccountIDList;
+        public string GroupMemberAccountIDList;
         /// <summary>
         /// ApplicationData
         /// </summary>
-        public char[] ApplicationData;
+        public string ApplicationData;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -92,17 +92,17 @@ namespace RT.Models
             PlayerJoinType = reader.Read<MediusJoinType>();
             MinPlayers = reader.ReadUInt32();
             MaxPlayers = reader.ReadUInt32();
-            GameHostTypeBitField = reader.ReadChars(4);
+            GameHostTypeBitField = reader.ReadInt32();
             MatchOptions = reader.Read<MediusMatchOptions>();
             ServerSessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
-            RequestData = reader.ReadChars(16);
+            RequestData = reader.ReadString(Constants.REQUESTDATA_MAXLEN);
             reader.ReadBytes(3);
             
             //
             GroupMemberListSize = reader.ReadInt32();
             ApplicationDataSize = reader.ReadInt32();
-            GroupMemberAccountIDList = reader.ReadChars(GroupMemberListSize);
-            ApplicationData = reader.ReadChars(ApplicationDataSize);
+            GroupMemberAccountIDList = reader.ReadString(GroupMemberListSize);
+            ApplicationData = reader.ReadString(ApplicationDataSize);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -112,8 +112,6 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
-
-            // 
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
             writer.Write(new byte[2]);
 
@@ -125,15 +123,15 @@ namespace RT.Models
             writer.Write(MaxPlayers);
             writer.Write(GameHostTypeBitField);
             writer.Write(MatchOptions);
-            writer.Write(ServerSessionKey);
-            writer.Write(RequestData);
+            writer.Write(ServerSessionKey, Constants.SESSIONKEY_MAXLEN);
+            writer.Write(RequestData, Constants.REQUESTDATA_MAXLEN);
             writer.Write(new byte[3]);
 
             //
             writer.Write(GroupMemberListSize);
             writer.Write(ApplicationDataSize);
-            writer.Write(GroupMemberAccountIDList);
-            writer.Write(ApplicationData);
+            writer.Write(GroupMemberAccountIDList, GroupMemberListSize);
+            writer.Write(ApplicationData, ApplicationDataSize);
         }
 
 

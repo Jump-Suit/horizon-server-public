@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace RT.Models
 {
@@ -15,7 +16,11 @@ namespace RT.Models
         /// <summary>
         /// Message class.
         /// </summary>
-        public abstract NetMessageClass PacketClass { get; }
+        public abstract byte IncomingMessage { get; }
+
+        public abstract byte Size { get; }
+
+        public abstract byte PluginId { get; }
 
         /// <summary>
         /// Message type.
@@ -54,21 +59,15 @@ namespace RT.Models
         #endregion
 
         #region Logging
-
+        /*
         /// <summary>
         /// Whether or not this message passes the log filter.
         /// </summary>
         public virtual bool CanLog()
         {
-
-            switch (PacketClass)
-            {
-                case NetMessageClass.MessageClassApplication: return LogSettings.Singleton?.IsLogPlugin(PacketType) ?? false;
-                default: return true;
-            }
-
+            
         }
-
+        */
         #endregion
 
         #region Dynamic Instantiation
@@ -111,55 +110,88 @@ namespace RT.Models
             }
         }
 
-        public static BaseMediusPluginMessage Instantiate(Server.Common.Stream.MessageReader reader)
+        public static BaseMediusPluginMessage InstantiateClientPlugin(Server.Common.Stream.MessageReader reader)
         {
             BaseMediusPluginMessage msg;
 
             Type classType = null;
 
-            var msgClass = reader.Read<NetMessageClass>();
-            reader.ReadBytes(2);
-            var msgType = reader.Read<NetMessageTypeIds>();
+            var msgSize = reader.ReadByte();
+            //reader.ReadBytes(2);
+            //var msgSize = reader.ReadUInt16();
+            var msgTypeBW = reader.Read<NetMessageTypeIds>();
 
+            var msgTypeByteInt = Convert.ToInt32(msgTypeBW);
+            var msgTypeReversed = ReverseBytes(msgTypeByteInt);
+            //var reversedMsgType = Reverse(Convert.ToInt32(msgTypeBW));
+
+
+            NetMessageTypeIds msgType = (NetMessageTypeIds)msgTypeReversed;
 
             // Init
             Initialize();
 
-            switch (msgClass)
-            {
-                case NetMessageClass.MessageClassApplication:
-                    {
-                        if (!_netPluginMessageTypeById.TryGetValue(msgType, out classType))
-                            classType = null;
-                        break;
-                    }
-            }
+            if (!_netPluginMessageTypeById.TryGetValue(msgType, out classType))
+                classType = null;
 
             // Instantiate
             if (classType == null)
-                msg = new RawMediusMessage0(msgClass, msgType);
+                msg = new RawMediusClientMessage(msgSize, msgType);
             else
                 msg = (BaseMediusPluginMessage)Activator.CreateInstance(classType);
 
             // Deserialize
             msg.DeserializePlugin(reader);
             return msg;
+        }
 
-            /*
+
+        public static BaseMediusPluginMessage InstantiateServerPlugin(Server.Common.Stream.MessageReader reader)
+        {
+            BaseMediusPluginMessage msg;
+
+            Type classType = null;
+
+            var incomingMsg = reader.ReadByte();
+            reader.ReadByte();
+            var msgSize = reader.ReadByte();
+            var PluginId = reader.ReadByte();
+
+            var msgSizeReversed = ReverseBytes(Convert.ToInt32(msgSize));
+
+            var msgTypeBW = reader.Read<NetMessageTypeIds>();
+
+            var msgTypeByteInt = Convert.ToInt32(msgTypeBW);
+            var msgTypeReversed = ReverseBytes(msgTypeByteInt);
+            //var reversedMsgType = Reverse(Convert.ToInt32(msgTypeBW));
+
+
+            NetMessageTypeIds msgType = (NetMessageTypeIds)msgTypeReversed;
+
+            // Init
+            Initialize();
+
+            if (!_netPluginMessageTypeById.TryGetValue(msgType, out classType))
+                classType = null;
+
             // Instantiate
             if (classType == null)
-                msg = new RawMediusMessage0((byte)msgType);
+                msg = new RawMediusServerMessage(incomingMsg, Convert.ToByte(msgSizeReversed), PluginId, msgType);
             else
                 msg = (BaseMediusPluginMessage)Activator.CreateInstance(classType);
 
             // Deserialize
-            msg.Deserialize(reader);
+            msg.DeserializePlugin(reader);
             return msg;
-            */
         }
 
         #endregion
 
+        public static int ReverseBytes(int value)
+        {
+            return (int)((value & 0x000000FFU) << 24 | (value & 0x0000FF00U) << 8 |
+                (value & 0x00FF0000U) >> 8 | (value & 0xFF000000U) >> 24);
+        }
     }
     #endregion
 }

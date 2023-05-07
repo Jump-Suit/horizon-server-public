@@ -3,6 +3,7 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /*
     [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.SetLobbyWorldFilterResponse1)]
     public class MediusSetLobbyWorldFilterResponse1 : BaseLobbyExtMessage, IMediusResponse
     {
@@ -73,4 +74,5 @@ $"LobbyFilterType:{LobbyFilterType} " +
 $"FilterMaskLevel:{FilterMaskLevel}";
         }
     }
+    */
 }

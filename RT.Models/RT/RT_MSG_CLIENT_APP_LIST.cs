@@ -14,6 +14,7 @@ namespace RT.Models
 
         public List<int> Targets { get; set; } = new List<int>();
         public byte[] Payload { get; set; }
+        public short SourceIn { get; set; }
 
         public override void Deserialize(MessageReader reader)
         {
@@ -30,19 +31,25 @@ namespace RT.Models
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
         {
-            // Determine size of bitmask in bytes
-            byte size = 1;
-            if (Targets != null && Targets.Count > 0)
-                size = (byte)Math.Ceiling((Targets.Max() + 1) / 8d);
+            if(writer.MediusVersion == 109)
+            {
+                writer.Write(SourceIn);
+            } else
+            {
+                // Determine size of bitmask in bytes
+                byte size = 1;
+                if (Targets != null && Targets.Count > 0)
+                    size = (byte)Math.Ceiling((Targets.Max() + 1) / 8d);
 
-            // Populate bitmask
-            byte[] mask = new byte[size];
-            if (Targets != null)
-                foreach (var target in Targets)
-                    mask[target / 8] |= (byte)(1 << (target % 8));
+                // Populate bitmask
+                byte[] mask = new byte[size];
+                if (Targets != null)
+                    foreach (var target in Targets)
+                        mask[target / 8] |= (byte)(1 << (target % 8));
 
-            writer.Write(size);
-            writer.Write(mask);
+                writer.Write(size);
+                writer.Write(mask);
+            }
             writer.Write(Payload);
         }
 
@@ -50,6 +57,7 @@ namespace RT.Models
         {
             return base.ToString() + " " +
                 $"Targets: {string.Join(",", Targets)} " +
+                $"Source: {SourceIn} " +
                 $"Payload: {BitConverter.ToString(Payload)}";
         }
     }

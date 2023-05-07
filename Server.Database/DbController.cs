@@ -39,6 +39,10 @@ namespace Server.Database
         private List<FileMetaDataDTO> _simulatedFileMetaData = new List<FileMetaDataDTO>();
         private List<FileAttributesDTO> _simulatedFileAttributes = new List<FileAttributesDTO>();
 
+        //SVO
+        private List<MatchmakingSupersetDTO> _simulatedURIstores = new List<MatchmakingSupersetDTO>();
+
+        
         public DbController(string configFile)
         {
             #region Dirs
@@ -88,7 +92,7 @@ namespace Server.Database
         /// </summary>
         public async Task<bool> Authenticate()
         {
-            // Succeed in simulated mode
+            // Succeed in simulated mode#region account
             if (_settings.SimulatedMode)
                 return true;
 
@@ -124,6 +128,30 @@ namespace Server.Database
         }
 
         #region Account
+
+        public async Task<string> GetPlayerList()
+        {
+            string results = null;
+
+            try
+            {
+                if (_settings.SimulatedMode) // Deprecated
+                {
+                    return "[]";
+                }
+                else
+                {
+                    HttpResponseMessage Resp = await GetDbAsync($"Account/getOnlineAccounts");
+                    results = await Resp.Content.ReadAsStringAsync();
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return results;
+        }
 
         /// <summary>
         /// Get account by name.
@@ -926,6 +954,78 @@ namespace Server.Database
         #endregion
 
         #region Stats
+
+        /// <summary>
+        /// Get player wide stats.
+        /// </summary>
+        /// <param name="accountId">Account id of player.</param>
+        /// <returns></returns>
+        public async Task<StatPostDTO> GetPlayerWideStats(int accountId)
+        {
+            StatPostDTO result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    var stats = _simulatedAccounts.FirstOrDefault(x => x.AccountId == accountId)?.AccountWideStats;
+                    if (stats != null)
+                    {
+                        result = new StatPostDTO()
+                        {
+                            AccountId = accountId,
+                            Stats = stats
+                        };
+                    }
+                }
+                else
+                {
+                    result = await GetDbAsync<StatPostDTO>($"Stats/getStats?AccountId={accountId}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Get player wide stats.
+        /// </summary>
+        /// <param name="accountId">Account id of player.</param>
+        /// <returns></returns>
+        public async Task<ClanStatPostDTO> GetClanWideStats(int clanId)
+        {
+            ClanStatPostDTO result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    var stats = _simulatedClans.FirstOrDefault(x => x.ClanId == clanId)?.ClanWideStats;
+                    if (stats != null)
+                    {
+                        result = new ClanStatPostDTO()
+                        {
+                            ClanId = clanId,
+                            Stats = stats
+                        };
+                    }
+                }
+                else
+                {
+                    result = await GetDbAsync<ClanStatPostDTO>($"Stats/getClanStats?ClanId={clanId}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
 
         /// <summary>
         /// Get player ranking in a given leaderboard.
@@ -1956,7 +2056,7 @@ namespace Server.Database
                 }
                 else
                 {
-                    result = (await GetDbAsync<List<ClanMessageDTO>>($"Clan/messages?accountId={accountId}&clanId={clanId}&start={startIndex}&pageSize={pageSize}"));
+                    result = await GetDbAsync<List<ClanMessageDTO>>($"Clan/messages?accountId={accountId}&clanId={clanId}&start={startIndex}&pageSize={pageSize}");
                 }
             }
             catch (Exception e)
@@ -2118,12 +2218,145 @@ namespace Server.Database
             return result;
         }
 
+        /// <summary>
+        /// Request Clan Team Challenge from client
+        /// </summary>
+        /// <param name="challengerClanId">The ClanId of the clan to request a team challenge on.</param>
+        /// <param name="accountId">Is this accountId the Clan Leader?</param>
+        /// <param name="appId">AppId of the game to filter by</param>
+        /// <param name="message">Message by the game to send for requesting the clan team challenge</param>
+        /// <returns>Returns clan.</returns>
+        public async Task<ClanTeamChallengeDTO> RequestClanTeamChallenge(int challengerClanId, int againstClanId, int accountId, string message, int appId)
+        {
+            ClanTeamChallengeDTO result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    // get clan
+                    var clan = await GetClanById((int)challengerClanId, appId);
+                    if (clan == null)
+                        return null;
+
+                    // validate leader
+                    if (clan.ClanLeaderAccount.AccountId != accountId)
+                        return null;
+
+
+
+                    result = null; //_simulatedClans.FirstOrDefault(x => x.AppId == appId && x.ClanId == clanId);
+                }
+                else
+                {
+                    result = (await PostDbAsync<ClanTeamChallengeDTO>($"Clan/requestClanTeamChallenge?challengerClanId={challengerClanId}&againstClanId={againstClanId}&accountId={accountId}&message={message}&appId={appId}", new ClanTeamChallengeDTO()
+                    {
+
+                    }));
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        public async Task <List<ClanTeamChallengeDTO>> GetClanTeamChallenges(int clanId, int accountId, MediusClanChallengeStatus clanChallengeStatus, int startIdx, int pageSize, int appId)
+        {
+            List<ClanTeamChallengeDTO> result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    // get clan
+                    var clan = await GetClanById(clanId, appId);
+                    if (clan == null)
+                        return null;
+
+                    // validate leader
+                    if (clan.ClanLeaderAccount.AccountId != accountId)
+                        return null;
+
+
+
+                    result = null; //_simulatedClans.FirstOrDefault(x => x.AppId == appId && x.ClanId == clanId);
+                }
+                else
+                {
+                    result = await GetDbAsync<List<ClanTeamChallengeDTO>>($"Clan/getClanTeamChallenges?clanId={clanId}&accountId={accountId}&clanChallengeStatus={(int)clanChallengeStatus}&appId={appId}&start={startIdx}&pageSize={pageSize}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        public async Task<bool> RespondClanTeamChallenge(int clanChallengeId, MediusClanChallengeStatus clanChallengeStatus, int accountId, string message, int appId)
+        {
+            bool result = false;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+
+                    result = false; //_simulatedClans.FirstOrDefault(x => x.AppId == appId && x.ClanId == clanId);
+                }
+                else
+                {
+                    result = (await PostDbAsync($"Clan/respondClanTeamChallenge?clanChallengeId={clanChallengeId}&clanChallengeStatus={(int)clanChallengeStatus}&accountId={accountId}&message={message}&appId={appId}", new ClanTeamChallengeDTO()
+                    {
+
+                    })).IsSuccessStatusCode;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        public async Task<bool> RevokeClanTeamChallenge(int clanChallengeId, int accountId, int appId)
+        {
+            bool result = false;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+
+                    result = false; //_simulatedClans.FirstOrDefault(x => x.AppId == appId && x.ClanId == clanId);
+                }
+                else
+                {
+                    result = (await PostDbAsync($"Clan/revokeClanTeamChallenge?clanChallengeId={clanChallengeId}&accountId={accountId}&appId={appId}", new ClanTeamChallengeDTO()
+                    {
+
+                    })).IsSuccessStatusCode;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
         #endregion
 
         #region DebugInfo
         /*
         /// <summary>
-        /// Post the NpId to the database
+        /// Post the DebugInfo to the database
         /// </summary>
         public async Task<bool> PostDebugInfo(PostDebugInfo NpId)
         {
@@ -2485,8 +2718,8 @@ namespace Server.Database
                 }
                 else
                 {
-                    Logger.Warn($"FileNameBeginsWith: {FileNameBeginsWith.Remove(FileNameBeginsWith.Length - 1)} OwnerByID: {OwnerByID} metaKey: {fileMetaData.Key}");
-                    result = await GetDbAsync<List<FileDTO>>($"FileServices/getFileListExt?AppId={appId}&FileNameBeginsWith={FileNameBeginsWith.Remove(FileNameBeginsWith.Length - 1)}&OwnerByID={OwnerByID}&metaKey={fileMetaData.Key}");
+                    Logger.Warn($"FileNameBeginsWith: {FileNameBeginsWith} OwnerByID: {OwnerByID} metaKey: {fileMetaData.Key}");
+                    result = await GetDbAsync<List<FileDTO>>($"FileServices/getFileListExt?AppId={appId}&FileNameBeginsWith={FileNameBeginsWith}&OwnerByID={OwnerByID}&metaKey={fileMetaData.Key}");
                 }
             }
             catch (Exception e)
@@ -2680,6 +2913,7 @@ namespace Server.Database
             {
                 if (_settings.SimulatedMode)
                 {
+                    Logger.Warn("Simulated DB NpID Success");
                     _simulatedNpIdAccounts.Add(new NpIdDTO() {
                         AppId = NpId.AppId,
                         data = NpId.data,
@@ -2750,6 +2984,38 @@ namespace Server.Database
         #endregion
 
         #region Game
+
+        
+
+        public async Task<string> GetGameList()
+        {
+            string results = null;
+
+            HttpResponseMessage Resp = null;
+            try
+            {
+                if (_settings.SimulatedMode) // Deprecated
+                {
+                    return "[]";
+                }
+                else
+                {
+                    Resp = await GetDbAsync($"api/Game/list");
+                    results = await Resp.Content.ReadAsStringAsync();
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return results;
+        }
+
+
+
+
+
         /// <summary>
         /// 
         /// </summary>
@@ -2897,35 +3163,126 @@ namespace Server.Database
 
             try
             {
-                if (_settings.SimulatedMode)
+                if (_settings.SimulatedMode == true)
                 {
+                    
                     return new ChannelDTO[]
-                    {
+                    {   
                         /*
                         new ChannelDTO()
                         {
-                            AppId = 24180,
+                            AppId = 10540,
                             Id = 1,
-                            Name = "Default",
+                            Name = "Rank1",
                             MaxPlayers = 256,
-                            GenericFieldFilter = 32,
                             GenericField1 = 1,
-                            GenericField2 = 1,
-
-                        }
+                            GenericFieldFilter = 1
+                        },
                         */
-                            /*
-                            new ChannelDTO()
-                            {
-                                AppId = 20770,
-                                Id = 1,
-                                Name = "Default",
-                                MaxPlayers = 256,
-                                GenericFieldFilter = 32,
-                                GenericField1 = 1,
-                                GenericField2 = 1,
-                            }, 
-                            */
+
+                        new ChannelDTO()
+                        {
+                            AppId = 10540,
+                            Id = 2,
+                            Name = "Rank2",
+                            MaxPlayers = 256,
+                            GenericField1 = 16,
+                            GenericFieldFilter = 1
+                        },
+                        //Arc the Lad: End of Darkness
+                        new ChannelDTO()
+                        {
+                            AppId = 10984,
+                            Id = 1,
+                            Name = "Yewbell",
+                            MaxPlayers = 256,
+                        },
+                        new ChannelDTO()
+                        {
+                            AppId = 10984,
+                            Id = 2,
+                            Name = "Rueloon",
+                            MaxPlayers = 256,
+                        },
+
+                        //WRC 04
+                        new ChannelDTO()
+                        {
+                            AppId = 10394,
+                            Id = 1,
+                            Name = "Internal 1",
+                            MaxPlayers = 256,
+                            GenericField1 = 4096,
+                            GenericFieldFilter = 1
+                        },
+                        new ChannelDTO()
+                        {
+                            AppId = 10394,
+                            Id = 2,
+                            Name = "Internal 2",
+                            MaxPlayers = 256,
+                            GenericField1 = 8192,
+                            GenericFieldFilter = 1
+                        },
+
+                        //WRC05 Beta
+                        new ChannelDTO()
+                        {
+                            AppId = 10933,
+                            Id = 1,
+                            Name = "Internal 1",
+                            MaxPlayers = 256,
+                            GenericField1 = 4096,
+                            GenericFieldFilter = 1
+                        },
+                        new ChannelDTO()
+                        {
+                            AppId = 10933,
+                            Id = 2,
+                            Name = "Internal 2",
+                            MaxPlayers = 256,
+                            GenericField1 = 8192,
+                            GenericFieldFilter = 1
+                        },
+                        new ChannelDTO()
+                        {
+                            AppId = 10933,
+                            Id = 3,
+                            Name = "Internal 3",
+                            MaxPlayers = 256,
+                            GenericField1 = 16384,
+                            GenericFieldFilter = 1
+                        },
+
+                        //WRC Rally Evolved
+                        new ChannelDTO()
+                        {
+                            AppId = 10934,
+                            Id = 1,
+                            Name = "Internal 1",
+                            MaxPlayers = 256,
+                            GenericField1 = 4096,
+                            GenericFieldFilter = 1
+                        },
+                        new ChannelDTO()
+                        {
+                            AppId = 10934,
+                            Id = 2,
+                            Name = "Internal 2",
+                            MaxPlayers = 256,
+                            GenericField1 = 8192,
+                            GenericFieldFilter = 1
+                        },
+                        new ChannelDTO()
+                        {
+                            AppId = 10934,
+                            Id = 3,
+                            Name = "Internal 3",
+                            MaxPlayers = 256,
+                            GenericField1 = 16384,
+                            GenericFieldFilter = 1
+                        }
+                        
                     };
                 }
                 else
@@ -2968,7 +3325,14 @@ namespace Server.Database
                             AppId = 23044,
                             Id = 0,
                             Name = "US"
-                        }
+                        },
+
+                        new LocationDTO()
+                        {
+                            AppId = 10680,
+                            Id = 40,
+                            Name = "Aquatos"
+                        },
                     };
                 }
                 else
@@ -2996,9 +3360,28 @@ namespace Server.Database
                     {
                         new LocationDTO()
                         {
-                            AppId = appId,
+                            AppId = 0,
                             Id = 0,
                             Name = "Location 1"
+                        },
+                        new LocationDTO()
+                        {
+                            AppId = 24000,
+                            Id = 0,
+                            Name = "Aquatos"
+                        },
+                        new LocationDTO()
+                        {
+                            AppId = 23044,
+                            Id = 0,
+                            Name = "US"
+                        },
+
+                        new LocationDTO()
+                        {
+                            AppId = 10680,
+                            Id = 40,
+                            Name = "Aquatos"
                         },
                     };
                 }
@@ -3256,6 +3639,48 @@ namespace Server.Database
             return result;
         }
 
+        #endregion
+
+        #region SVO CUSTOM
+        /*
+        /// <summary>
+        /// Returns all clan invitations for the given player.
+        /// </summary>
+        /// <param name="accountId">Id of target player.</param>
+        /// <returns>Success or failure.</returns>
+        public async Task<List<MatchmakingSupersetDTO>> getStarhawkURIStore(string path)
+        {
+            List<MatchmakingSupersetDTO> result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    // get clans
+                    var supersets = _simulatedURIstores.Where(x => x.path == path);
+
+                    // 
+                    result = supersets.Select(x => new MatchmakingSupersetDTO()
+                    {
+                        SupersetID = 1,
+                        SupersetName = "Casual",
+                        SupersetDescription = "M:PR Matchmaking",
+                        AppId = 21624
+                    }).Where(x => x.SupersetID != 0).ToList();
+                }
+                else
+                {
+                    result = (await GetDbAsync<List<MatchmakingSupersetDTO>>($"SVO/uriStore?path={path}"));
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+        */
         #endregion
 
         #region Key

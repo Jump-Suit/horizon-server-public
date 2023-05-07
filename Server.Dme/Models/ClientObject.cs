@@ -195,8 +195,8 @@ namespace Server.Dme.Models
             // so instead we'll increment our timeout dates by the client echo
             if (MediusVersion <= 108)
             {
+                UtcLastServerEchoSent = Utils.GetHighPrecisionUtcTime().AddSeconds(-1);
                 UtcLastServerEchoReply = Utils.GetHighPrecisionUtcTime();
-                UtcLastServerEchoSent = Utils.GetHighPrecisionUtcTime();
             }
         }
 

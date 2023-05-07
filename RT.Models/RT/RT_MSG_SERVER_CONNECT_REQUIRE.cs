@@ -8,7 +8,7 @@ namespace RT.Models
     {
         public override RT_MSG_TYPE Id => RT_MSG_TYPE.RT_MSG_SERVER_CONNECT_REQUIRE;
 
-        public byte ReqServerPassword;
+        public byte ReqServerPassword = 0x00;
         public short MaxPacketSize = 584;
         public short? MaxUdpPacketSize = 584;
 

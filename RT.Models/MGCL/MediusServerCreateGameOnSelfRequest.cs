@@ -23,11 +23,6 @@ namespace RT.Models
         public int GenericField1;
         public int GenericField2;
         public int GenericField3;
-        public int GenericField4;
-        public int GenericField5;
-        public int GenericField6;
-        public int GenericField7;
-        public int GenericField8;
         public MGCL_GAME_HOST_TYPE GameHostType;
         public NetAddressList AddressList;
         public int WorldID;
@@ -40,25 +35,9 @@ namespace RT.Models
 
             // 
             MessageID = reader.Read<MessageId>();
-
-            if (reader.MediusVersion == 113)
-            {
-                GameName = reader.ReadString(Constants.MGCL_GAMENAME_MAXLEN1);
-            }
-            else
-            {
-                GameName = reader.ReadString(Constants.MGCL_GAMENAME_MAXLEN);
-            }
+            GameName = reader.ReadString(Constants.MGCL_GAMENAME_MAXLEN);
             GameStats = reader.ReadBytes(Constants.MGCL_GAMESTATS_MAXLEN);
-
-            if (reader.MediusVersion == 113)
-            {
-                GamePassword = reader.ReadString(Constants.MGCL_GAMEPASSWORD_MAXLEN1);
-            }
-            else
-            {
-                GamePassword = reader.ReadString(Constants.MGCL_GAMEPASSWORD_MAXLEN);
-            }
+            GamePassword = reader.ReadString(Constants.MGCL_GAMEPASSWORD_MAXLEN);
             reader.ReadBytes(3);
             ApplicationID = reader.ReadInt32();
             MaxClients = reader.ReadInt32();
@@ -95,6 +74,7 @@ namespace RT.Models
             writer.Write(GenericField1);
             writer.Write(GenericField2);
             writer.Write(GenericField3);
+
             writer.Write(GameHostType);
             writer.Write(AddressList);
             writer.Write(WorldID);

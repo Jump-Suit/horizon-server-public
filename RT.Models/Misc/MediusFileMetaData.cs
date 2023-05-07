@@ -35,7 +35,7 @@ namespace RT.Models
         public override string ToString()
         {
             return $"MetaKey: {Key} " +
-                $"MetaValue {Value}";
+                $"MetaValue: {Value}";
         }
     }
 }

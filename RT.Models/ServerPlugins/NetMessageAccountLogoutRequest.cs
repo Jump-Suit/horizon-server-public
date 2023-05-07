@@ -10,24 +10,24 @@ namespace RT.Models.ServerPlugins
     {
         public override NetMessageTypeIds PacketType => NetMessageTypeIds.NetMessageTypeAccountLogoutRequest;
 
-        public byte Unk;
+        public override byte IncomingMessage => 0;
+        public override byte Size => 0;
+
+        public override byte PluginId => 0;
 
         public override void DeserializePlugin(MessageReader reader)
         {
-            reader.ReadBytes(67);
-            Unk = reader.ReadByte();
+
         }
 
         public override void SerializePlugin(MessageWriter writer)
         {
-            writer.Write(new byte[67]);
-            writer.Write(Unk);
+
         }
 
         public override string ToString()
         {
-            return base.ToString() + " " +
-                $"Unk: {Unk} ";
+            return base.ToString() + " ";
         }
 
     }

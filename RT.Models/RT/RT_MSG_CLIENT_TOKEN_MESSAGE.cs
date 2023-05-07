@@ -9,22 +9,26 @@ namespace RT.Models
     {
         public override RT_MSG_TYPE Id => RT_MSG_TYPE.RT_MSG_CLIENT_TOKEN_MESSAGE;
 
-        public byte[] Contents;
+        public RT_TOKEN_MESSAGE_TYPE RT_TOKEN_MESSAGE_TYPE;
+        public ushort targetToken;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
-            Contents = reader.ReadRest();
+            RT_TOKEN_MESSAGE_TYPE = reader.Read<RT_TOKEN_MESSAGE_TYPE>();
+            targetToken = reader.ReadUInt16();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
         {
-            writer.Write(Contents);
+            writer.Write(RT_TOKEN_MESSAGE_TYPE);
+            writer.Write(targetToken);
         }
 
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"Contents: {BitConverter.ToString(Contents)}";
+                $"RT_TOKEN_MESSAGE_TYPE: {RT_TOKEN_MESSAGE_TYPE} " +
+                $"targetToken: {targetToken}";
         }
     }
 }

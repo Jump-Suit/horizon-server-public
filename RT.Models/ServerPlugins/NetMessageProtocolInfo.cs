@@ -1,23 +1,29 @@
 ﻿using RT.Common;
 using Server.Common;
 using Server.Common.Stream;
+using System;
 using System.IO;
 
 namespace RT.Models
 {
     [MediusMessage(NetMessageClass.MessageClassApplication, NetMessageTypeIds.NetMessageTypeProtocolInfo)]
-    public class NetMessageProtocolInfo : BaseApplicationMessage
+    public class NetMessageTypeProtocolInfo : BaseApplicationMessage
     {
         public override NetMessageTypeIds PacketType => NetMessageTypeIds.NetMessageTypeProtocolInfo;
 
-        public long protocolInfo;
-        public long buildNumber;
+        public override byte IncomingMessage => 0;
+        public override byte Size => 5;
+
+        public override byte PluginId => 31;
+
+        public int protocolInfo;
+        public int buildNumber;
 
 
         public override void DeserializePlugin(MessageReader reader)
         {
             protocolInfo = reader.ReadInt32();
-            buildNumber = reader.ReadUInt32();
+            buildNumber = reader.ReadInt32();
 
         }
         public override void SerializePlugin(MessageWriter writer)
@@ -28,10 +34,11 @@ namespace RT.Models
 
         public override string ToString()
         {
+            var ProtoBytesReversed = ReverseBytes(protocolInfo);
+
             return base.ToString() + " " +
-                $"protocolInfo: {protocolInfo} " +
+                $"protocolInfo: {ProtoBytesReversed} " +
                 $"buildNumber: {buildNumber}";
         }
-
     }
 }

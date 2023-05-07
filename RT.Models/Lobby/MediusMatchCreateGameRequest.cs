@@ -1,5 +1,8 @@
-﻿using RT.Common;
+﻿using Org.BouncyCastle.Bcpg.Sig;
+using Org.BouncyCastle.Utilities;
+using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -11,6 +14,7 @@ namespace RT.Models
         public MessageId MessageID { get; set; }
         public string SessionKey; // SESSIONKEY_MAXLEN
         public int SupersetID;
+        public int ApplicationID;
         public int MinPlayers;
         public int MaxPlayers;
         public int GameLevel;
@@ -32,10 +36,10 @@ namespace RT.Models
         public MediusMatchOptions MatchOptions;
         public string ServerSessionKey; // SESSIONKEY_MAXLEN
         public string RequestData; // REQUESTDATA_MAXLEN
-        public uint GroupMemberListSize;
-        public uint ApplicationDataSize;
-        public char[] GroupMemberAccountIDList;
-        public char[] ApplicationData;
+        public int GroupMemberListSize;
+        public int ApplicationDataSize;
+        public string GroupMemberAccountIDList;
+        public string ApplicationData;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -47,10 +51,11 @@ namespace RT.Models
 
             //
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
-            reader.ReadBytes(2);
+            //reader.ReadBytes(2);
 
             //
             SupersetID = reader.ReadInt32();
+            ApplicationID = reader.ReadInt32();
             MinPlayers = reader.ReadInt32();
             MaxPlayers = reader.ReadInt32();
             GameLevel = reader.ReadInt32();
@@ -72,13 +77,13 @@ namespace RT.Models
             MatchOptions = reader.Read<MediusMatchOptions>();
             ServerSessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             RequestData = reader.ReadString(Constants.REQUESTDATA_MAXLEN);
-            reader.ReadBytes(3);
+            //reader.ReadBytes(3);
 
             //
-            GroupMemberListSize = reader.ReadUInt32();
-            ApplicationDataSize = reader.ReadUInt32();
-            GroupMemberAccountIDList = reader.ReadChars((int)GroupMemberListSize);
-            ApplicationData = reader.ReadChars((int)ApplicationDataSize);
+            GroupMemberListSize = reader.ReadInt32();
+            ApplicationDataSize = reader.ReadInt32();
+            GroupMemberAccountIDList = reader.ReadString(GroupMemberListSize);
+            ApplicationData = reader.ReadString(ApplicationDataSize);
 
         }
 
@@ -91,15 +96,18 @@ namespace RT.Models
             writer.Write(MessageID ?? MessageId.Empty);
             
             //
-            writer.Write(SessionKey);
-            writer.Write(new byte[2]);
+            writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
+            //writer.Write(new byte[2]);
 
             //
             writer.Write(SupersetID);
+            writer.Write(ApplicationID);
+            writer.Write(MinPlayers);
+            writer.Write(MaxPlayers);
             writer.Write(GameLevel);
-            writer.Write(GameName);
-            writer.Write(GamePassword);
-            writer.Write(SpectatorPassword);
+            writer.Write(GameName, Constants.GAMENAME_MAXLEN);
+            writer.Write(GamePassword, Constants.GAMEPASSWORD_MAXLEN);
+            writer.Write(SpectatorPassword, Constants.SPECTATORPASSWORD_MAXLEN);
             writer.Write(PlayerSkillLevel);
             writer.Write(RulesSet);
             writer.Write(GenericField1);
@@ -113,15 +121,15 @@ namespace RT.Models
             writer.Write(GameHostType);
             writer.Write(WorldAttributesType);
             writer.Write(MatchOptions);
-            writer.Write(ServerSessionKey);
-            writer.Write(RequestData);
-            writer.Write(new byte[3]);
+            writer.Write(ServerSessionKey, Constants.SESSIONKEY_MAXLEN);
+            writer.Write(RequestData, Constants.REQUESTDATA_MAXLEN);
+            //writer.Write(new byte[3]);
 
             //
             writer.Write(GroupMemberListSize);
             writer.Write(ApplicationDataSize);
-            writer.Write(GroupMemberAccountIDList);
-            writer.Write(ApplicationData);
+            writer.Write(GroupMemberAccountIDList, GroupMemberListSize);
+            writer.Write(ApplicationData, ApplicationDataSize);
         }
 
         public override string ToString()
@@ -129,7 +137,10 @@ namespace RT.Models
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
                 $"SessionKey: {SessionKey} " +
-                $"SupersetID: {SupersetID}" +
+                $"SupersetID: {SupersetID} " +
+                $"ApplicationID: {ApplicationID} " +
+                $"MinPlayers: {MinPlayers} " +
+                $"MaxPlayers: {MaxPlayers} " +
                 $"GameLevel: {GameLevel} " +
                 $"GameName: {GameName} " +
                 $"GamePassword: {GamePassword} " +

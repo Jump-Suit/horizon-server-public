@@ -1,4 +1,6 @@
 ﻿using RT.Common;
+using System;
+using System.Runtime.InteropServices;
 
 namespace RT.Models
 {
@@ -10,49 +12,41 @@ namespace RT.Models
 
         // 
         public byte ServReq;
-        public byte length;
-        public byte pPassword;
         public ushort Password_Len;
-        public string Password;
+        public char[] Password;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
             ServReq = reader.ReadByte();
-            length = reader.ReadByte();
-            pPassword = reader.ReadByte();
-            /*
-            if (ServReq == 0x01)
+            if(ServReq != 0)
             {
-                Client = reader.ReadByte();
                 Password_Len = reader.ReadByte();
-                Password = reader.ReadString();
+                Password = reader.ReadChars(Password_Len);
             }
-            */
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
         {
-            writer.Write(ServReq);
-            writer.Write(length);
-            writer.Write(pPassword);
-
-
-            /*
-            if (ServReq == 0x01)
+            writer.Write(ServReq); 
+            if (ServReq != 0)
             {
-                writer.Write(Client);
                 writer.Write(Password_Len);
                 writer.Write(Password);
             }
-            */
         }
 
         public override string ToString()
         {
-            return base.ToString() + " " +
-                $"ServReq: {ServReq} " +
-                $"length: {length} " +
-                $"pPassword: {pPassword}";
+            if(ServReq != 0)
+            {
+                return base.ToString() + " " +
+                    $"ServReq: {ServReq} " +
+                    $"PW Length: {Password_Len} " +
+                    $"Password: {new string(Password)}";
+            } else {
+                return base.ToString() + " " +
+                    $"ServReq: {ServReq} ";
+            }
         }
     }
 }

@@ -14,18 +14,20 @@ namespace RT.Models
         public NetAddressType AddressType;
         public string Address;
         public uint BinaryAddress;
-        public int Port;
+        public uint Port;
 
 
         public void Deserialize(BinaryReader reader)
         {
             AddressType = reader.Read<NetAddressType>();
 
-            
-            if(AddressType == NetAddressType.NetAddressTypeBinaryExternal)
+            if(AddressType == NetAddressType.NetAddressTypeBinaryExternal 
+                || AddressType == NetAddressType.NetAddressTypeBinaryInternal
+                || AddressType == NetAddressType.NetAddressTypeBinaryExternalVport
+                || AddressType == NetAddressType.NetAddressTypeBinaryInternalVport)
             {
                 BinaryAddress = reader.ReadUInt32();
-                Port = reader.ReadInt32();
+                Port = reader.ReadUInt32();
             }
 
             if(AddressType == NetAddressType.NetAddressTypeInternal
@@ -35,7 +37,7 @@ namespace RT.Models
                 || AddressType == NetAddressType.NetAddressNone)
             {
                 Address = reader.ReadString(Constants.NET_MAX_NETADDRESS_LENGTH);
-                Port = reader.ReadInt32();
+                Port = reader.ReadUInt32();
             }
             
         }
@@ -43,7 +45,11 @@ namespace RT.Models
         public void Serialize(BinaryWriter writer)
         {
             writer.Write(AddressType);
-            if (AddressType == NetAddressType.NetAddressTypeBinaryExternal)  {
+            if (AddressType == NetAddressType.NetAddressTypeBinaryExternal
+                || AddressType == NetAddressType.NetAddressTypeBinaryInternal
+                || AddressType == NetAddressType.NetAddressTypeBinaryExternalVport
+                || AddressType == NetAddressType.NetAddressTypeBinaryInternalVport)  
+            {
                 writer.Write(BinaryAddress);
                 writer.Write(Port);
             }
@@ -61,7 +67,10 @@ namespace RT.Models
 
         public override string ToString()
         {
-            if (AddressType == NetAddressType.NetAddressTypeBinaryExternal) {
+            if (AddressType == NetAddressType.NetAddressTypeBinaryExternal
+                || AddressType == NetAddressType.NetAddressTypeBinaryInternal
+                || AddressType == NetAddressType.NetAddressTypeBinaryExternalVport
+                || AddressType == NetAddressType.NetAddressTypeBinaryInternalVport) {
                 return base.ToString() + " " +
                 $"AddressType: {AddressType} " +
                 $"BinaryAddress: {BinaryAddress} " +

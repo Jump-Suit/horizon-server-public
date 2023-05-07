@@ -65,7 +65,7 @@ namespace RT.Models
                 $"StatusCode: {StatusCode} " +
                 $"AccountID: {AccountID} " +
                 $"AccountName: {AccountName} " +
-                $"Stats: {Stats} " +
+                $"Stats: {BitConverter.ToString(Stats)} " +
                 $"ConnectionClass: {ConnectionClass} " +
                 $"EndOfList: {EndOfList}";
         }

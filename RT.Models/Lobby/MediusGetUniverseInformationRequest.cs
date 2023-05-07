@@ -1,5 +1,6 @@
 using RT.Common;
 using Server.Common;
+using System;
 
 namespace RT.Models
 {
@@ -62,7 +63,7 @@ namespace RT.Models
         {
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
-                $"InfoType: {InfoType} " +
+                $"InfoType: {Convert.ToInt32(InfoType)}:{InfoType} " +
                 $"CharacterEncoding: {CharacterEncoding} " +
                 $"Language: {Language}";
         }

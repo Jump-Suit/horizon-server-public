@@ -3,6 +3,8 @@ using Server.Common;
 
 namespace RT.Models
 {
+
+    /*
     [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.UnkRequestTwistedMetalX)]
     public class MediusUnkTMRequest1 : BaseLobbyExtMessage, IMediusRequest
     {
@@ -41,4 +43,5 @@ namespace RT.Models
                 //$"MessageID:{MessageID} ";
         }
     }
+    */
 }

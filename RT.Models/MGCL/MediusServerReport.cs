@@ -48,11 +48,15 @@ namespace RT.Models
             // 
             SessionKey = reader.ReadString(Constants.MGCL_SESSIONKEY_MAXLEN);
             reader.ReadBytes(1);
+
+            //
             MaxWorlds = reader.ReadInt16();
             MaxPlayersPerWorld = reader.ReadInt16();
             ActiveWorldCount = reader.ReadInt16();
             TotalActivePlayers = reader.ReadInt16();
             reader.ReadBytes(2);
+
+            //
             AlertLevel = reader.Read<MGCL_ALERT_LEVEL>();
         }
 
