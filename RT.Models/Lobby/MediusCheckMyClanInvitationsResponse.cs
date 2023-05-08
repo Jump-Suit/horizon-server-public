@@ -36,7 +36,13 @@ namespace RT.Models
             ClanInvitationID = reader.ReadInt32();
             ClanID = reader.ReadInt32();
             ResponseStatus = reader.Read<MediusClanInvitationsResponseStatus>();
-            Message = reader.ReadString(Constants.CLANMSG_MAXLEN);
+            if(reader.MediusVersion >= 112)
+            {
+                Message = reader.ReadString(Constants.CLANMSG_MAXLEN_113);
+            } else
+            {
+                Message = reader.ReadString(Constants.CLANMSG_MAXLEN);
+            }
             LeaderAccountID = reader.ReadInt32();
             LeaderAccountName = reader.ReadString(Constants.ACCOUNTNAME_MAXLEN);
             EndOfList = reader.ReadBoolean();
@@ -57,7 +63,14 @@ namespace RT.Models
             writer.Write(ClanInvitationID);
             writer.Write(ClanID);
             writer.Write(ResponseStatus);
-            writer.Write(Message, Constants.CLANMSG_MAXLEN);
+            if(writer.MediusVersion >= 112)
+            {
+                writer.Write(Message, Constants.CLANMSG_MAXLEN_113);
+            } else
+            {
+
+                writer.Write(Message, Constants.CLANMSG_MAXLEN);
+            }
             writer.Write(LeaderAccountID);
             writer.Write(LeaderAccountName, Constants.ACCOUNTNAME_MAXLEN);
             writer.Write(EndOfList);

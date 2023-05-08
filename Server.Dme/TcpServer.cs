@@ -359,9 +359,10 @@ namespace Server.Dme
 
                         data.ApplicationId = clientConnectTcpAuxUdp.AppId;
                         data.ClientObject = Program.GetClientByAccessToken(clientConnectTcpAuxUdp.AccessToken);
+                        /*
                         if (data.ClientObject == null || data.ClientObject.DmeWorld == null || data.ClientObject.DmeWorld.WorldId != clientConnectTcpAuxUdp.ARG1)
                             throw new Exception($"Client connected with invalid world id!");
-
+                        */
                         data.ClientObject.ApplicationId = clientConnectTcpAuxUdp.AppId;
                         data.ClientObject.OnTcpConnected(clientChannel);
                         data.ClientObject.ScertId = GenerateNewScertClientId();

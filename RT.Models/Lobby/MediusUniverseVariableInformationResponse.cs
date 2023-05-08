@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using RT.Common;
 using Server.Common;
 using System;
+using System.Collections.Generic;
 
 namespace RT.Models
 {
@@ -29,6 +30,10 @@ namespace RT.Models
         public string ExtendedInfo; // UNIVERSE_EXTENDED_INFO_MAXLEN
         public string SvoURL; // UNIVERSE_SVO_URL_MAXLEN
         public bool EndOfList;
+
+        public List<int> approvedList = new List<int> { 20371, 20374, };
+
+        public List<int> unapprovedList = new List<int> { 20060, 22920, 22500, 20474};
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -125,12 +130,7 @@ namespace RT.Models
             if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_EXTRAINFO))
                 writer.Write(ExtendedInfo, Constants.UNIVERSE_EXTENDED_INFO_MAXLEN);
 
-            if(writer.AppId == 20371 &&
-                writer.AppId == 20374 &&
-                writer.AppId != 20474 &&
-                writer.AppId != 22920 &&
-                writer.AppId != 20060 &&
-                writer.AppId != 22500)
+            if(approvedList.Contains(writer.AppId) && !unapprovedList.Contains(writer.AppId))
             {
                 if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_SVO_URL))
                     writer.Write(SvoURL, Constants.UNIVERSE_SVO_URL_MAXLEN);

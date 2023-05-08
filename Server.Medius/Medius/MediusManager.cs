@@ -1010,18 +1010,13 @@ namespace Server.Medius
                 }
             }
 
-            if(appId == 20371 || appId == 20374)
+            // create default
+            channel = new Channel()
             {
-                Logger.Info("Not creating default channel for PS Home");
-            } else {
-                // create default
-                channel = new Channel()
-                {
-                    ApplicationId = appId,
-                    Name = "Default",
-                    Type = ChannelType.Lobby
-                };
-            }
+                ApplicationId = appId,
+                Name = "Default",
+                Type = ChannelType.Lobby
+            };
 
             _ = AddChannel(channel);
 

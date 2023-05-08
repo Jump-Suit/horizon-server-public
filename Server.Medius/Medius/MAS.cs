@@ -2099,7 +2099,7 @@ namespace Server.Medius
             Logger.Info($"LOGGING IN AS {data.ClientObject.AccountName} with access token {data.ClientObject.Token}");
 
             // Put client in default channel
-            await data.ClientObject.JoinChannel(Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId));
+            //await data.ClientObject.JoinChannel(Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId));
 
             IPHostEntry host = Dns.GetHostEntry(Program.Settings.NATIp);
 
@@ -2124,7 +2124,7 @@ namespace Server.Medius
                     {
                         AccessKey = data.ClientObject.Token,
                         SessionKey = data.ClientObject.SessionKey,
-                        WorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId).Id,
+                        WorldID = 1, //Reserved
                         ServerKey = new RSA_KEY(), //Program.GlobalAuthPublic,
                         AddressList = new NetAddressList()
                         {
@@ -2136,7 +2136,7 @@ namespace Server.Medius
                         },
                         Type = NetConnectionType.NetConnectionTypeClientServerTCP
                     },
-                    MediusWorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId).Id,
+                    MediusWorldID = 1, //Reserved
                 });
                 // Prepare for transition to lobby server
                 data.ClientObject.KeepAliveUntilNextConnection();
@@ -2155,7 +2155,7 @@ namespace Server.Medius
                     {
                         AccessKey = data.ClientObject.Token,
                         SessionKey = data.ClientObject.SessionKey,
-                        WorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId).Id,
+                        WorldID = 1, //Reserved,
                         ServerKey = Program.GlobalAuthPublic,
                         AddressList = new NetAddressList()
                         {
@@ -2167,7 +2167,7 @@ namespace Server.Medius
                         },
                         Type = NetConnectionType.NetConnectionTypeClientServerTCP
                     },
-                    MediusWorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId).Id,
+                    MediusWorldID = 1, //Reserved
                 });
 
                 // Prepare for transition to lobby server
@@ -2207,7 +2207,7 @@ namespace Server.Medius
             Logger.Info($"LOGGING IN ANONYMOUSLY AS {data.ClientObject.AccountDisplayName} with access token {data.ClientObject.Token}");
 
             // Put client in default channel
-            await data.ClientObject.JoinChannel(Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId));
+            //await data.ClientObject.JoinChannel(Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId));
 
             // Tell client
             data.ClientObject.Queue(new MediusAnonymousLoginResponse()
@@ -2216,12 +2216,12 @@ namespace Server.Medius
                 StatusCode = MediusCallbackStatus.MediusSuccess,
                 AccountID = iAccountID,
                 AccountType = MediusAccountType.MediusMasterAccount,
-                MediusWorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId).Id,
+                MediusWorldID = 1, //Reserved
                 ConnectInfo = new NetConnectionInfo()
                 {
                     AccessKey = data.ClientObject.Token,
                     SessionKey = data.ClientObject.SessionKey,
-                    WorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId).Id,
+                    WorldID = 1, //Reserved,
                     ServerKey = Program.GlobalAuthPublic,
                     AddressList = new NetAddressList()
                     {
