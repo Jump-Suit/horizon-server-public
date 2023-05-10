@@ -5412,7 +5412,7 @@ namespace Server.Medius
                                     ApplicationID = data.ClientObject.ApplicationId,
                                     ApplicationName = appName,
                                     ApplicationType = MediusApplicationType.MediusAppTypeGame,
-                                    MediusWorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId).Id,
+                                    MediusWorldID = Program.Manager.GetChannelByChannelName(findWorldByNameRequest.Name, data.ApplicationId).Id,
                                     WorldName = channel.Name,
                                     WorldStatus = channel.WorldStatus,
                                     EndOfList = false
@@ -5439,7 +5439,7 @@ namespace Server.Medius
                                     ApplicationID = data.ClientObject.ApplicationId,
                                     ApplicationName = appName,
                                     ApplicationType = MediusApplicationType.LobbyChatChannel,
-                                    MediusWorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId).Id,
+                                    MediusWorldID = Program.Manager.GetChannelByChannelName(findWorldByNameRequest.Name, data.ApplicationId).Id,
                                     WorldName = channel.Name,
                                     WorldStatus = channel.WorldStatus,
                                     EndOfList = false
