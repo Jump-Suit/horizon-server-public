@@ -28,9 +28,10 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
+            reader.ReadBytes(4);
 
             //
-            reader.ReadBytes(4);
+            ClanId = reader.ReadInt32();
             for (int i = 0; i < Constants.LADDERSTATSWIDE_MAXLEN; ++i) { Stats[i] = reader.ReadInt32(); }
         }
 
@@ -41,11 +42,11 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
+            writer.Write(new byte[4]);
 
             //
-            writer.Write(new byte[4]);
             writer.Write(ClanId);
-            for (int i = 0; i < Constants.LADDERSTATS_MAXLEN; ++i) { writer.Write(i >= Stats.Length ? 0 : Stats[i]); }
+            for (int i = 0; i < Constants.LADDERSTATSWIDE_MAXLEN; ++i) { writer.Write(i >= Stats.Length ? 0 : Stats[i]); }
         }
 
         public override string ToString()
