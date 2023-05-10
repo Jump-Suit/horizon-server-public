@@ -120,9 +120,7 @@ namespace Server.Dme
 
                 // Log if id is set
                 if (message.CanLog())
-                    Logger.Debug($"TCP 
-
-{data?.ClientObject},{channel}: {message}");
+                    Logger.Debug($"TCP {data?.ClientObject},{channel}: {message}");
             };
 
             var bootstrap = new ServerBootstrap();

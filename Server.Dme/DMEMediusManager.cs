@@ -139,11 +139,7 @@ namespace Server.Dme
 
                 // Log if id is set
                 if (message.CanLog())
-                    Logger.Debug($"MPS 
-
-
-
-{channel}: {message}");
+                    Logger.Debug($"MPS {channel}: {message}");
             };
 
             _bootstrap = new Bootstrap();
