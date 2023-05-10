@@ -28,7 +28,7 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
-            reader.ReadBytes(4);
+            reader.ReadBytes(3);
 
             //
             ClanId = reader.ReadInt32();
@@ -42,7 +42,7 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
-            writer.Write(new byte[4]);
+            writer.Write(new byte[3]);
 
             //
             writer.Write(ClanId);
