@@ -23,9 +23,9 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
-
-            // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
+
+            //
             MessageType = reader.Read<MediusChatMessageType>();
             TargetID = reader.ReadInt32();
             int length = reader.ReadInt32();
@@ -39,24 +39,23 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
-
-            // 
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
+
+            //
             writer.Write(MessageType);
             writer.Write(TargetID);
             writer.Write(Message.Length);
             writer.Write(Message, Message.Length);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-                $"SessionKey:{SessionKey} " +
-                $"MessageType:{MessageType} " +
-                $"TargetID:{TargetID} " +
-                $"Message:{Message}";
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey} " +
+                $"MessageType: {MessageType} " +
+                $"TargetID: {TargetID} " +
+                $"Message: {Message}";
         }
     }
 }

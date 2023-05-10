@@ -3870,6 +3870,101 @@ namespace Server.Medius
                         break;
                     }
 
+                case MediusUpdateClanLadderStatsWide_DeltaRequest updateClanLaddersStatsWideDeltaRequest:
+                    {
+                        // ERROR - Need a session
+                        if (data.ClientObject == null)
+                            throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {updateClanLaddersStatsWideDeltaRequest} without a session.");
+                        
+                        // ERROR -- Need to be logged in
+                        if (!data.ClientObject.IsLoggedIn)
+                            throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {updateClanLaddersStatsWideDeltaRequest} without being logged in.");
+
+                        if (Program.Settings.EnableClanLaddersDeltaOpenAccess == false)
+                        {
+                            Logger.Warn("Update Clan Ladders Stats Wide Delta (Open Access) not enabled.");
+                            data.ClientObject.Queue(new MediusUpdateClanLadderStatsWide_DeltaResponse()
+                            {
+                                MessageID = updateClanLaddersStatsWideDeltaRequest.MessageID,
+                                StatusCode = MediusCallbackStatus.MediusFeatureNotEnabled
+                            });
+                        }
+                        else
+                        {
+                            Logger.Info($"Update Clan Ladder Stats Delta (Open Access)");
+                            if (Program.Database._settings.SimulatedMode != false)
+                            {
+                                Logger.Warn("MediusUpdateClanLadderStatsWide_Delta Success (DB DISABLED)");
+                                data.ClientObject.Queue(new MediusUpdateClanLadderStatsWide_DeltaResponse()
+                                {
+                                    MessageID = updateClanLaddersStatsWideDeltaRequest.MessageID,
+                                    StatusCode = MediusCallbackStatus.MediusFeatureNotEnabled
+                                });
+                            }
+                            else
+                            {
+
+                                // pass to plugins
+                                var pluginMessage = new OnPlayerWideStatsArgs()
+                                {
+                                    Game = data.ClientObject.CurrentGame,
+                                    Player = data.ClientObject,
+                                    IsClan = true,
+                                    WideStats = updateClanLaddersStatsWideDeltaRequest.Stats
+                                };
+                                await Program.Plugins.OnEvent(PluginEvent.MEDIUS_PLAYER_POST_WIDE_STATS, pluginMessage);
+
+                                // reject
+                                if (pluginMessage.Reject)
+                                {
+                                    data.ClientObject.Queue(new MediusUpdateLadderStatsResponse()
+                                    {
+                                        MessageID = updateClanLaddersStatsWideDeltaRequest.MessageID,
+                                        StatusCode = MediusCallbackStatus.MediusFail
+                                    });
+                                    break;
+                                }
+
+                                _ = Program.Database.PostClanLadderStats(data.ClientObject.AccountId,
+                                    data.ClientObject.ClanId,
+
+                                    pluginMessage.WideStats,
+                                    data.ClientObject.ApplicationId)
+                                    .ContinueWith(r =>
+                                    {
+                                        if (data == null || data.ClientObject == null || !data.ClientObject.IsConnected)
+                                            return;
+
+                                        if (r.IsCompletedSuccessfully && r.Result != false)
+                                        {
+                                            Logger.Info("Updated Clan Ladder stats (Delta)");
+                                            data.ClientObject.WideStats = pluginMessage.WideStats;
+                                            data.ClientObject.Queue(new RT_MSG_SERVER_APP()
+                                            {
+                                                Message = new MediusUpdateClanLadderStatsWide_DeltaResponse()
+                                                {
+                                                    MessageID = updateClanLaddersStatsWideDeltaRequest.MessageID,
+                                                    StatusCode = MediusCallbackStatus.MediusSuccess
+                                                }
+                                            });
+                                        }
+                                        else
+                                        {
+                                            data.ClientObject.Queue(new RT_MSG_SERVER_APP()
+                                            {
+                                                Message = new MediusUpdateClanLadderStatsWide_DeltaResponse()
+                                                {
+                                                    MessageID = updateClanLaddersStatsWideDeltaRequest.MessageID,
+                                                    StatusCode = MediusCallbackStatus.MediusDBError
+                                                }
+                                            });
+                                        }
+                                    });
+                            }
+                        }
+                        break;
+                    }
+
                 case MediusClanLadderPositionRequest getClanLadderPositionRequest:
                     {
                         // ERROR - Need a session
@@ -4192,7 +4287,7 @@ namespace Server.Medius
 
                         _ = Program.Database.GetClanMessages(data.ClientObject.AccountId,
                             data.ClientObject.ClanId.Value,
-                            getAllClanMessagesRequest.Start - 1,
+                            getAllClanMessagesRequest.Start,
                             getAllClanMessagesRequest.PageSize,
                             data.ClientObject.ApplicationId)
                         .ContinueWith((r) =>
@@ -8069,6 +8164,8 @@ namespace Server.Medius
                             return;
 
                         //Program.AntiCheatPlugin.mc_anticheat_event_msg(AnticheatEventCode.anticheatCHATMESSAGE, data.ClientObject.WorldId, data.ClientObject.AccountId, Program.AntiCheatClient, (IMediusRequest)genericChatMessage, 256);
+
+                        //log to syslog
 
                         await ProcessGenericChatMessage(clientChannel, data.ClientObject, genericChatMessage);
                         break;

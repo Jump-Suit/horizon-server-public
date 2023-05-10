@@ -2,6 +2,7 @@
 using RT.Common;
 using RT.Cryptography;
 using Server.Common.Logging;
+using Server.Medius.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -320,6 +321,13 @@ namespace Server.Medius.Config
         // Set this to 1 to enable this override.
         // Or to 0 (the default) to maintain strict clan leader control.
         public bool EnableNonClanLeaderToGetTeamChallenges = false;
+
+        /// <summary>
+        ///  Clan Ladders 
+        /// If enabled, allows for any member of a clan to post clan ladder scores via <br></br>
+        /// the API MediusUpdateClanLadderStatsWide_Delta()
+        /// </summary>
+        public bool EnableClanLaddersDeltaOpenAccess = false;
         #endregion
 
         #region Syphon Filter - The Omega Strain

@@ -19,7 +19,7 @@ namespace RT.Models
         /// <summary>
         /// Total set of wide stats to update the clan with
         /// </summary>
-        public byte[] Stats = new byte[Constants.LADDERSTATSWIDE_MAXLEN];
+        public int[] Stats = new int[Constants.LADDERSTATSWIDE_MAXLEN];
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -31,7 +31,7 @@ namespace RT.Models
 
             //
             reader.ReadBytes(4);
-            Stats = reader.ReadBytes(Constants.LADDERSTATSWIDE_MAXLEN);
+            for (int i = 0; i < Constants.LADDERSTATSWIDE_MAXLEN; ++i) { Stats[i] = reader.ReadInt32(); }
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -45,16 +45,15 @@ namespace RT.Models
             //
             writer.Write(new byte[4]);
             writer.Write(ClanId);
-            writer.Write(Stats, Constants.LADDERSTATSWIDE_MAXLEN);
+            for (int i = 0; i < Constants.LADDERSTATS_MAXLEN; ++i) { writer.Write(i >= Stats.Length ? 0 : Stats[i]); }
         }
-
 
         public override string ToString()
         {
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
                 $"ClanId: {ClanId} " +
-                $"Stats: {BitConverter.ToString(Stats)}";
+                $"DeltaStats: {Stats}";
         }
     }
 }

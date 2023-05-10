@@ -130,10 +130,15 @@ namespace RT.Models
             if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_EXTRAINFO))
                 writer.Write(ExtendedInfo, Constants.UNIVERSE_EXTENDED_INFO_MAXLEN);
 
-            if(approvedList.Contains(writer.AppId) && !unapprovedList.Contains(writer.AppId))
+            if(approvedList.Contains(writer.AppId) && 
+                !unapprovedList.Contains(writer.AppId))
             {
+                Console.WriteLine("Setting SVOURL");
                 if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_SVO_URL))
                     writer.Write(SvoURL, Constants.UNIVERSE_SVO_URL_MAXLEN);
+            } else
+            {
+                Console.WriteLine("Not writing SVOURL");
             }
 
             writer.Write(EndOfList);
