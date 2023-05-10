@@ -992,9 +992,9 @@ namespace Server.Database
         }
 
         /// <summary>
-        /// Get player wide stats.
+        /// Get clan wide stats.
         /// </summary>
-        /// <param name="accountId">Account id of player.</param>
+        /// <param name="accountId">Clan id of clan.</param>
         /// <returns></returns>
         public async Task<ClanStatPostDTO> GetClanWideStats(int clanId)
         {
