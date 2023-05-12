@@ -3917,7 +3917,7 @@ namespace Server.Medius
                                 // reject
                                 if (pluginMessage.Reject)
                                 {
-                                    data.ClientObject.Queue(new MediusUpdateLadderStatsResponse()
+                                    data.ClientObject.Queue(new MediusUpdateClanLadderStatsWide_DeltaResponse()
                                     {
                                         MessageID = updateClanLaddersStatsWideDeltaRequest.MessageID,
                                         StatusCode = MediusCallbackStatus.MediusFail
@@ -4762,9 +4762,11 @@ namespace Server.Medius
                         if (!data.ClientObject.IsLoggedIn)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {gameList_ExtraInfoRequest} without being logged in.");
 
+                        List<int> FilteredGameLists = new List<int>() { 21924, 10994, 11203, 11204};
+                        List<int> NonFilteredGameLists = new List<int>() { 20770, 20623, 20624, 20764, 22920 };
 
                         //By Filter
-                        if (data.ClientObject.ApplicationId == 21924)
+                        if (FilteredGameLists.Contains(data.ClientObject.ApplicationId))
                         {
                             var gameList = Program.Manager.GetGameList(
                                data.ClientObject.ApplicationId,
@@ -4819,12 +4821,7 @@ namespace Server.Medius
                         }
 
                         // Size Matters  20770, CAC 20623, 20624
-                        else if (data.ClientObject.ApplicationId == 20770
-                                || data.ClientObject.ApplicationId == 20623 
-                                || data.ClientObject.ApplicationId == 20624 
-                                || data.ClientObject.ApplicationId == 20764 
-                                || data.ClientObject.ApplicationId == 20364
-                                || data.ClientObject.ApplicationId == 22920)
+                        else if (NonFilteredGameLists.Contains(data.ClientObject.ApplicationId))
                         {
 
                             int Count = Program.Manager.GetGameCountAppId(data.ClientObject.ApplicationId);
@@ -4888,11 +4885,10 @@ namespace Server.Medius
                             int Count = Program.Manager.GetGameCountAppId(data.ClientObject.ApplicationId);
                             Logger.Warn($"Count: {Count}");
 
-                            var gameList = Program.Manager.GetGameList(
+                            var gameList = Program.Manager.GetGameListAppId(
                                 data.ClientObject.ApplicationId,
                                 gameList_ExtraInfoRequest.PageID,
-                                gameList_ExtraInfoRequest.PageSize,
-                                data.ClientObject.GameListFilters)
+                                gameList_ExtraInfoRequest.PageSize)
                             .Select(x => new MediusGameList_ExtraInfoResponse()
                             {
                                 MessageID = gameList_ExtraInfoRequest.MessageID,

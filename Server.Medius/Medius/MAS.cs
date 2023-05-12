@@ -2098,52 +2098,97 @@ namespace Server.Medius
             // 
             Logger.Info($"LOGGING IN AS {data.ClientObject.AccountName} with access token {data.ClientObject.Token}");
 
-            // Put client in default channel
-            //await data.ClientObject.JoinChannel(Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId));
 
             IPHostEntry host = Dns.GetHostEntry(Program.Settings.NATIp);
 
             // Tell client
             if (ticket == true)
             {
-
-                #region IF PS3 Client
-                data.ClientObject.Queue(new MediusTicketLoginResponse()
+                #region PS Home PS3
+                //If PS Home don't GetOrCreateDefaultLobbyChannel, Home creates their own channels
+                if (data.ClientObject.ApplicationId == 20371 || data.ClientObject.ApplicationId == 20374)
                 {
-                    //TicketLoginResponse
-                    MessageID = messageId,
-                    StatusCodeTicketLogin = MediusCallbackStatus.MediusSuccess,
-                    PasswordType = MediusPasswordType.MediusPasswordNotSet,
-
-                    //AccountLoginResponse Wrapped
-                    MessageID2 = messageId,
-                    StatusCodeAccountLogin = MediusCallbackStatus.MediusSuccess,
-                    AccountID = data.ClientObject.AccountId,
-                    AccountType = MediusAccountType.MediusMasterAccount,
-                    ConnectInfo = new NetConnectionInfo()
+                    data.ClientObject.Queue(new MediusTicketLoginResponse()
                     {
-                        AccessKey = data.ClientObject.Token,
-                        SessionKey = data.ClientObject.SessionKey,
-                        WorldID = 1, //Reserved
-                        ServerKey = new RSA_KEY(), //Program.GlobalAuthPublic,
-                        AddressList = new NetAddressList()
+                        //TicketLoginResponse
+                        MessageID = messageId,
+                        StatusCodeTicketLogin = MediusCallbackStatus.MediusSuccess,
+                        PasswordType = MediusPasswordType.MediusPasswordNotSet,
+
+                        //AccountLoginResponse Wrapped
+                        MessageID2 = messageId,
+                        StatusCodeAccountLogin = MediusCallbackStatus.MediusSuccess,
+                        AccountID = data.ClientObject.AccountId,
+                        AccountType = MediusAccountType.MediusMasterAccount,
+                        MediusWorldID = 1, // Reserved
+                        ConnectInfo = new NetConnectionInfo()
                         {
-                            AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
+                            AccessKey = data.ClientObject.Token,
+                            SessionKey = data.ClientObject.SessionKey,
+                            WorldID = 1, // Reserved,
+                            ServerKey = new RSA_KEY(), //Program.GlobalAuthPublic,
+                            AddressList = new NetAddressList()
+                            {
+                                AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                             {
                                 new NetAddress() {Address = Program.LobbyServer.IPAddress.ToString(), Port = (uint)Program.LobbyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal},
                                 new NetAddress() {Address = host.AddressList.First().ToString(), Port = (uint)Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService},
                             }
+                            },
+                            Type = NetConnectionType.NetConnectionTypeClientServerTCP
                         },
-                        Type = NetConnectionType.NetConnectionTypeClientServerTCP
-                    },
-                    MediusWorldID = 1, //Reserved
-                });
+                    });
+                }
+                #endregion
+
+                //Default
+                else
+                {
+                    // Put client in default channel
+                    await data.ClientObject.JoinChannel(Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId));
+
+                    #region IF PS3 Client
+                    data.ClientObject.Queue(new MediusTicketLoginResponse()
+                    {
+                        //TicketLoginResponse
+                        MessageID = messageId,
+                        StatusCodeTicketLogin = MediusCallbackStatus.MediusSuccess,
+                        PasswordType = MediusPasswordType.MediusPasswordNotSet,
+
+                        //AccountLoginResponse Wrapped
+                        MessageID2 = messageId,
+                        StatusCodeAccountLogin = MediusCallbackStatus.MediusSuccess,
+                        AccountID = data.ClientObject.AccountId,
+                        AccountType = MediusAccountType.MediusMasterAccount,
+                        MediusWorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ClientObject.ApplicationId).Id,
+                        ConnectInfo = new NetConnectionInfo()
+                        {
+                            AccessKey = data.ClientObject.Token,
+                            SessionKey = data.ClientObject.SessionKey,
+                            WorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ClientObject.ApplicationId).Id,
+                            ServerKey = new RSA_KEY(), //Program.GlobalAuthPublic,
+                            AddressList = new NetAddressList()
+                            {
+                                AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
+                                {
+                                new NetAddress() {Address = Program.LobbyServer.IPAddress.ToString(), Port = (uint)Program.LobbyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal},
+                                new NetAddress() {Address = host.AddressList.First().ToString(), Port = (uint)Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService},
+                                }
+                            },
+                            Type = NetConnectionType.NetConnectionTypeClientServerTCP
+                        },
+                    });
+                    #endregion
+                }
+
                 // Prepare for transition to lobby server
                 data.ClientObject.KeepAliveUntilNextConnection();
-                #endregion
             }
             else
             {
+                // Put client in default channel
+                await data.ClientObject.JoinChannel(Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId));
+
                 #region If PS2/PSP
                 data.ClientObject.Queue(new MediusAccountLoginResponse()
                 {
@@ -2151,11 +2196,12 @@ namespace Server.Medius
                     StatusCode = MediusCallbackStatus.MediusSuccess,
                     AccountID = data.ClientObject.AccountId,
                     AccountType = MediusAccountType.MediusMasterAccount,
+                    MediusWorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ClientObject.ApplicationId).Id,
                     ConnectInfo = new NetConnectionInfo()
                     {
                         AccessKey = data.ClientObject.Token,
                         SessionKey = data.ClientObject.SessionKey,
-                        WorldID = 1, //Reserved,
+                        WorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ClientObject.ApplicationId).Id,
                         ServerKey = Program.GlobalAuthPublic,
                         AddressList = new NetAddressList()
                         {
@@ -2167,7 +2213,6 @@ namespace Server.Medius
                         },
                         Type = NetConnectionType.NetConnectionTypeClientServerTCP
                     },
-                    MediusWorldID = 1, //Reserved
                 });
 
                 // Prepare for transition to lobby server
@@ -2216,12 +2261,12 @@ namespace Server.Medius
                 StatusCode = MediusCallbackStatus.MediusSuccess,
                 AccountID = iAccountID,
                 AccountType = MediusAccountType.MediusMasterAccount,
-                MediusWorldID = 1, //Reserved
+                MediusWorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ClientObject.ApplicationId).Id,
                 ConnectInfo = new NetConnectionInfo()
                 {
                     AccessKey = data.ClientObject.Token,
                     SessionKey = data.ClientObject.SessionKey,
-                    WorldID = 1, //Reserved,
+                    WorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ClientObject.ApplicationId).Id,
                     ServerKey = Program.GlobalAuthPublic,
                     AddressList = new NetAddressList()
                     {
