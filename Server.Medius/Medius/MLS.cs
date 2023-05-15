@@ -3085,7 +3085,7 @@ namespace Server.Medius
                                 }
                             case MediusUserAction.JoinedChatWorld:
                                 {
-                                    await data.ClientObject.JoinChannel(Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId));
+                                    //await data.ClientObject.JoinChannel(Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId));
                                     break;
                                 }
                             case MediusUserAction.LeftGameWorld:

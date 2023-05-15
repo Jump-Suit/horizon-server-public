@@ -536,7 +536,16 @@ namespace Server.Dme
                     }
                 case RT_MSG_CLIENT_TOKEN_MESSAGE tokenMessage:
                     {
-                        await ProcessRTTHostTokenMessage(tokenMessage, clientChannel, data);
+                        if (scertClient.MediusVersion == 109){
+                            Queue(new RT_MSG_SERVER_TOKEN_MESSAGE()
+                            {
+                            Host = (byte)data.ClientObject.DmeWorld.SessionMaster
+                            }, clientChannel);
+                        }
+                        else{
+                            await ProcessRTTHostTokenMessage(tokenMessage, clientChannel, data);
+                        }
+                        
                         break;
                     }
                 case RT_MSG_CLIENT_APP_BROADCAST clientAppBroadcast:

@@ -54,7 +54,7 @@ namespace RT.Models
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
                 $"ClanId: {ClanId} " +
-                $"DeltaStats: {Stats}";
+                $"DeltaStats: {string.Join("", Stats)}";
         }
     }
 }
