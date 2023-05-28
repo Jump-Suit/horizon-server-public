@@ -2099,7 +2099,8 @@ namespace Server.Medius
                                     _ = Program.Database.PostClanLadderStats(data.ClientObject.AccountId,
                                         data.ClientObject.ClanId,
                                         pluginMessage.WideStats,
-                                        data.ClientObject.ApplicationId)
+                                        data.ClientObject.ApplicationId,
+                                        false)
                                     .ContinueWith((r) =>
                                     {
                                         if (data == null || data.ClientObject == null || !data.ClientObject.IsConnected)
@@ -2204,7 +2205,8 @@ namespace Server.Medius
                                     _ = Program.Database.PostClanLadderStats(data.ClientObject.AccountId,
                                         data.ClientObject.ClanId,
                                         pluginMessage.WideStats,
-                                        data.ClientObject.ApplicationId)
+                                        data.ClientObject.ApplicationId,
+                                        false)
                                     .ContinueWith((r) =>
                                     {
                                         if (data == null || data.ClientObject == null || !data.ClientObject.IsConnected)
@@ -3929,7 +3931,8 @@ namespace Server.Medius
                                     data.ClientObject.ClanId,
 
                                     pluginMessage.WideStats,
-                                    data.ClientObject.ApplicationId)
+                                    data.ClientObject.ApplicationId,
+                                    true)
                                     .ContinueWith(r =>
                                     {
                                         if (data == null || data.ClientObject == null || !data.ClientObject.IsConnected)

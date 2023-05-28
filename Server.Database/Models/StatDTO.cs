@@ -86,6 +86,13 @@
         public int ClanId { get; set; }
 
         /// <summary>
+        /// Type of stats payload
+        /// True (Delta) - Each stat value is added to the original as a differnce
+        /// False (Standard) - Stat values are replaced with the input
+        /// </summary>
+        public bool Delta { get; set; }
+
+        /// <summary>
         /// Collection of ladder stats to be saved to the database.
         /// </summary>
         public int[] Stats { get; set; }
