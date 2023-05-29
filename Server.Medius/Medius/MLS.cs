@@ -2099,7 +2099,8 @@ namespace Server.Medius
                                     _ = Program.Database.PostClanLadderStats(data.ClientObject.AccountId,
                                         data.ClientObject.ClanId,
                                         pluginMessage.WideStats,
-                                        data.ClientObject.ApplicationId)
+                                        data.ClientObject.ApplicationId,
+                                        false)
                                     .ContinueWith((r) =>
                                     {
                                         if (data == null || data.ClientObject == null || !data.ClientObject.IsConnected)
@@ -2204,7 +2205,8 @@ namespace Server.Medius
                                     _ = Program.Database.PostClanLadderStats(data.ClientObject.AccountId,
                                         data.ClientObject.ClanId,
                                         pluginMessage.WideStats,
-                                        data.ClientObject.ApplicationId)
+                                        data.ClientObject.ApplicationId,
+                                        false)
                                     .ContinueWith((r) =>
                                     {
                                         if (data == null || data.ClientObject == null || !data.ClientObject.IsConnected)
@@ -3664,7 +3666,7 @@ namespace Server.Medius
                         .ContinueWith(r =>
                         {
                             List<MediusRequestClanTeamChallengeResponse> responses = new List<MediusRequestClanTeamChallengeResponse>();
-                            if (r.IsCompletedSuccessfully && r.Result != null)
+                            if (r.IsCompletedSuccessfully)
                             {
                                 data.ClientObject.Queue(new RT_MSG_SERVER_APP()
                                 {
@@ -3790,7 +3792,7 @@ namespace Server.Medius
                             data.ClientObject.ApplicationId)
                         .ContinueWith(r =>
                         {
-                            if (r.IsCompletedSuccessfully && r.Result != false)
+                            if (r.IsCompletedSuccessfully)
                             {
                                 data.ClientObject.Queue(new RT_MSG_SERVER_APP()
                                 {
@@ -3843,7 +3845,7 @@ namespace Server.Medius
                             data.ClientObject.ApplicationId)
                         .ContinueWith(r =>
                         {
-                            if (r.IsCompletedSuccessfully && r.Result != false)
+                            if (r.IsCompletedSuccessfully)
                             {
                                 data.ClientObject.Queue(new RT_MSG_SERVER_APP()
                                 {
@@ -3929,7 +3931,8 @@ namespace Server.Medius
                                     data.ClientObject.ClanId,
 
                                     pluginMessage.WideStats,
-                                    data.ClientObject.ApplicationId)
+                                    data.ClientObject.ApplicationId,
+                                    true)
                                     .ContinueWith(r =>
                                     {
                                         if (data == null || data.ClientObject == null || !data.ClientObject.IsConnected)

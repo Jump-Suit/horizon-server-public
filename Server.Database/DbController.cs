@@ -1336,7 +1336,7 @@ namespace Server.Database
         /// </summary>
         /// <param name="statPost">Model containing clan id and ladder stats collection.</param>
         /// <returns>Success or failure.</returns>
-        public async Task<bool> PostClanLadderStats(int accountId, int? clanId, int[] stats, int appId)
+        public async Task<bool> PostClanLadderStats(int accountId, int? clanId, int[] stats, int appId, bool delta)
         {
             bool result = false;
             if (!clanId.HasValue)
@@ -1362,6 +1362,7 @@ namespace Server.Database
                     result = (await PostDbAsync($"Stats/postClanStats", JsonConvert.SerializeObject(new ClanStatPostDTO()
                     {
                         ClanId = clanId.Value,
+                        Delta = delta,
                         Stats = stats
                     }))).IsSuccessStatusCode;
                 }
