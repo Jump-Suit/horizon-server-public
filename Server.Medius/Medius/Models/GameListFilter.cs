@@ -30,7 +30,7 @@ namespace Server.Medius.Models
                 case MediusGameListFilterField.MEDIUS_FILTER_LOBBY_WORLDID: return ComparisonOperator.Compare(BaselineValue, (ulong)(game.Id & Mask));
                 case MediusGameListFilterField.MEDIUS_FILTER_MAX_PLAYERS: return ComparisonOperator.Compare(BaselineValue, (ulong)(game.MaxPlayers & Mask));
                 case MediusGameListFilterField.MEDIUS_FILTER_MIN_PLAYERS: return ComparisonOperator.Compare(BaselineValue, (ulong)(game.MinPlayers & Mask));
-                case MediusGameListFilterField.MEDIUS_FILTER_PLAYER_COUNT: return ComparisonOperator.Compare(BaselineValue, (ulong)(game.PlayerCount & Mask));
+                case MediusGameListFilterField.MEDIUS_FILTER_PLAYER_COUNT: return ComparisonOperator.Compare(ulong)(game.PlayerCount & Mask), (BaselineValue);
                 case MediusGameListFilterField.MEDIUS_FILTER_PLAYER_SKILL_LEVEL: return ComparisonOperator.Compare(BaselineValue, (ulong)(game.PlayerSkillLevel & Mask));
                 case MediusGameListFilterField.MEDIUS_FILTER_RULES_SET: return ComparisonOperator.Compare(BaselineValue, (ulong)(game.RulesSet & Mask));
                 default: return false;
