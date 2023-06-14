@@ -33,7 +33,14 @@ namespace RT.Models
             StatusCode = reader.Read<MediusCallbackStatus>();
             AccountID = reader.ReadInt32();
             AccountName = reader.ReadString(Constants.ACCOUNTNAME_MAXLEN);
-            ResponseMsg = reader.ReadString(Constants.CLANMSG_MAXLEN);
+
+            if(reader.MediusVersion == 113)
+            {
+                ResponseMsg = reader.ReadString(Constants.CLANMSG_MAXLEN_113);
+            } else
+            {
+                ResponseMsg = reader.ReadString(Constants.CLANMSG_MAXLEN);
+            }
             ResponseStatus = reader.Read<MediusClanInvitationsResponseStatus>();
             ResponseTime = reader.ReadInt32();
             EndOfList = reader.ReadBoolean();
@@ -53,25 +60,30 @@ namespace RT.Models
             writer.Write(StatusCode);
             writer.Write(AccountID);
             writer.Write(AccountName, Constants.ACCOUNTNAME_MAXLEN);
-            writer.Write(ResponseMsg, Constants.CLANMSG_MAXLEN);
+            if(writer.MediusVersion == 113)
+            {
+                writer.Write(ResponseMsg, Constants.CLANMSG_MAXLEN_113);
+            } else
+            {
+                writer.Write(ResponseMsg, Constants.CLANMSG_MAXLEN);
+            }
             writer.Write(ResponseStatus);
             writer.Write(ResponseTime);
             writer.Write(EndOfList);
             writer.Write(new byte[3]);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID} " +
-             $"StatusCode:{StatusCode} " +
-$"AccountID:{AccountID} " +
-$"AccountName:{AccountName} " +
-$"ResponseMsg:{ResponseMsg} " +
-$"ResponseStatus:{ResponseStatus} " +
-$"ResponseTime:{ResponseTime} " +
-$"EndOfList:{EndOfList}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode} " +
+                $"AccountID: {AccountID} " +
+                $"AccountName: {AccountName} " +
+                $"ResponseMsg: {ResponseMsg} " +
+                $"ResponseStatus: {ResponseStatus} " +
+                $"ResponseTime: {ResponseTime} " +
+                $"EndOfList: {EndOfList}";
         }
     }
 }

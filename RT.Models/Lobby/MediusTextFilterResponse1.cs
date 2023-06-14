@@ -68,7 +68,7 @@ namespace RT.Models
                 $"MessageID: {MessageID} " +
                 $"StatusCode: {StatusCode} " +
                 $"TextSize: {TextSize} " +
-                $"Text: {Convert.ToString(Text)}";
+                $"Text: {string.Join("", Text)}";
         }
     }
 }

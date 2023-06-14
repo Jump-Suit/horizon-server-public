@@ -68,7 +68,6 @@ namespace RT.Models
                 writer.Write(Message, Constants.CLANMSG_MAXLEN_113);
             } else
             {
-
                 writer.Write(Message, Constants.CLANMSG_MAXLEN);
             }
             writer.Write(LeaderAccountID);

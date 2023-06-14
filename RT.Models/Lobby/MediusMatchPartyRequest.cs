@@ -20,7 +20,7 @@ namespace RT.Models
         public MediusMatchOptions MatchOptions;
         public int ApplicationDataSize;
         public int[] PartyAccountIDList;
-        public char[] ApplicationData;
+        public string ApplicationData;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -51,7 +51,7 @@ namespace RT.Models
                 PartyAccountIDList[i] = reader.ReadInt32();
             }
 
-            ApplicationData = reader.ReadChars(Constants.APPLICATIONDATA_MAXLEN);
+            ApplicationData = reader.ReadString(Constants.APPLICATIONDATA_MAXLEN);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)

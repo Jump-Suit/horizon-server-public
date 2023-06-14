@@ -120,7 +120,7 @@ namespace Server.Medius.Config
         #endregion
 
         #region Medius Versions
-        public bool MediusServerVersionOverride { get; set; } = false;
+        public bool MediusServerVersionOverride { get; set; } = true;
 
         public string MMSVersion { get; set; } = "Medius Matchmaking Server Version 3.03.0000";
 
@@ -240,7 +240,7 @@ namespace Server.Medius.Config
         /// Enable posting of debug information from the client <br></br>
         /// Set to false to disable, set to true to enable.            
         /// </summary>
-        public bool PostDebugInfoEnable = true;
+        public bool PostDebugInfoEnable = false;
         #endregion
 
         #region Anti-Cheat (and related info)

@@ -218,47 +218,21 @@ namespace Server.UniverseInformation
                         data.ApplicationId = clientConnectTcp.AppId;
                         scertClient.ApplicationID = clientConnectTcp.AppId;
 
+                        List<int> pre108ServerComplete = new List<int>() { 10540 };
 
-                        //
-                        if (scertClient.MediusVersion <= 109) 
+                        if (scertClient.CipherService.HasKey(CipherContext.RC_CLIENT_SESSION))
                         {
-
-                            if (scertClient.CipherService.HasKey(CipherContext.RC_CLIENT_SESSION))
-                            {
-                                Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
-                            }
-
-                            Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
-                            {
-                                IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address,
-                            }, clientChannel);
-
-
-                            Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
+                            Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
                         }
-                        else
-                        //Default flow 
+
+                        Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
                         {
-                            if (scertClient.CipherService.HasKey(CipherContext.RC_CLIENT_SESSION))
-                            {
-                                Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
-                            }
+                            IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address,
+                        }, clientChannel);
 
-                            Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
-                            {
-                                IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address,
-                            }, clientChannel);
-
-
-                            //Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
-
-                            //Queue(new RT_MSG_SERVER_CONNECT_REQUIRE(), clientChannel);
-
-                            //If this isn't Motorstorm Pacific Rift then complete handshake
-                            if (data.ApplicationId != 21624)
-                            {
-                                //Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
-                            }
+                        if(pre108ServerComplete.Contains(data.ApplicationId))
+                        {
+                            Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
                         }
                         break;
                     }
@@ -611,7 +585,7 @@ namespace Server.UniverseInformation
                                                 Port = info.Port,
                                                 UniverseBilling = info.UniverseBilling,
                                                 BillingSystemName = info.BillingSystemName,
-                                                EndOfList = true
+                                                EndOfList = isLast
                                             }
                                         }, clientChannel);
                                     }

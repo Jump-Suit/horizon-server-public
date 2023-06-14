@@ -25,7 +25,7 @@ namespace RT.Models
         public int GenericField2;
         public int GenericField3;
         public MediusGameHostType GameHostType;
-        public MediusWorldAttributesType Attributes;
+        public MediusWorldAttributesType WorldAttributesType;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -51,6 +51,7 @@ namespace RT.Models
             GenericField2 = reader.ReadInt32();
             GenericField3 = reader.ReadInt32();
             GameHostType = reader.Read<MediusGameHostType>();
+            //WorldAttributesType = reader.Read<MediusWorldAttributesType>();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -77,6 +78,7 @@ namespace RT.Models
             writer.Write(GenericField2);
             writer.Write(GenericField3);
             writer.Write(GameHostType);
+            //writer.Write(WorldAttributesType);
         }
 
         public override string ToString()
@@ -96,7 +98,8 @@ namespace RT.Models
                 $"GenericField1:{GenericField1:X8} " +
                 $"GenericField2:{GenericField2:X8} " +
                 $"GenericField3:{GenericField3:X8} " +
-                $"GameHostType:{GameHostType} ";
+                $"GameHostType:{GameHostType} " +
+                $"WorldAttributesType: {WorldAttributesType}";
         }
     }
 }

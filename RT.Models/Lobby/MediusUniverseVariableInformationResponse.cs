@@ -31,9 +31,9 @@ namespace RT.Models
         public string SvoURL; // UNIVERSE_SVO_URL_MAXLEN
         public bool EndOfList;
 
-        public List<int> approvedList = new List<int> { 20371, 20374, };
+        public List<int> approvedList = new List<int> { 20371, 20374, 21624, 21834, 22920, 10994 };
 
-        public List<int> unapprovedList = new List<int> { 20060, 22920, 22500, 20474};
+        public List<int> unapprovedList = new List<int> { 20060, 22500, 20474 };
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {

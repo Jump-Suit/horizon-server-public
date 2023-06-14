@@ -225,7 +225,6 @@ namespace Server.Medius.Models
             GamePassword = createGame.GamePassword;
             SpectatorPassword = createGame.SpectatorPassword;
             GameHostType = createGame.GameHostType;
-            Attributes = createGame.Attributes;
         }
 
         private void FromCreateGameOnMeRequest(MediusServerCreateGameOnMeRequest serverCreateGameOnMe)
@@ -419,10 +418,13 @@ namespace Server.Medius.Models
 
             // Update player object
             await player.Client.LeaveGame(this);
-            // player.Client.LeaveChannel(ChatChannel);
+            await player.Client.LeaveChannel(ChatChannel);
 
             // Remove from collection
-            await RemovePlayer(player.Client);
+            if(player.Client.CurrentGame != null)
+            {
+                await RemovePlayer(player.Client);
+            }
         }
 
         public virtual async Task RemovePlayer(ClientObject client)
@@ -450,8 +452,6 @@ namespace Server.Medius.Models
         {
             try
             {
-                //Close world
-                await SetWorldStatus(MediusWorldStatus.WorldClosed);
                 ///Send database EndGameReport info
                 await EndGame();
                 Logger.Info($"Successful local delete of game world [{report.MediusWorldID}]");
@@ -537,6 +537,49 @@ namespace Server.Medius.Models
             Logger.Info("World Updated from World Report");
         }
 
+        public virtual async Task OnWorldReportOnMe(MediusServerWorldReportOnMe report)
+        {
+            // Ensure report is for correct game world
+            if (report.MediusWorldID != Id)
+                return;
+
+
+            Id = report.MediusWorldID;
+            ApplicationId = report.ApplicationID;
+            GameName = report.GameName;
+            GameStats = report.GameStats;
+            MinPlayers = report.MinClients;
+            MaxPlayers = report.MaxClients;
+            //PlayerCount = report.PlayerCount; //Not Needed at this moment
+            GameLevel = report.GameLevel;
+            PlayerSkillLevel = report.PlayerSkillLevel;
+            RulesSet = report.RulesSet;
+            GenericField1 = report.GenericField1;
+            GenericField2 = report.GenericField2;
+            GenericField3 = report.GenericField3;
+            GenericField4 = report.GenericField4;
+            GenericField5 = report.GenericField5;
+            GenericField6 = report.GenericField6;
+            GenericField7 = report.GenericField7;
+            GenericField8 = report.GenericField8;
+
+            // Once the world has been closed then we force it closed.
+            // This is because when the host hits 'Play Again' they tell the server the world has closed (EndGameReport)
+            // but the existing clients tell the server the world is still active.
+            // This gives the host a "Game Name Already Exists" when they try to remake with the same name.
+            // This just fixes that. At the cost of the game not showing after a host leaves a game.
+            if (WorldStatus != MediusWorldStatus.WorldClosed && WorldStatus != report.WorldStatus)
+            {
+                await SetWorldStatus(report.WorldStatus);
+            }
+            else
+            {
+                // Update db
+                if (!utcTimeEnded.HasValue)
+                    _ = Program.Database.UpdateGame(ToGameDTO());
+            }
+        }
+
         public virtual Task GameCreated()
         {
             return Task.CompletedTask;
@@ -564,10 +607,9 @@ namespace Server.Medius.Models
                 else
                 {
                     await client.LeaveGame(this);
-                    // client.LeaveChannel(ChatChannel);
+                    await client.LeaveChannel(ChatChannel);
                 }
             }
-
 
             // Unregister from channel
             ChatChannel?.UnregisterGame(this);

@@ -84,7 +84,7 @@ namespace RT.Models
 
             // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
-            reader.ReadBytes(2);
+            //reader.ReadBytes(2);
             
             //
             SupersetID = reader.ReadUInt32();
@@ -96,7 +96,7 @@ namespace RT.Models
             MatchOptions = reader.Read<MediusMatchOptions>();
             ServerSessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             RequestData = reader.ReadString(Constants.REQUESTDATA_MAXLEN);
-            reader.ReadBytes(3);
+            //reader.ReadBytes(3);
             
             //
             GroupMemberListSize = reader.ReadInt32();
@@ -113,7 +113,7 @@ namespace RT.Models
             //
             writer.Write(MessageID ?? MessageId.Empty);
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
-            writer.Write(new byte[2]);
+            //writer.Write(new byte[2]);
 
             //
             writer.Write(SupersetID);
@@ -125,7 +125,7 @@ namespace RT.Models
             writer.Write(MatchOptions);
             writer.Write(ServerSessionKey, Constants.SESSIONKEY_MAXLEN);
             writer.Write(RequestData, Constants.REQUESTDATA_MAXLEN);
-            writer.Write(new byte[3]);
+            //writer.Write(new byte[3]);
 
             //
             writer.Write(GroupMemberListSize);

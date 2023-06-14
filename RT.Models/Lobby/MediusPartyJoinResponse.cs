@@ -46,7 +46,6 @@ namespace RT.Models
             ConnectionInfo = reader.Read<NetConnectionInfo>();
             partyIndex = reader.ReadInt32();
             maxPlayers = reader.ReadInt32();
-            //MatchGameState = reader.Read<MediusMatchGameState>();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -64,7 +63,6 @@ namespace RT.Models
             writer.Write(ConnectionInfo);
             writer.Write(partyIndex);
             writer.Write(maxPlayers);
-            //writer.Write(MatchGameState);
         }
 
         public override string ToString()
@@ -76,7 +74,6 @@ namespace RT.Models
                 $"ConnectionInfo: {ConnectionInfo} " +
                 $"partyIndex: {partyIndex} " +
                 $"maxPlayers: {maxPlayers}";
-            //$"GameState: {MatchGameState}";
         }
     }
 }

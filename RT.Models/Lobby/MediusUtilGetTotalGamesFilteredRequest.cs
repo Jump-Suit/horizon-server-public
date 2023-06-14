@@ -3,15 +3,26 @@ using Server.Common;
 
 namespace RT.Models
 {
-    /*
-    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.MatchSetGameStateRequest)] // Set GameState
-    public class MediusMatchSetGameStateRequest : BaseLobbyExtMessage, IMediusRequest
+    /// <summary>
+    /// Sent as request to retrieve version string of current connected Medius Server
+    /// </summary>
+    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.UtilGetTotalGamesFilteredRequest)]
+    public class MediusUtilGetTotalGamesFilteredRequest : BaseLobbyExtMessage, IMediusRequest
     {
-        public override byte PacketType => (byte)MediusLobbyExtMessageIds.MatchSetGameStateRequest; // Set GameState
+        public override byte PacketType => (byte)MediusLobbyExtMessageIds.UtilGetTotalGamesFilteredRequest;
 
+        /// <summary>
+        /// Message ID
+        /// </summary>
         public MessageId MessageID { get; set; }
+        /// <summary>
+        /// Session Key
+        /// </summary>
         public string SessionKey; // SESSIONKEY_MAXLEN
-        public MediusMatchGameState MatchGameState;
+        /// <summary>
+        /// ApplicationId of the client
+        /// </summary>
+        public int ApplicationId;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -23,7 +34,8 @@ namespace RT.Models
 
             // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
-            MatchGameState = reader.Read<MediusMatchGameState>();
+            reader.ReadBytes(2);
+            ApplicationId = reader.ReadInt32();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -36,7 +48,8 @@ namespace RT.Models
 
             // 
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
-            writer.Write(MatchGameState);
+            writer.Write(new byte[2]);
+            writer.Write(ApplicationId);
         }
 
         public override string ToString()
@@ -44,8 +57,7 @@ namespace RT.Models
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
                 $"SessionKey: {SessionKey} " +
-                $"GameState: {MatchGameState}";
+                $"ApplicationID: {ApplicationId}";
         }
     }
-    */
 }

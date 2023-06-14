@@ -80,7 +80,7 @@ namespace RT.Models
             GenericField8 = reader.ReadInt32();
             PartyHostType = reader.Read<MediusGameHostType>();
 
-            //ServerSessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
+            ServerSessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             //reader.ReadBytes(3);
         }
 
@@ -111,8 +111,7 @@ namespace RT.Models
             writer.Write(GenericField7);
             writer.Write(GenericField8);
             writer.Write(PartyHostType);
-
-            //writer.Write(ServerSessionKey, Constants.SESSIONKEY_MAXLEN);
+            writer.Write(ServerSessionKey, Constants.SESSIONKEY_MAXLEN);
             //writer.Write(new byte[3]);
         }
 

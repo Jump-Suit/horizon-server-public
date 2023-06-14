@@ -57,7 +57,7 @@ namespace RT.Models
         {
             return base.ToString() + " " +
                 $"RT_TOKEN_MESSAGE_TYPE: {tokenMsgType} " +
-                $"targetToken: {targetToken}" +
+                $"targetToken: {targetToken} " +
                 $"Host: {Host}";
         }
     }

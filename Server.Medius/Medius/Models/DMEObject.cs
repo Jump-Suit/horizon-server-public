@@ -1,4 +1,5 @@
 ﻿using DotNetty.Common.Internal.Logging;
+using RT.Common;
 using RT.Models;
 using System;
 using System.Linq;
@@ -16,6 +17,7 @@ namespace Server.Medius.Models
         public int CurrentWorlds { get; protected set; } = 0;
         public int CurrentPlayers { get; protected set; } = 0;
 
+        public MGCL_ALERT_LEVEL MGCL_ALERT_LEVEL { get; protected set; } = MGCL_ALERT_LEVEL.MGCL_ALERT_NONE;
         public int Port { get; protected set; } = 0;
         public IPAddress IP { get; protected set; } = IPAddress.Any;
 
@@ -111,6 +113,20 @@ namespace Server.Medius.Models
             RNG.NextBytes(tokenBuf);
             Token = Convert.ToBase64String(tokenBuf);
         }
+
+        public DMEObject(MediusServerSessionBeginRequest2 request)
+        {
+            ApplicationId = request.ApplicationID;
+            Port = request.Port;
+
+            // Generate new session key
+            SessionKey = Program.GenerateSessionKey();
+
+            // Generate new token
+            byte[] tokenBuf = new byte[12];
+            RNG.NextBytes(tokenBuf);
+            Token = Convert.ToBase64String(tokenBuf);
+        }
         #endregion
 
         public void OnServerReport(MediusServerReport report)
@@ -119,7 +135,7 @@ namespace Server.Medius.Models
             MaxPlayersPerWorld = report.MaxPlayersPerWorld;
             CurrentWorlds = report.ActiveWorldCount;
             CurrentPlayers = report.TotalActivePlayers;
-
+            MGCL_ALERT_LEVEL = report.AlertLevel;
         }
 
         #region SetIP

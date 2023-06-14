@@ -420,7 +420,7 @@ namespace Server.Dme.Models
 
         public override string ToString()
         {
-            return $"WorldId:{WorldId}, ClientCount:{Clients.Count}";
+            return $"WorldId: {WorldId}, ClientCount: {Clients.Count}";
         }
 
     }

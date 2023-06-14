@@ -43,7 +43,6 @@ namespace RT.Models
             writer.Write(FilterID);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +

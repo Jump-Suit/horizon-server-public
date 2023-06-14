@@ -47,7 +47,6 @@ namespace RT.Models
             writer.Write(BaselineValue);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +

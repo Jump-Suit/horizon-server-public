@@ -35,12 +35,11 @@ namespace RT.Models
             writer.Write(StatusCode);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID:{MessageID}" + " " +
-                $"StatusCode:{StatusCode}";
+                $"MessageID: {MessageID} " +
+                $"StatusCode: {StatusCode}";
         }
     }
 }

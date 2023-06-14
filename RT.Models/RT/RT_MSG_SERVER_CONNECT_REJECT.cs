@@ -9,12 +9,12 @@ namespace RT.Models
         public override RT_MSG_TYPE Id => RT_MSG_TYPE.RT_MSG_SERVER_CONNECT_REJECT;
 
         //
-        public RT_MSG_CLIENT_REJECT rejectReason;
+        public RT_MSG_CONNECT_REJECT_REASON rejectReason;
         public ushort Unk1;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
-            rejectReason = reader.Read<RT_MSG_CLIENT_REJECT>();
+            rejectReason = reader.Read<RT_MSG_CONNECT_REJECT_REASON>();
             Unk1 = reader.ReadUInt16();
         }
 

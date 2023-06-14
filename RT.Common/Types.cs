@@ -77,19 +77,15 @@ namespace RT.Common
 
     }
 
-    public enum RT_MSG_CLIENT_REJECT : byte
+    public enum RT_MSG_CONNECT_REJECT_REASON : byte
     {
-        RT_MSG_CLIENT_REJECT_NONE,
-        RT_MSG_CLIENT_REJECT_ERROR,
-        RT_MSG_CLIENT_REJECT_CLIENT_VER,
-        RT_MSG_CLIENT_REJECT_SERVER_VER,
-        RT_MSG_CLIENT_REJECT_FULL,
-        RT_MSG_CLIENT_REJECT_WORLD_ID,
-        RT_MSG_CLIENT_REJECT_APP_SIGNATURE,
-        RT_MSG_CLIENT_REJECT_ENCRYPTION,
-        RT_MSG_CLIENT_ACCESS_KEY,
-        RT_MSG_CLIENT_REJECT_AUX_UDP_FAILURE,
-        MAX_RT_MSG_CLIENT_REJECT
+        RT_MSG_REJECT_VERSION,
+        RT_MSG_REJECT_WORLD_FULL,
+        RT_MSG_REJECT_WORLD_ID,
+        RT_MSG_REJECT_APP_SIGNATURE,
+        RT_MSG_REJECT_ENCRYPTION,
+        RT_MSG_REJECT_ACCESS_KEY,
+        RT_MSG_REJECT_AUX_UDP_FAILURE
     }
 
     public enum RT_MSG_CLIENT_DISCONNECT_REASON : byte
@@ -452,6 +448,9 @@ namespace RT.Common
         /// Medius Matchmaking Server not found
         /// </summary>
         MediusMatchServerNotFound = -928,
+        /// <summary>
+        /// Matchmake Create Game Failed
+        /// </summary>
         MediusMatchGameCreationFailed = -927,
         MediusGameListSortOperationFailed = -926,
         MediusNumSortCriteriaAtMax = -925,
@@ -970,6 +969,7 @@ namespace RT.Common
     public enum MediusUserAction : int
     {
         /// <summary>
+        /// DEPRECATED NORMALLY<br></br>
         /// Used to denote that the player is still online
         /// </summary>
         KeepAlive,
@@ -1862,6 +1862,7 @@ namespace RT.Common
         ServerCreateGameWithAttributesResponse = 0x19,
         ServerSessionBeginRequest1 = 0x21,
         ServerSessionBeginResponse1 = 0x22,
+        ServerSessionBeginRequest2 = 0x24,
         ServerConnectGamesRequest = 0x1A,
         ServerConnectGamesResponse = 0x1B,
         ServerConnectNotification = 0x1C,
@@ -2166,10 +2167,9 @@ namespace RT.Common
         GetLadderStatsWide_wIDArray_Response = 0x1D,
         UniverseSvoURLResponse = 0x1E,
         ChannelList_ExtraInfo = 0x1F,
-
-        UnkRequestTwistedMetalX = 0x20,
-        UnkResponseTwistedMetalX = 0x21,
-
+        DListSubscription = 0x20,
+        DListRequest = 0x21,
+        DListResponse = 0x22,
         GenericChatMessage = 0x23,
         GenericChatFwdMessage = 0x24,
         GenericChatSetFilterRequest = 0x25,
@@ -2619,7 +2619,7 @@ namespace RT.Common
 
     #region Medius DList
 
-    public enum MediusDListID : int
+    public enum MediusDListID : ushort
     {
         MEDIUS_DLIST_BUDDY = 0,
         MEDIUS_DLIST_CLAN_MEMBER = 1,
@@ -2627,7 +2627,7 @@ namespace RT.Common
         MEDIUS_DLIST_LAST = 3,
     }
 
-    public enum MediusDListServiceLevel : int
+    public enum MediusDListServiceLevel : byte
     {
         MEDIUS_DLEVEL_UNSUB = 0,
         MEDIUS_DLEVEL_CHANGE_EVENTS = 1,
@@ -3038,6 +3038,7 @@ namespace RT.Common
 
     public enum NetMessageTypeIds : int
     {
+        //MAG
         /*
         kNetKernelMessageTypeStart = 0,
         NetMessageTypeHello = 1,
@@ -3084,13 +3085,13 @@ namespace RT.Common
         NetMessageTypePlayerKicked = 0x2A,
         NetMessageTypeAccountLoginRequest = 0x2B,
         NetMessageTypeAccountLoginResponse = 0x2C,
-        NetMessageTypeAccountLogoutRequest = 0x2D, // 45
-        NetMessageTypeAccountLogoutResponse = 0x2E,
+        NetMessageTypeAccountLogoutRequest = 45, // 45
+        NetMessageTypeAccountLogoutResponse = 46,
         NetMessageTypeCreateAccountRequest = 0x2F,
         NetMessageTypeCreateAccountResponse = 0x30,
         NetMessageTypeNPAuthenticateRequest = 0x31,
         NetMessageTypeNPAuthenticateResponse = 0x32,
-        NetMessageTypeMAPSHelloMessage = 0x33,
+        NetMessageTypeMAPSHelloMessage = 51,
         NetMessageTypeUniverseListRequest = 0x34,
         NetMessageTypeUniverseListResponse = 0x35,
         NetMessageTypeJoinGameConfirm = 0x36,
@@ -3185,8 +3186,8 @@ namespace RT.Common
         NetMessageTypeClanTagUpdate = 0x34,
         NetMessageTypeAccountLoginRequest = 0x35,
         NetMessageTypeAccountLoginResponse = 0x36,
-        NetMessageTypeAccountLogoutRequest = 0x37,
-        NetMessageTypeAccountLogoutResponse = 0x38,
+        NetMessageTypeAccountLogoutRequest = 55,
+        NetMessageTypeAccountLogoutResponse = 56,
         NetMessageTypeCreateAccountRequest = 0x39,
         NetMessageTypeCreateAccountResponse = 0x3A,
         NetMessageTypeNPAuthenticateRequest = 0x3B,
@@ -3197,7 +3198,7 @@ namespace RT.Common
         NetMessageTypeJoinGameConfirm = 0x40,
         NetMessageTypeQueueControls = 0x41,
         NetMessageTypeServerStatus = 0x42,
-        kNetGameMessageTypeStart = 0x1F4,
+        kNetGameMessageTypeStart = 500,
         NetMessageTypePatchRequest = 0x1F5,
         NetMessageTypePatchSettings = 0x1F6,
         NetMessageTypePatchURL = 0x1F7,

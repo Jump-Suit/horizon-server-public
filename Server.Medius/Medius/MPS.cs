@@ -11,11 +11,13 @@ using Server.Medius.PluginArgs;
 using Server.Pipeline.Attribute;
 using Server.Plugins.Interface;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using static Server.Medius.BaseMediusComponent;
 
 namespace Server.Medius
 {
@@ -29,6 +31,10 @@ namespace Server.Medius
         public override int UDPPort => 00000;
 
         DateTime lastSend = Utils.GetHighPrecisionUtcTime();
+
+        IChannel channel = null;
+        ChannelData channelData = null;
+        ClientObject clientObject = null;
 
         public MPS()
         {
@@ -50,10 +56,13 @@ namespace Server.Medius
 
         protected override async Task ProcessMessage(BaseScertMessage message, IChannel clientChannel, ChannelData data)
         {
+            channelData = data;
+            channel = clientChannel;
+
             // Get ScertClient data
             var scertClient = clientChannel.GetAttribute(Pipeline.Constants.SCERT_CLIENT).Get();
             scertClient.CipherService.EnableEncryption = Program.GetAppSettingsOrDefault(data.ApplicationId).EnableEncryption;
-
+            var enableEncryption = Program.GetAppSettingsOrDefault(data.ApplicationId).EnableEncryption;
 
             // 
             switch (message)
@@ -64,7 +73,7 @@ namespace Server.Medius
                             throw new Exception($"Unexpected RT_MSG_CLIENT_HELLO from {clientChannel.RemoteAddress}: {clientHello}");
 
                         data.State = ClientState.HELLO;
-                        Queue(new RT_MSG_SERVER_HELLO(), clientChannel);
+                        Queue(new RT_MSG_SERVER_HELLO() { RsaPublicKey = enableEncryption ? Program.Settings.DefaultKey.N : Org.BouncyCastle.Math.BigInteger.Zero }, clientChannel);
                         break;
                     }
                 case RT_MSG_CLIENT_CRYPTKEY_PUBLIC clientCryptKeyPublic:
@@ -104,9 +113,19 @@ namespace Server.Medius
                         data.ApplicationId = clientConnectTcp.AppId;
                         scertClient.ApplicationID = clientConnectTcp.AppId;
 
+                        List<int> pre108ServerConnect = new List<int>() { 10190, 10124, 10284, 10540, 10680 };
+                        List<int> pre108NoServerConnect = new List<int>() { 10782 };
+
+
                         if (clientConnectTcp.AccessToken != null)
                         {
                             data.ClientObject = Program.Manager.GetClientByAccessToken(clientConnectTcp.AccessToken, data.ApplicationId);
+                            if(data.ClientObject != null)
+                            {
+                                clientObject = data.ClientObject;
+                                Logger.Info("MPS Client Connected!");
+                                data.ClientObject.OnConnected();
+                            }
                         }
 
                         data.State = ClientState.AUTHENTICATED;
@@ -118,12 +137,9 @@ namespace Server.Medius
                             IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
                         }, clientChannel);
 
-
-                        //Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
-                        
-                        #region Amplitude SERVER_CONNECT_COMPLETE
-                        // Complete MPS Connection on Amplitude, R&C3: Pubeta, My Street, or ATV Offroad Fury 2 
-                        if (scertClient.MediusVersion < 109)
+                        #region 108 SERVER_CONNECT_COMPLETE
+                        // Depending on game, complete connection or not.
+                        if (scertClient.MediusVersion == 108 || !pre108NoServerConnect.Contains(scertClient.ApplicationID) && pre108ServerConnect.Contains(scertClient.ApplicationID))
                         {
                             Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
                         }
@@ -223,7 +239,7 @@ namespace Server.Medius
                         var game = Program.Manager.GetGameByGameId(gameId);
                         var rClient = Program.Manager.GetClientByAccountId(accountId, data.ClientObject.ApplicationId);
 
-                        if(data.ApplicationId == 22920)
+                        if (data.ApplicationId == 22920 || data.ApplicationId == 21834)
                         {
                             //Send Matchmaking create game
                             if (!createGameWithAttrResponse.IsSuccess)
@@ -379,6 +395,50 @@ namespace Server.Medius
                                         }
                                     });
                                 }
+
+                                else if (game.GameHostType == MediusGameHostType.MediusGameHostPeerToPeer &&
+                                    game.netAddressList.AddressList[0].AddressType == NetAddressType.NetAddressTypeBinaryExternalVport &&
+                                    game.netAddressList.AddressList[1].AddressType == NetAddressType.NetAddressTypeBinaryInternalVport
+                                    )
+                                {
+                                    // Join game P2P
+                                    await rClient?.JoinGameP2P(game);
+
+                                    // 
+                                    rClient?.Queue(new MediusJoinGameResponse()
+                                    {
+                                        MessageID = new MessageId(msgId),
+                                        StatusCode = MediusCallbackStatus.MediusSuccess,
+                                        GameHostType = game.GameHostType,
+                                        ConnectInfo = new NetConnectionInfo()
+                                        {
+                                            AccessKey = joinGameResponse.AccessKey,
+                                            SessionKey = rClient.SessionKey,
+                                            WorldID = game.WorldID,
+                                            ServerKey = joinGameResponse.pubKey,
+                                            AddressList = new NetAddressList()
+                                            {
+                                                AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
+                                                {
+                                                    new NetAddress() { IPBinaryBitOne = game.netAddressList.AddressList[0].IPBinaryBitOne,
+                                                        IPBinaryBitTwo = game.netAddressList.AddressList[0].IPBinaryBitTwo,
+                                                        IPBinaryBitThree = game.netAddressList.AddressList[0].IPBinaryBitThree,
+                                                        IPBinaryBitFour = game.netAddressList.AddressList[0].IPBinaryBitFour,
+                                                        Port = game.netAddressList.AddressList[0].Port,
+                                                        AddressType = NetAddressType.NetAddressTypeBinaryExternalVport},
+                                                    new NetAddress() { IPBinaryBitOne = game.netAddressList.AddressList[1].IPBinaryBitOne,
+                                                        IPBinaryBitTwo = game.netAddressList.AddressList[1].IPBinaryBitTwo,
+                                                        IPBinaryBitThree = game.netAddressList.AddressList[1].IPBinaryBitThree,
+                                                        IPBinaryBitFour = game.netAddressList.AddressList[1].IPBinaryBitFour,
+                                                        Port = game.netAddressList.AddressList[1].Port,
+                                                        AddressType = NetAddressType.NetAddressTypeBinaryExternalVport},
+                                                }
+                                            },
+                                            Type = NetConnectionType.NetConnectionTypePeerToPeerUDP
+                                        }
+                                    });
+                                }
+
                                 #endregion
                                 else if (rClient.MediusVersion == 108)
                                 {
@@ -582,7 +642,6 @@ namespace Server.Medius
                         Program.Manager.AddDmeClient(dme);
 
                         // 
-                        data.ClientObject = dme;
                         data.ClientObject.OnConnected();
 
                         // validate name
@@ -613,9 +672,7 @@ namespace Server.Medius
                         dme.BeginSession();
                         Program.Manager.AddDmeClient(dme);
 
-                        data.ClientObject = dme;
                         data.ClientObject.OnConnected();
-                        data.ClientObject.KeepAliveUntilNextConnection();
 
                         // validate name
                         if (!Program.PassTextFilter(data.ApplicationId, TextFilterContext.GAME_NAME, Convert.ToString(serverCreateGameOnSelfRequest0.GameName)))
@@ -636,7 +693,7 @@ namespace Server.Medius
                     }
                 #endregion
 
-                #region MediusServerCreateGameOnMeRequest
+                #region MediusServerCreateGameOnMeRequest   
                 case MediusServerCreateGameOnMeRequest serverCreateGameOnMeRequest:
                     {;
                         // Create DME object
@@ -645,8 +702,7 @@ namespace Server.Medius
                         dme.BeginSession();
                         Program.Manager.AddDmeClient(dme);
 
-                        // 
-                        data.ClientObject = dme;
+                        //
                         data.ClientObject.OnConnected();
 
                         // validate name
@@ -697,7 +753,18 @@ namespace Server.Medius
                         }
                         break;
                     }
-                #endregion 
+                #endregion
+
+                #region MediusServerWorldReportOnMe
+
+                case MediusServerWorldReportOnMe serverWorldReportOnMe:
+                    {
+                        if (data.ClientObject.CurrentGame != null)
+                            await data.ClientObject.CurrentGame.OnWorldReportOnMe(serverWorldReportOnMe);
+                        break;
+                    }
+
+                #endregion
 
                 #region MediusServerEndGameOnMeRequest
                 /// <summary>
@@ -843,6 +910,20 @@ namespace Server.Medius
             return null;
         }
 
+        public void SendServerCreateGameWithAttributesRequest(string messageId, int gameId, int gameAttributes, int clientAppId, int gameMaxPlayers)
+        {
+            Queue(new RT_MSG_SERVER_APP() { 
+                Message = new MediusServerCreateGameWithAttributesRequest()
+                {
+                    MessageID = new MessageId($"{messageId}"),
+                    MediusWorldUID = (uint)gameId,
+                    Attributes = (MediusWorldAttributesType)gameAttributes,
+                    ApplicationID = clientAppId,
+                    MaxClients = gameMaxPlayers
+                }
+            }, channel);
+        }
+
         //Actual DME flow unimplemented
         public DMEObject ReserveDMEObject(MediusServerSessionBeginRequest request)
         {
@@ -853,6 +934,14 @@ namespace Server.Medius
         }
 
         public DMEObject ReserveDMEObject(MediusServerSessionBeginRequest1 request)
+        {
+            var dme = new DMEObject(request);
+            dme.BeginSession();
+            Program.Manager.AddDmeClient(dme);
+            return dme;
+        }
+
+        public DMEObject ReserveDMEObject(MediusServerSessionBeginRequest2 request)
         {
             var dme = new DMEObject(request);
             dme.BeginSession();

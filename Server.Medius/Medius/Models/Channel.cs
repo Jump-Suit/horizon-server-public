@@ -27,14 +27,14 @@ namespace Server.Medius.Models
         public int Id = 0;
         public int ApplicationId = 0;
         public ChannelType Type = ChannelType.Lobby;
-        public string Name = "Default";
+        public string Name = "MediusLobby";
         public string Password = null;
         public int MinPlayers = 1;
         public int MaxPlayers = 10;
         public int GameLevel = 0;
         public int PlayerSkillLevel = 0;
         public int RuleSet = 0;
-        public MediusApplicationType AppType = MediusApplicationType.MediusAppTypeGame;
+        public MediusApplicationType AppType = MediusApplicationType.LobbyChatChannel;
         public MediusWorldSecurityLevelType SecurityLevel = MediusWorldSecurityLevelType.WORLD_SECURITY_NONE;
         public MediusLobbyFilterMaskLevelType LobbyFilterMaskLevelType = MediusLobbyFilterMaskLevelType.MediusLobbyFilterMaskLevel0;
         public ulong GenericField1 = 0;

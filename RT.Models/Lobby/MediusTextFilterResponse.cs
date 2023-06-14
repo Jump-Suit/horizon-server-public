@@ -14,8 +14,13 @@ namespace RT.Models
         /// Message ID
         /// </summary>
         public MessageId MessageID { get; set; }
-
+        /// <summary>
+        /// Text to Filter
+        /// </summary>
         public string Text; // CHATMESSAGE_MAXLEN
+        /// <summary>
+        /// Status Code to return
+        /// </summary>
         public MediusCallbackStatus StatusCode;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

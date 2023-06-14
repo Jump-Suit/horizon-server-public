@@ -21,6 +21,8 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
+
+            reader.ReadBytes(3);
             StatusCode = reader.Read<MediusCallbackStatus>();
         }
 
@@ -31,6 +33,9 @@ namespace RT.Models
 
             //
             writer.Write(MessageID);
+            
+            //
+            writer.Write(new byte[3]);
             writer.Write(StatusCode);
         }
 

@@ -16,17 +16,30 @@ namespace RT.Models
         public uint BinaryAddress;
         public uint Port;
 
+        public byte IPBinaryBitOne;
+        public byte IPBinaryBitTwo;
+        public byte IPBinaryBitThree;
+        public byte IPBinaryBitFour;
 
         public void Deserialize(BinaryReader reader)
         {
             AddressType = reader.Read<NetAddressType>();
 
             if(AddressType == NetAddressType.NetAddressTypeBinaryExternal 
-                || AddressType == NetAddressType.NetAddressTypeBinaryInternal
-                || AddressType == NetAddressType.NetAddressTypeBinaryExternalVport
-                || AddressType == NetAddressType.NetAddressTypeBinaryInternalVport)
+                || AddressType == NetAddressType.NetAddressTypeBinaryInternal)
             {
                 BinaryAddress = reader.ReadUInt32();
+                Port = reader.ReadUInt32();
+            }
+
+            if(AddressType == NetAddressType.NetAddressTypeBinaryExternalVport
+                || AddressType == NetAddressType.NetAddressTypeBinaryInternalVport)
+            {
+                IPBinaryBitOne = reader.ReadByte();
+                IPBinaryBitTwo = reader.ReadByte();
+                IPBinaryBitThree = reader.ReadByte();
+                IPBinaryBitFour = reader.ReadByte();
+                reader.ReadBytes(12);
                 Port = reader.ReadUInt32();
             }
 
@@ -46,11 +59,21 @@ namespace RT.Models
         {
             writer.Write(AddressType);
             if (AddressType == NetAddressType.NetAddressTypeBinaryExternal
-                || AddressType == NetAddressType.NetAddressTypeBinaryInternal
-                || AddressType == NetAddressType.NetAddressTypeBinaryExternalVport
-                || AddressType == NetAddressType.NetAddressTypeBinaryInternalVport)  
+                || AddressType == NetAddressType.NetAddressTypeBinaryInternal)  
             {
                 writer.Write(BinaryAddress);
+                writer.Write(Port);
+            }
+
+            if(AddressType == NetAddressType.NetAddressTypeBinaryExternalVport
+                || AddressType == NetAddressType.NetAddressTypeBinaryInternalVport)
+            {
+                writer.Write(IPBinaryBitOne);
+                writer.Write(IPBinaryBitTwo);
+                writer.Write(IPBinaryBitThree);
+                writer.Write(IPBinaryBitFour);
+
+                writer.Write(new byte[12]);
                 writer.Write(Port);
             }
 
@@ -68,13 +91,17 @@ namespace RT.Models
         public override string ToString()
         {
             if (AddressType == NetAddressType.NetAddressTypeBinaryExternal
-                || AddressType == NetAddressType.NetAddressTypeBinaryInternal
-                || AddressType == NetAddressType.NetAddressTypeBinaryExternalVport
-                || AddressType == NetAddressType.NetAddressTypeBinaryInternalVport) {
+                || AddressType == NetAddressType.NetAddressTypeBinaryInternal) {
                 return base.ToString() + " " +
                 $"AddressType: {AddressType} " +
                 $"BinaryAddress: {BinaryAddress} " +
                 $"Port: {Port}";
+            } else if (AddressType == NetAddressType.NetAddressTypeBinaryExternalVport
+                || AddressType == NetAddressType.NetAddressTypeBinaryInternalVport) {
+                return base.ToString() + " " +
+                $"AddressType: {AddressType} " +
+                $"(Binary) IP : {IPBinaryBitOne}.{IPBinaryBitTwo}.{IPBinaryBitThree}.{IPBinaryBitFour} " +
+                $"(Vport/Port) Port: {Port}"; 
             } else {
                 return base.ToString() + " " +
                 $"AddressType: {AddressType} " +

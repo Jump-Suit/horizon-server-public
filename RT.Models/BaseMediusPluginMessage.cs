@@ -117,12 +117,14 @@ namespace RT.Models
             Type classType = null;
 
             var msgSize = reader.ReadByte();
+
             //reader.ReadBytes(2);
             //var msgSize = reader.ReadUInt16();
             var msgTypeBW = reader.Read<NetMessageTypeIds>();
 
+
             var msgTypeByteInt = Convert.ToInt32(msgTypeBW);
-            var msgTypeReversed = ReverseBytes(msgTypeByteInt);
+            var msgTypeReversed = ReverseBytesInt(msgTypeByteInt);
             //var reversedMsgType = Reverse(Convert.ToInt32(msgTypeBW));
 
 
@@ -157,12 +159,12 @@ namespace RT.Models
             var msgSize = reader.ReadByte();
             var PluginId = reader.ReadByte();
 
-            var msgSizeReversed = ReverseBytes(Convert.ToInt32(msgSize));
+            var msgSizeReversed = ReverseBytesInt(Convert.ToInt32(msgSize));
 
             var msgTypeBW = reader.Read<NetMessageTypeIds>();
 
             var msgTypeByteInt = Convert.ToInt32(msgTypeBW);
-            var msgTypeReversed = ReverseBytes(msgTypeByteInt);
+            var msgTypeReversed = ReverseBytesInt(msgTypeByteInt);
             //var reversedMsgType = Reverse(Convert.ToInt32(msgTypeBW));
 
 
@@ -187,7 +189,13 @@ namespace RT.Models
 
         #endregion
 
-        public static int ReverseBytes(int value)
+        public static uint ReverseBytesUInt(uint value)
+        {
+            return (uint)((value & 0x000000FFU) << 24 | (value & 0x0000FF00U) << 8 |
+                (value & 0x00FF0000U) >> 8 | (value & 0xFF000000U) >> 24);
+        }
+
+        public static int ReverseBytesInt(int value)
         {
             return (int)((value & 0x000000FFU) << 24 | (value & 0x0000FF00U) << 8 |
                 (value & 0x00FF0000U) >> 8 | (value & 0xFF000000U) >> 24);

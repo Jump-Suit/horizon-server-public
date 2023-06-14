@@ -3,19 +3,24 @@ using Server.Common;
 
 namespace RT.Models
 {
-
-    /// <summary>
-    /// Begins a Peer to Peer MAS Session
-    /// </summary>
-    [MediusMessage(NetMessageClass.MessageClassLobbyReport, MediusMGCLMessageIds.ServerSessionBeginRequest1)]
-    public class MediusServerSessionBeginRequest1 : BaseMGCLMessage, IMediusRequest
+    [MediusMessage(NetMessageClass.MessageClassLobbyReport, MediusMGCLMessageIds.ServerSessionBeginRequest2)]
+    public class MediusServerSessionBeginRequest2 : BaseMGCLMessage, IMediusRequest
     {
 
-        public override byte PacketType => (byte)MediusMGCLMessageIds.ServerSessionBeginRequest1;
+        public override byte PacketType => (byte)MediusMGCLMessageIds.ServerSessionBeginRequest2;
 
         public MessageId MessageID { get; set; }
+        /// <summary>
+        /// LocaltionID of Client
+        /// </summary>
         public int LocationID;
+        /// <summary>
+        /// Client ApplicationID
+        /// </summary>
         public int ApplicationID;
+        /// <summary>
+        /// GameHostType connecting as.
+        /// </summary>
         public MGCL_GAME_HOST_TYPE ServerType;
         /// <summary>
         /// Major version for the Medius Client
@@ -26,9 +31,16 @@ namespace RT.Models
         /// </summary>
         public int ClientVersionMinor;
         /// <summary>
+        /// Special Patch version for the Medius Client
+        /// </summary>
+        public int ClientVersionSpecialPatch;
+        /// <summary>
         /// Build version for the Medius Client
         /// </summary>
         public int ClientVersionBuild;
+        /// <summary>
+        /// Not used in version 2.10
+        /// </summary>
         public int Port;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
@@ -44,6 +56,7 @@ namespace RT.Models
             ServerType = reader.Read<MGCL_GAME_HOST_TYPE>();
             ClientVersionMajor = reader.ReadInt32();
             ClientVersionMinor = reader.ReadInt32();
+            ClientVersionSpecialPatch = reader.ReadInt32();
             ClientVersionBuild = reader.ReadInt32();
             Port = reader.ReadInt32();
         }
@@ -59,12 +72,13 @@ namespace RT.Models
             writer.Write(LocationID);
             writer.Write(ApplicationID);
             writer.Write(ServerType);
-
             writer.Write(ClientVersionMajor);
             writer.Write(ClientVersionMinor);
+            writer.Write(ClientVersionSpecialPatch);
             writer.Write(ClientVersionBuild);
             writer.Write(Port);
         }
+
 
         public override string ToString()
         {
@@ -75,8 +89,9 @@ namespace RT.Models
                 $"ServerType: {ServerType} " +
                 $"ClientVersionMajor: {ClientVersionMajor} " +
                 $"ClientVersionMinor: {ClientVersionMinor} " +
+                $"ClientVersionSpecialPatch: {ClientVersionSpecialPatch} " +
                 $"ClientVersionBuild: {ClientVersionBuild} " +
-                $"Port: {Port}";
+                $"Port: {Port}(ignored)";
         }
     }
 }

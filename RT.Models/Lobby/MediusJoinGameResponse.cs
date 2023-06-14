@@ -1,5 +1,7 @@
 using RT.Common;
 using Server.Common;
+using System;
+using System.Collections.Generic;
 
 namespace RT.Models
 {
@@ -23,6 +25,9 @@ namespace RT.Models
         /// </summary>
         public long MaxPlayers;
 
+        public List<int> approvedMaxPlayersAppIds = new List<int>() { 22500, 22920 };
+        public List<int> unapprovedMaxPlayersAppids = new List<int>() { 20624, 24000, 24180 };
+
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
             // 
@@ -30,17 +35,17 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
-
-            //
-
             reader.ReadBytes(3);
 
+            //
             StatusCode = reader.Read<MediusCallbackStatus>();
             GameHostType = reader.Read<MediusGameHostType>();
             ConnectInfo = reader.Read<NetConnectionInfo>();
 
-            if (reader.MediusVersion == 113 && reader.AppId == 24180 || reader.AppId == 24000 || reader.AppId == 22500 || reader.AppId == 22920)
+            if (reader.MediusVersion == 113 /* && approvedMaxPlayersAppIds.Contains(reader.AppId) && !approvedMaxPlayersAppIds.Contains(reader.AppId)*/)
+            {
                 MaxPlayers = reader.ReadInt64();
+            }
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -50,16 +55,18 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
-
-            // 
             writer.Write(new byte[3]);
 
+            // 
             writer.Write(StatusCode);
             writer.Write(GameHostType);
             writer.Write(ConnectInfo);
 
-            if (writer.MediusVersion == 113 /*&& writer.AppId == 24180 || writer.AppId == 24000 || writer.AppId == 22500 || writer.AppId == 22920*/)
+            if (writer.MediusVersion == 113/* && approvedMaxPlayersAppIds.Contains(writer.AppId) && !approvedMaxPlayersAppIds.Contains(writer.AppId)*/)
+            {
+                Console.WriteLine("Setting MaxPlayers");
                 writer.Write(MaxPlayers);
+            }
         }
 
         public override string ToString()

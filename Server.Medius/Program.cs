@@ -11,7 +11,6 @@ using Server.Database;
 using Server.Medius.Config;
 using Server.Medius.Models;
 using Server.Plugins;
-using Server.libAntiCheat.Main;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -24,6 +23,8 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using DotNetty.Transport.Channels;
+using Server.libAntiCheat.Main;
 
 namespace Server.Medius
 {
@@ -305,7 +306,7 @@ namespace Server.Medius
                 #endregion
 
                 #region MLS Enabled?
-                if (Settings.EnableMAS == true)
+                if (Settings.EnableMLS == true)
                 {
                     Logger.Info($"MLS Version: {Settings.MLSVersion}");
                     Logger.Info($"Enabling MLS on Server IP = {SERVER_IP} TCP Port = {LobbyServer.TCPPort} UDP Port = {LobbyServer.UDPPort}.");
@@ -1295,6 +1296,12 @@ namespace Server.Medius
             //ERROR: Could not reset DME Svr metrics[%d]
         }
 
+        public static MPS GetMPS()
+        {
+            MPS mps = ProxyServer;
+
+            return mps;
+        }
     }
 }
 

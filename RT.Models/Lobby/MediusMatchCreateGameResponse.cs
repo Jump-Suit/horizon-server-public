@@ -45,7 +45,7 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
-
+            //writer.Write(new byte[3]);
             //
             writer.Write(StatusCode);
             writer.Write(MediusWorldID);

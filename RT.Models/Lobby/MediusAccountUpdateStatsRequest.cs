@@ -41,7 +41,6 @@ namespace RT.Models
             writer.Write(Stats, Constants.ACCOUNTSTATS_MAXLEN);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +

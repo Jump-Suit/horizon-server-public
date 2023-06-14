@@ -30,6 +30,7 @@
         public const int CLANSTATS_MAXLEN = 256;
         public const int CLANMSG_MAXLEN = 200;
         public const int CLANMSG_MAXLEN_113 = 2048;
+        public const int CLANMSG_MAXLEN_113_2 = 1200;
         #endregion
 
         /// <summary>
@@ -170,6 +171,16 @@
         public const int DME_VERSION_LENGTH = 20;
 
         public const int BUFFER_SIZE = 1500;
+
+        #region PSN Specific Ticket
+
+        public const int TICKET_SERIAL_ID_MAXLEN = 20;
+        public const int USER_ONLINE_ID_MAXLEN = 16;
+        public const int USER_REGION_MAXLEN = 4;
+        public const int USER_DOMAIN_MAXLEN = 4;
+        public const int SERVICE_ID_MAXLEN = 24;
+
+        #endregion
 
         #region Deprecated
 

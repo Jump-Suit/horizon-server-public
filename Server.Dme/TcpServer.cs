@@ -493,7 +493,7 @@ namespace Server.Dme
                 case RT_MSG_CLIENT_SET_AGG_TIME setAggTime:
                     {
                         Logger.Info($"rt_msg_server_process_client_set_agg_time_msg: new agg time = {setAggTime.AggTime}");
-                        if (scertClient.MediusVersion >= 109) {
+                        if (scertClient.ApplicationID != 10954 || scertClient.ApplicationID != 10952) {
                             data.ClientObject.AggTimeMs = setAggTime.AggTime;
                         } // We don't set AggTime here YET, the client object isn't created! for Pre-108 clients
                         break;
@@ -536,16 +536,7 @@ namespace Server.Dme
                     }
                 case RT_MSG_CLIENT_TOKEN_MESSAGE tokenMessage:
                     {
-                        if (scertClient.MediusVersion == 109){
-                            Queue(new RT_MSG_SERVER_TOKEN_MESSAGE()
-                            {
-                            Host = (byte)data.ClientObject.DmeWorld.SessionMaster
-                            }, clientChannel);
-                        }
-                        else{
-                            await ProcessRTTHostTokenMessage(tokenMessage, clientChannel, data);
-                        }
-                        
+                        await ProcessRTTHostTokenMessage(tokenMessage, clientChannel, data);
                         break;
                     }
                 case RT_MSG_CLIENT_APP_BROADCAST clientAppBroadcast:
@@ -643,7 +634,8 @@ namespace Server.Dme
             if (!isTokenValid)
             {
                 Logger.Info($"rt_msg_server_process_client_token_msg: bad target token {clientTokenMsg.targetToken}");
-            } else
+            }
+            else
             {
                 switch (clientTokenMsg.RT_TOKEN_MESSAGE_TYPE)
                 {
@@ -651,9 +643,26 @@ namespace Server.Dme
                         {
                             clientTokens.Add(clientTokenMsg.targetToken);
 
-                            rt_token_build_token_msg(clientTokenMsg.targetToken, clientChannel, clientTokenMsg.RT_TOKEN_MESSAGE_TYPE);
-                            return Task.CompletedTask;
+                            Queue(new RT_MSG_SERVER_TOKEN_MESSAGE()
+                            {
+                                tokenMsgType = RT_TOKEN_MESSAGE_TYPE.RT_TOKEN_SERVER_GRANTED,
+                                targetToken = clientTokenMsg.targetToken,
+                            }, clientChannel);
+                            break;
                         }
+
+                    case RT_TOKEN_MESSAGE_TYPE.RT_TOKEN_CLIENT_RELEASE:
+                        {
+                            clientTokens.Remove(clientTokenMsg.targetToken);
+
+                            Queue(new RT_MSG_SERVER_TOKEN_MESSAGE()
+                            {
+                                tokenMsgType = RT_TOKEN_MESSAGE_TYPE.RT_TOKEN_SERVER_FREED,
+                                targetToken = clientTokenMsg.targetToken,
+                            }, clientChannel);
+                            break;
+                        }
+
                     default:
                         {
                             Logger.Warn($"UNHANDLED RT TOKEN MESSAGE: {clientTokenMsg.RT_TOKEN_MESSAGE_TYPE}");

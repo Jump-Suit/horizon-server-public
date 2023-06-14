@@ -3,15 +3,17 @@ using Server.Common;
 
 namespace RT.Models
 {
-    /*
-    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.MatchSetGameStateRequest)] // Set GameState
-    public class MediusMatchSetGameStateRequest : BaseLobbyExtMessage, IMediusRequest
+    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.ClanRenameRequest)]
+    public class MediusClanRenameRequest : BaseLobbyExtMessage, IMediusRequest
     {
-        public override byte PacketType => (byte)MediusLobbyExtMessageIds.MatchSetGameStateRequest; // Set GameState
+
+        public override byte PacketType => (byte)MediusLobbyExtMessageIds.ClanRenameRequest;
 
         public MessageId MessageID { get; set; }
+
         public string SessionKey; // SESSIONKEY_MAXLEN
-        public MediusMatchGameState MatchGameState;
+        public int ClanID; // Target ClanId
+        public string NewClanName; // CLANNAME_MAXLEN
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -23,7 +25,8 @@ namespace RT.Models
 
             // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
-            MatchGameState = reader.Read<MediusMatchGameState>();
+            ClanID = reader.ReadInt32();
+            NewClanName = reader.ReadString(Constants.CLANNAME_MAXLEN);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -36,7 +39,8 @@ namespace RT.Models
 
             // 
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
-            writer.Write(MatchGameState);
+            writer.Write(ClanID);
+            writer.Write(NewClanName, Constants.CLANNAME_MAXLEN);
         }
 
         public override string ToString()
@@ -44,8 +48,8 @@ namespace RT.Models
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
                 $"SessionKey: {SessionKey} " +
-                $"GameState: {MatchGameState}";
+                $"ClanId: {ClanID} " +
+                $"NewClanName: {NewClanName}";
         }
     }
-    */
 }

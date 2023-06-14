@@ -159,7 +159,7 @@ namespace Server.libAntiCheat.Models
             GamePassword = createGame.GamePassword;
             SpectatorPassword = createGame.SpectatorPassword;
             GameHostType = createGame.GameHostType;
-            Attributes = createGame.Attributes;
+            Attributes = createGame.WorldAttributesType;
         }
 
         private void FromCreateGameOnMeRequest(MediusServerCreateGameOnMeRequest serverCreateGameOnMe)

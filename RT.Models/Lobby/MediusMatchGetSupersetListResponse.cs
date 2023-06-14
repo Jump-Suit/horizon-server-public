@@ -4,7 +4,8 @@ using Server.Common;
 namespace RT.Models
 {
     /// <summary>
-    /// Response returning a list of Match Supersets from the database
+    /// Response returning a list of Match Supersets from the database <br></br>
+    /// StatusCode: MediusNoResult, MediusSuccess
     /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.MatchGetSupersetListResponse)]
     public class MediusMatchGetSupersetListResponse : BaseLobbyExtMessage, IMediusRequest
@@ -48,21 +49,16 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
-            //reader.ReadBytes(3);
-			
+
             //
             StatusCode = reader.Read<MediusCallbackStatus>();
             EndOfList = reader.Read<bool>();
-
-            //reader.ReadBytes(3);
 
             //
             SupersetID = reader.ReadInt32();
             SupersetName = reader.ReadString(Constants.SUPERSETNAME_MAXLEN);
             SupersetDescription = reader.ReadString(Constants.SUPERSETDESCRIPTION_MAXLEN);
             ExtraInfo = reader.ReadString(Constants.SUPERSETEXTRAINFO_MAXLEN);
-
-            //reader.ReadBytes(2);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -72,23 +68,16 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
-            //writer.Write(new byte[3]);
 
             // 
             writer.Write(StatusCode);
             writer.Write(EndOfList);
-
-            //writer.Write(new byte[3]);
-
 
             //
             writer.Write(SupersetID);
             writer.Write(SupersetName, Constants.SUPERSETNAME_MAXLEN);
             writer.Write(SupersetDescription, Constants.SUPERSETDESCRIPTION_MAXLEN);
             writer.Write(ExtraInfo, Constants.SUPERSETEXTRAINFO_MAXLEN);
-
-            //writer.Write(new byte[2]);
-
         }
 
         public override string ToString()

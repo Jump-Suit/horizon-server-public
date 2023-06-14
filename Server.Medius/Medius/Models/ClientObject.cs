@@ -337,7 +337,7 @@ namespace Server.Medius.Models
         /// <summary>
         /// 
         /// </summary>
-        private uint _gameListFilterIdCounter = 0;
+        private uint _gameListFilterIdCounter = 1;
 
         /// <summary>
         /// 

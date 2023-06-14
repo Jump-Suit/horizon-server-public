@@ -22,7 +22,13 @@ namespace RT.Models
             // 
             MessageID = reader.Read<MessageId>();
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
-            Message = reader.ReadString(Constants.CLANMSG_MAXLEN);
+            if(reader.MediusVersion == 113)
+            {
+                Message = reader.ReadString(Constants.CLANMSG_MAXLEN_113_2);
+            } else
+            {
+                Message = reader.ReadString(Constants.CLANMSG_MAXLEN);
+            }
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -33,15 +39,21 @@ namespace RT.Models
             // 
             writer.Write(MessageID ?? MessageId.Empty);
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
-            writer.Write(Message, Constants.CLANMSG_MAXLEN);
+            if (writer.MediusVersion == 113)
+            {
+                writer.Write(Message, Constants.CLANMSG_MAXLEN_113_2);
+            }
+            else
+            {
+                writer.Write(Message, Constants.CLANMSG_MAXLEN);
+            }
         }
-
 
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"MessageID: {MessageID}" + " " +
-                $"SessionKey: {SessionKey}" + " " +
+                $"MessageID: {MessageID} " +
+                $"SessionKey: {SessionKey} " +
                 $"Message: {Message}";
         }
     }

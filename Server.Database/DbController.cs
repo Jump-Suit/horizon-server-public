@@ -1336,7 +1336,7 @@ namespace Server.Database
         /// </summary>
         /// <param name="statPost">Model containing clan id and ladder stats collection.</param>
         /// <returns>Success or failure.</returns>
-        public async Task<bool> PostClanLadderStats(int accountId, int? clanId, int[] stats, int appId, bool delta)
+        public async Task<bool> PostClanLadderStats(int accountId, int? clanId, int[] stats, int appId)
         {
             bool result = false;
             if (!clanId.HasValue)
@@ -1362,7 +1362,6 @@ namespace Server.Database
                     result = (await PostDbAsync($"Stats/postClanStats", JsonConvert.SerializeObject(new ClanStatPostDTO()
                     {
                         ClanId = clanId.Value,
-                        Delta = delta,
                         Stats = stats
                     }))).IsSuccessStatusCode;
                 }
@@ -1633,6 +1632,7 @@ namespace Server.Database
                             ClanMemberInvitations = new List<ClanInvitationDTO>(),
                             ClanMessages = new List<ClanMessageDTO>(),
                             ClanMediusStats = Convert.ToBase64String(new byte[Constants.CLANSTATS_MAXLEN]),
+                            ClanStats = new int[Constants.LADDERSTATSWIDE_MAXLEN],
                             ClanWideStats = new int[Constants.LADDERSTATSWIDE_MAXLEN],
                             AppId = appId
                         });
@@ -2421,6 +2421,7 @@ namespace Server.Database
             {
                 if (_settings.SimulatedMode)
                 {
+                    /*
                     return new DimAnnouncements()
                     {
                         Id = 1,
@@ -2428,6 +2429,7 @@ namespace Server.Database
                         AnnouncementBody = "Announcement Body",
                         CreateDt = DateTime.UtcNow,
                     };
+                    */
                 }
                 else
                 {
@@ -2452,7 +2454,7 @@ namespace Server.Database
             try
             {
                 if (_settings.SimulatedMode)
-                {
+                {/*
                     return new DimAnnouncements[]
                     {
                         new DimAnnouncements()
@@ -2464,6 +2466,7 @@ namespace Server.Database
 
                         }
                     };
+                    */
                 }
                 else
                 {
@@ -2489,6 +2492,7 @@ namespace Server.Database
             {
                 if (_settings.SimulatedMode)
                 {
+                    /*
                     return new DimEula()
                     {
                         Id = 1,
@@ -2498,6 +2502,7 @@ namespace Server.Database
                         EulaBody = "Eula Body",
 
                     };
+                    */
                 }
                 else
                 {

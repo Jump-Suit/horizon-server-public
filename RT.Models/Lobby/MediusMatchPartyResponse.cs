@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 
 namespace RT.Models
 {
-    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.MatchPartyResponse)]
+    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.MatchSetGameStateRequest)]
     public class MediusMatchPartyResponse : BaseLobbyExtMessage, IMediusResponse
     {
 
-        public override byte PacketType => (byte)MediusLobbyExtMessageIds.MatchPartyResponse;
+        public override byte PacketType => (byte)MediusLobbyExtMessageIds.MatchSetGameStateRequest;
 
         public bool IsSuccess => StatusCode >= 0;
 
