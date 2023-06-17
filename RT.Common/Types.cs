@@ -1860,9 +1860,6 @@ namespace RT.Common
         ServerSetAttributesResponse = 0x17,
         ServerCreateGameWithAttributesRequest = 0x18,
         ServerCreateGameWithAttributesResponse = 0x19,
-        ServerSessionBeginRequest1 = 0x21,
-        ServerSessionBeginResponse1 = 0x22,
-        ServerSessionBeginRequest2 = 0x24,
         ServerConnectGamesRequest = 0x1A,
         ServerConnectGamesResponse = 0x1B,
         ServerConnectNotification = 0x1C,
@@ -1870,6 +1867,9 @@ namespace RT.Common
         ServerDisconnectPlayerRequest = 0x1E,
         ServerCreateGameOnMeRequest = 0x1F,
         ServerWorldReportOnMe = 0x20,
+        ServerSessionBeginRequest1 = 0x21,
+        ServerSessionBeginResponse1 = 0x22,
+        ServerSessionBeginRequest2 = 0x24,
     }
     #endregion
 
