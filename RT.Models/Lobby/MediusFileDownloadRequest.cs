@@ -21,11 +21,10 @@ namespace RT.Models
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
             // 
-            MediusFileInfo = reader.Read<MediusFile>();
+            base.Deserialize(reader);
 
             // 
-            reader.ReadBytes(4);
-            base.Deserialize(reader);
+            MediusFileInfo = reader.Read<MediusFile>();
 
             //
             MessageID = reader.Read<MessageId>();
@@ -34,12 +33,10 @@ namespace RT.Models
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
         {
-            // 
-            writer.Write(MediusFileInfo);
+            base.Serialize(writer);
 
             // 
-            writer.Write(new byte[4]);
-            base.Serialize(writer);
+            writer.Write(MediusFileInfo);
 
             //
             writer.Write(MessageID ?? MessageId.Empty);

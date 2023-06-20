@@ -24,9 +24,10 @@ namespace RT.Models
 
             // 
             MessageID = reader.Read<MessageId>();
-            reader.ReadBytes(3);
             StatusCode = reader.Read<MediusCallbackStatus>();
             ClanID = reader.ReadInt32();
+
+            
             if (reader.MediusVersion == 113)
             {
                 ClanMessageID = reader.ReadInt32();
@@ -36,8 +37,8 @@ namespace RT.Models
             {
                 Message = reader.ReadString(Constants.CLANMSG_MAXLEN);
             }
+
             EndOfList = reader.ReadBoolean();
-            reader.ReadBytes(3);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -47,9 +48,9 @@ namespace RT.Models
 
             // 
             writer.Write(MessageID ?? MessageId.Empty);
-            //writer.Write(new byte[3]);
             writer.Write(StatusCode);
             writer.Write(ClanID);
+            
             if (writer.MediusVersion == 113)
             {
                 writer.Write(ClanMessageID);
@@ -59,8 +60,8 @@ namespace RT.Models
             {
                 writer.Write(Message, Constants.CLANMSG_MAXLEN);
             }
+
             writer.Write(EndOfList);
-            //writer.Write(new byte[3]);
         }
 
         public override string ToString()

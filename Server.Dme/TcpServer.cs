@@ -416,6 +416,15 @@ namespace Server.Dme
                             PlayerCount = (ushort)data.ClientObject.DmeWorld.Clients.Count,
                             IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
                         }, clientChannel);
+
+                        if(scertClient.MediusVersion == 108)
+                        {
+                            Queue(new RT_MSG_SERVER_CONNECT_COMPLETE()
+                            {
+                                ClientCountAtConnect = (ushort)data.ClientObject.DmeWorld.Clients.Count
+                            }, clientChannel);
+                        }
+
                         break;
                     }
                 case RT_MSG_CLIENT_CONNECT_READY_REQUIRE clientConnectReadyRequire:

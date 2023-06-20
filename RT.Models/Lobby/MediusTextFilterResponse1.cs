@@ -1,10 +1,8 @@
 using RT.Common;
 using Server.Common;
-using System;
 
 namespace RT.Models
 {
-
     [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.MediusTextFilterResponse1)]
     public class MediusTextFilterResponse1 : BaseLobbyExtMessage, IMediusResponse
     {
@@ -26,17 +24,9 @@ namespace RT.Models
             MessageID = reader.Read<MessageId>();
 
             // 
-            //reader.ReadBytes(3);
-
             StatusCode = reader.Read<MediusCallbackStatus>();
             TextSize = reader.ReadUInt32();
             Text = reader.ReadChars(Constants.CHATMESSAGE_MAXLEN);
-            //reader.ReadBytes(4);
-
-            //
-            //Text = reader.ReadString(Constants.CHATMESSAGE_MAXLEN);
-            //reader.ReadBytes(3);
-            //StatusCode = reader.Read<MediusCallbackStatus>();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -48,19 +38,10 @@ namespace RT.Models
             writer.Write(MessageID ?? MessageId.Empty);
 
             // 
-            //writer.Write(new byte[3]);
-
             writer.Write(StatusCode);
             writer.Write(TextSize);
             writer.Write(Text);
-            //writer.Write(new byte[4]);
-
-            // 
-            //writer.Write(Text, Constants.CHATMESSAGE_MAXLEN);
-            //writer.Write(new byte[3]);
-            //writer.Write(StatusCode);
         }
-
 
         public override string ToString()
         {

@@ -68,7 +68,7 @@ namespace Server.Medius
                     }
                 case RT_MSG_CLIENT_CONNECT_TCP clientConnectTcp:
                     {
-                        List<int> pre108ServerComplete = new List<int>() { 10164, 10190, 10124, 10284, 10414, 10540, 10680 };
+                        List<int> pre108ServerComplete = new List<int>() { 10164, 10190, 10124, 10284, 10414, 10442, 10540, 10680 };
 
                         data.ApplicationId = clientConnectTcp.AppId;
                         scertClient.ApplicationID = clientConnectTcp.AppId;
@@ -148,7 +148,11 @@ namespace Server.Medius
                             {
                                 Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
                             }
-                            if (scertClient.MediusVersion > 108 || pre108ServerComplete.Contains(data.ApplicationId))
+
+                            if (scertClient.MediusVersion > 108)
+                            {
+                                Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
+                            } else if(pre108ServerComplete.Contains(data.ApplicationId))
                             {
                                 Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
                             }
@@ -1269,6 +1273,12 @@ namespace Server.Medius
                         if (data.ClientObject == null)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {accountLoginRequest} without a session.");
 
+                        await Program.Plugins.OnEvent(PluginEvent.MEDIUS_ACCOUNT_LOGIN_REQUEST, new OnAccountLoginRequestArgs()
+                        {
+                            Player = data.ClientObject,
+                            Request = accountLoginRequest
+                        });
+
                         // Check the client isn't already logged in
                         if (Program.Manager.GetClientByAccountName(accountLoginRequest.Username, data.ClientObject.ApplicationId)?.IsLoggedIn ?? false)
                         {
@@ -1361,15 +1371,21 @@ namespace Server.Medius
                                         }
 
                                         // validate name
-                                        if (!Program.PassTextFilter(data.ApplicationId, Config.TextFilterContext.ACCOUNT_NAME, accountLoginRequest.Username))
+                                        if (!Program.PassTextFilter(data.ApplicationId, TextFilterContext.ACCOUNT_NAME, accountLoginRequest.Username))
                                         {
                                             data.ClientObject.Queue(new MediusAccountLoginResponse()
                                             {
                                                 MessageID = accountLoginRequest.MessageID,
-                                                StatusCode = MediusCallbackStatus.MediusFail,
+                                                StatusCode = MediusCallbackStatus.MediusVulgarityFound,
                                             });
                                             return;
                                         }
+
+                                        await Program.Plugins.OnEvent(PluginEvent.MEDIUS_PRE_ACCOUNT_CREATE_ON_NOT_FOUND, new OnAccountLoginRequestArgs()
+                                        {
+                                            Player = data.ClientObject,
+                                            Request = accountLoginRequest
+                                        });
 
                                         _ = Program.Database.CreateAccount(new Database.Models.CreateAccountDTO()
                                         {
@@ -1382,6 +1398,11 @@ namespace Server.Medius
                                         {
                                             if (r.IsCompletedSuccessfully && r.Result != null)
                                             {
+                                                await Program.Plugins.OnEvent(PluginEvent.MEDIUS_POST_ACCOUNT_CREATE_ON_NOT_FOUND, new OnAccountLoginRequestArgs()
+                                                {
+                                                    Player = data.ClientObject,
+                                                    Request = accountLoginRequest
+                                                });
                                                 await Login(accountLoginRequest.MessageID, clientChannel, data, r.Result, false);
                                             }
                                             else
@@ -1615,7 +1636,7 @@ namespace Server.Medius
                                             _ = Program.Database.CreateAccount(new Database.Models.CreateAccountDTO()
                                             {
                                                 AccountName = ticketLoginRequest.UserOnlineId,
-                                                AccountPassword = "TEMP",
+                                                AccountPassword = null,
                                                 MachineId = data.MachineId,
                                                 MediusStats = Convert.ToBase64String(new byte[Constants.ACCOUNTSTATS_MAXLEN]),
                                                 AppId = data.ClientObject.ApplicationId

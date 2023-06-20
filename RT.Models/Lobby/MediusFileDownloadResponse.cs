@@ -26,7 +26,7 @@ namespace RT.Models
             // 
             base.Deserialize(reader);
 
-            // 
+            //
             Data = reader.ReadBytes(Constants.MEDIUS_FILE_MAX_DOWNLOAD_DATA_SIZE);
             iStartByteIndex = reader.ReadInt32();
             iDataSize = reader.ReadInt32();
@@ -61,7 +61,7 @@ namespace RT.Models
         {
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
-                $"Data: {BitConverter.ToString(Data)} " +
+                $"Data: {string.Join("", BitConverter.ToString(Data))} " +
                 $"iStartByteIndex: {iStartByteIndex} " +
                 $"iDataSize: {iDataSize} " +
                 $"iPacketNumber: {iPacketNumber} " +

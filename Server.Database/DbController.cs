@@ -14,6 +14,7 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace Server.Database
 {
@@ -33,6 +34,7 @@ namespace Server.Database
         private List<AccountDTO> _simulatedAccounts = new List<AccountDTO>();
         private List<AccountRelationInviteDTO> _simulatedBuddyInvitations = new List<AccountRelationInviteDTO>();
         private List<NpIdDTO> _simulatedNpIdAccounts = new List<NpIdDTO>();
+        private List<PostDebugInfoDTO> _simulatedPostDebugInfo = new List<PostDebugInfoDTO>();
         private List<ClanDTO> _simulatedClans = new List<ClanDTO>();
         private List<MatchmakingSupersetDTO> _simulatedMatchmakingSupersets = new List<MatchmakingSupersetDTO>();
         private List<FileDTO> _simulatedMediusFiles = new List<FileDTO>();
@@ -188,7 +190,9 @@ namespace Server.Database
                 }
                 else
                 {
-                    result = await GetDbAsync<AccountDTO>($"Account/searchAccountByName?AccountName={name}&AppId={appId}");
+                    name = HttpUtility.UrlEncode(name);
+                    string route = $"Account/searchAccountByName?AccountName={name}&AppId={appId}";
+                    result = await GetDbAsync<AccountDTO>(route);
                 }
             }
             catch (Exception e)
@@ -2355,11 +2359,11 @@ namespace Server.Database
         #endregion
 
         #region DebugInfo
-        /*
+        
         /// <summary>
         /// Post the DebugInfo to the database
         /// </summary>
-        public async Task<bool> PostDebugInfo(PostDebugInfo NpId)
+        public async Task<bool> PostDebugInfo(string acctName, string Message, int appId)
         {
             bool result = false;
 
@@ -2367,15 +2371,11 @@ namespace Server.Database
             {
                 if (_settings.SimulatedMode)
                 {
-                    _simulatedNpIdAccounts.Add(new NpIdDTO()
+                    _simulatedPostDebugInfo.Add(new PostDebugInfoDTO()
                     {
-                        AppId = NpId.AppId,
-                        data = NpId.data,
-                        term = NpId.term,
-                        dummy = NpId.dummy,
-
-                        opt = NpId.opt,
-                        reserved = NpId.reserved,
+                        AppId = appId,
+                        AccountName = acctName,
+                        Message = Message,
                         CreateDt = DateTime.UtcNow
                     });
 
@@ -2385,15 +2385,11 @@ namespace Server.Database
                 }
                 else
                 {
-                    result = (await PostDbAsync($"Account/postNpId?&AppId={NpId.AppId}&SceNpId={NpId}&createDt={DateTime.UtcNow}", JsonConvert.SerializeObject(new NpIdDTO
+                    result = (await PostDbAsync($"logs/postDebugInfo", JsonConvert.SerializeObject(new PostDebugInfoDTO
                     {
-                        AppId = NpId.AppId,
-                        data = NpId.data,
-                        term = NpId.term,
-                        dummy = NpId.dummy,
-
-                        opt = NpId.opt,
-                        reserved = NpId.reserved,
+                        AppId = appId,
+                        AccountName = acctName,
+                        Message = Message,
                         CreateDt = DateTime.UtcNow
                     }))).IsSuccessStatusCode;
                 }
@@ -2405,7 +2401,7 @@ namespace Server.Database
 
             return result;
         }
-        */
+        
         #endregion
 
         #region Announcements / Policy
@@ -3185,6 +3181,25 @@ namespace Server.Database
                             GenericFieldFilter = 1
                         },
                         */
+                        new ChannelDTO()
+                        {
+                            AppId = 20624,
+                            Id = 1,
+                            Name = "US",
+                            MaxPlayers = 512,
+                            GenericField1 = 1,
+                            GenericField2 = 1,
+                            GenericFieldFilter = 64
+                        },
+                        new ChannelDTO()
+                        {
+                            AppId = 20244,
+                            Id = 1,
+                            Name = "NBA 07",
+                            MaxPlayers = 256,
+                            GenericField1 = 1,
+                            GenericFieldFilter = 64
+                        },
 
                         new ChannelDTO()
                         {

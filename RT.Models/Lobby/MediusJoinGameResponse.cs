@@ -42,7 +42,7 @@ namespace RT.Models
             GameHostType = reader.Read<MediusGameHostType>();
             ConnectInfo = reader.Read<NetConnectionInfo>();
 
-            if (reader.MediusVersion == 113 /* && approvedMaxPlayersAppIds.Contains(reader.AppId) && !approvedMaxPlayersAppIds.Contains(reader.AppId)*/)
+            if (reader.MediusVersion == 113  && approvedMaxPlayersAppIds.Contains(reader.AppId) && !approvedMaxPlayersAppIds.Contains(reader.AppId))
             {
                 MaxPlayers = reader.ReadInt64();
             }
@@ -62,7 +62,7 @@ namespace RT.Models
             writer.Write(GameHostType);
             writer.Write(ConnectInfo);
 
-            if (writer.MediusVersion == 113/* && approvedMaxPlayersAppIds.Contains(writer.AppId) && !approvedMaxPlayersAppIds.Contains(writer.AppId)*/)
+            if (writer.MediusVersion == 113 && approvedMaxPlayersAppIds.Contains(writer.AppId) && !approvedMaxPlayersAppIds.Contains(writer.AppId))
             {
                 Console.WriteLine("Setting MaxPlayers");
                 writer.Write(MaxPlayers);

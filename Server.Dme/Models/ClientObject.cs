@@ -330,12 +330,15 @@ namespace Server.Dme.Models
 
         public bool HasRecvFlag(RT_RECV_FLAG flag)
         {
+            if (MediusVersion <= 108)
+                return true;
+
             return RecvFlag.HasFlag(flag);
         }
 
         public override string ToString()
         {
-            return $"(worldId:{DmeWorld.WorldId},clientId:{DmeId})";
+            return $"(worldId: {DmeWorld.WorldId}, clientId: {DmeId})";
         }
 
     }

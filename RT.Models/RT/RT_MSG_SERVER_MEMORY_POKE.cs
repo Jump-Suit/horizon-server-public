@@ -9,36 +9,32 @@ namespace RT.Models
     {
         public override RT_MSG_TYPE Id => RT_MSG_TYPE.RT_MSG_SERVER_MEMORY_POKE;
 
-        public int MsgDataLen;
-        public long start_Address = 0;
-        public byte[] Payload = new byte[00000000];
+        public uint start_Address = 0;
+        public byte[] Payload;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
             start_Address = reader.ReadUInt32();
-            //MsgDataLen = reader.ReadInt32();
-            Payload = reader.ReadBytes(MsgDataLen);
+            int len = reader.ReadInt32();
+            Payload = reader.ReadBytes(len);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
         {
             writer.Write(start_Address);
-
-            //writer.Write(Payload?.Length ?? 0);
-            writer.Write(Payload);
-            //if (Payload != null)
-            
+            writer.Write(Payload?.Length ?? 0);
+            if (Payload != null)
+                writer.Write(Payload);
         }
 
         public override string ToString()
         {
             return base.ToString() + " " +
 
-                $"Address: {start_Address:X8} " +
-                $"MsgDataLen: {MsgDataLen} " +
-                $"Payload: {BitConverter.ToString(Payload)}";
+                $"Address: {start_Address} " +
+                $"PayloadLen: {Payload?.Length} " +
+                $"Payload: {string.Join("", Payload)}";
         }
-
 
         public static List<RT_MSG_SERVER_MEMORY_POKE> FromPayload(uint address, byte[] payload)
         {

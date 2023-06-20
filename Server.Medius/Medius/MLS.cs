@@ -101,7 +101,7 @@ namespace Server.Medius
                     }
                 case RT_MSG_CLIENT_CONNECT_TCP clientConnectTcp:
                     {
-                        List<int> pre108ServerComplete = new List<int>() { 10164, 10190, 10124, 10284, 10414, 10540, 10680 };
+                        List<int> pre108ServerComplete = new List<int>() { 10164, 10190, 10124, 10284, 10414, 10442, 10540, 10680 };
                         List<int> pre108NoServerComplete = new List<int>() { 10010, 10031, 10274 };
 
 
@@ -168,12 +168,6 @@ namespace Server.Medius
                             else
                             {
 
-                                //Older Medius titles do NOT use CRYPTKEY_GAME, newer ones have this.
-                                if (scertClient.CipherService.EnableEncryption == true)
-                                {
-                                    Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
-                                }
-
                                 Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
                                 {
                                     PlayerId = 0,
@@ -182,10 +176,21 @@ namespace Server.Medius
                                     IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
                                 }, clientChannel);
 
-                                if (scertClient.MediusVersion == 108 && pre108ServerComplete.Contains(data.ApplicationId) && !pre108NoServerComplete.Contains(data.ApplicationId))
+                                //Older Medius titles do NOT use CRYPTKEY_GAME, newer ones have this.
+                                if (scertClient.CipherService.EnableEncryption == true)
+                                {
+                                    Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
+                                }
+
+                                if (scertClient.MediusVersion > 108)
                                 {
                                     Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
                                 }
+                                else if (pre108ServerComplete.Contains(data.ApplicationId) && !pre108NoServerComplete.Contains(data.ApplicationId))
+                                {
+                                    Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
+                                }
+
                                 /*
 
                                  //If Frequency, TMBO, Socom 1, ATV Offroad Fury 2,  My Street, or Field Commander Beta then
@@ -4409,12 +4414,21 @@ namespace Server.Medius
                                 List<MediusGetMyClanMessagesResponse> responses = new List<MediusGetMyClanMessagesResponse>();
                                 if (r.IsCompletedSuccessfully && r.Result != null)
                                 {
+                                    /*
+                                    char[] ch = new char[r.Result.FirstOrDefault().Message.Length];
+
+                                    // Copy character by character into array 
+                                    for (int i = 0; i < r.Result.FirstOrDefault().Message.Length; i++)
+                                    {
+                                        ch[i] = r.Result.FirstOrDefault().Message[i];
+                                    }
+                                    */
                                     responses.AddRange(r.Result
                                         .Select(x => new MediusGetMyClanMessagesResponse()
                                         {
                                             MessageID = getMyClanMessagesRequest.MessageID,
                                             StatusCode = MediusCallbackStatus.MediusSuccess,
-                                            Message = x.Message,
+                                            Message = r.Result.FirstOrDefault().Message,
                                             ClanID = data.ClientObject.ClanId.Value,
                                             ClanMessageID = 1
                                         }));
@@ -5218,7 +5232,7 @@ namespace Server.Medius
                                 PlayerCount = (ushort)x.PlayerCount,
                                 PlayerSkillLevel = x.PlayerSkillLevel,
                                 RulesSet = x.RulesSet,
-                                SecurityLevel = (String.IsNullOrEmpty(x.GamePassword) ? MediusWorldSecurityLevelType.WORLD_SECURITY_NONE : MediusWorldSecurityLevelType.WORLD_SECURITY_PLAYER_PASSWORD),
+                                SecurityLevel = (string.IsNullOrEmpty(x.GamePassword) ? MediusWorldSecurityLevelType.WORLD_SECURITY_NONE : MediusWorldSecurityLevelType.WORLD_SECURITY_PLAYER_PASSWORD),
                                 WorldStatus = x.WorldStatus,
                                 EndOfList = false
                             }).ToArray();
@@ -5273,7 +5287,9 @@ namespace Server.Medius
                             {
                                 MessageID = gameInfoRequest.MessageID,
                                 StatusCode = MediusCallbackStatus.MediusSuccess,
-
+                                ApplicationID = data.ApplicationId,
+                                MaxPlayers = (ushort)game.MaxPlayers,
+                                MinPlayers = (ushort)game.MinPlayers,
                                 GameHostType = game.GameHostType,
                                 GameLevel = game.GameLevel,
                                 GameName = game.GameName,
@@ -5286,16 +5302,12 @@ namespace Server.Medius
                                 GenericField6 = game.GenericField6,
                                 GenericField7 = game.GenericField7,
                                 GenericField8 = game.GenericField8,
-                                MaxPlayers = (ushort)game.MaxPlayers,
-                                MinPlayers = (ushort)game.MinPlayers,
                                 PlayerCount = (ushort)game.PlayerCount,
                                 PlayerSkillLevel = game.PlayerSkillLevel,
                                 RulesSet = game.RulesSet,
                                 WorldStatus = game.WorldStatus,
-                                ApplicationID = data.ApplicationId
                             });
                         }
-
                         break;
                     }
 
@@ -7820,7 +7832,7 @@ namespace Server.Medius
                                     {
                                         AppId = data.ClientObject.ApplicationId,
                                         FileName = fileCreateRequest.MediusFileToCreate.FileName,
-                                        ServerChecksum = serverCheckSumGenerated,
+                                        ServerChecksum = string.Join("", serverCheckSumGenerated),
                                         FileID = fileCreateRequest.MediusFileToCreate.FileID,
                                         FileSize = fileCreateRequest.MediusFileToCreate.FileSize,
                                         CreationTimeStamp = fileCreateRequest.MediusFileToCreate.CreationTimeStamp,
@@ -8215,7 +8227,6 @@ namespace Server.Medius
 
                         if (File.Exists(rootPath))
                         {
-
                             var bytes = File.ReadAllBytes(rootPath);
                             int j = 0;
                             for (int i = 0; i < bytes.Length; i += Constants.MEDIUS_FILE_MAX_DOWNLOAD_DATA_SIZE)
@@ -8224,38 +8235,18 @@ namespace Server.Medius
                                 if (len > Constants.MEDIUS_FILE_MAX_DOWNLOAD_DATA_SIZE)
                                     len = Constants.MEDIUS_FILE_MAX_DOWNLOAD_DATA_SIZE;
 
-                                //If File is less than the Max Download Data Size, End the Transfer in one download packet otherwise continue with normal flow
-                                if(len < Constants.MEDIUS_FILE_MAX_DOWNLOAD_DATA_SIZE)
+                                var msg = new MediusFileDownloadResponse()
                                 {
-                                    var msg = new MediusFileDownloadResponse()
-                                    {
-                                        MessageID = fileDownloadRequest.MessageID,
-                                        iDataSize = len,
-                                        iPacketNumber = j,
-                                        iXferStatus = MediusFileXferStatus.End,
-                                        iStartByteIndex = i,
-                                        StatusCode = MediusCallbackStatus.MediusSuccess
-                                    };
+                                    MessageID = fileDownloadRequest.MessageID,
+                                    iDataSize = len,
+                                    iPacketNumber = j,
+                                    iXferStatus = j == 0 ? MediusFileXferStatus.Initial : ((len + i) >= bytes.Length ? MediusFileXferStatus.End : MediusFileXferStatus.Mid),
+                                    iStartByteIndex = i,
+                                    StatusCode = MediusCallbackStatus.MediusSuccess
+                                };
+                                Array.Copy(bytes, i, msg.Data, 0, len);
 
-                                    Array.Copy(bytes, i, msg.Data, 0, len);
-
-                                    data.ClientObject.Queue(msg);
-                                } else
-                                {
-
-                                    var msg = new MediusFileDownloadResponse()
-                                    {
-                                        MessageID = fileDownloadRequest.MessageID,
-                                        iDataSize = len,
-                                        iPacketNumber = j,
-                                        iXferStatus = j == 0 ? MediusFileXferStatus.Initial : ((len + i) >= bytes.Length ? MediusFileXferStatus.End : MediusFileXferStatus.Mid),
-                                        iStartByteIndex = i,
-                                        StatusCode = MediusCallbackStatus.MediusSuccess
-                                    };
-                                    Array.Copy(bytes, i, msg.Data, 0, len);
-
-                                    data.ClientObject.Queue(msg);
-                                }
+                                data.ClientObject.Queue(msg);
 
                                 ++j;
                             }
@@ -8789,7 +8780,7 @@ namespace Server.Medius
 
                         if (Settings.PostDebugInfoEnable == false)
                         {
-                            Logger.Warn("PostDebugInfo not enabled");
+                            Logger.Warn("PostDebugInfo feature not enabled");
 
                             data.ClientObject.Queue(new MediusPostDebugInfoResponse
                             {
@@ -8799,15 +8790,27 @@ namespace Server.Medius
                         }
                         else
                         {
-                            //Program.Database.postdebug
-                            Logger.Info("PostDebugInfo success");
                             //Post DebugInfo to database
-                            //await Program.Database.PostDebugInfo(data.ClientObject.ApplicationId, postDebugInfoRequest.Message)
-
-                            data.ClientObject.Queue(new MediusPostDebugInfoResponse
+                            await Program.Database.PostDebugInfo(data.ClientObject.AccountName, postDebugInfoRequest.Message, data.ClientObject.ApplicationId).ContinueWith((r) =>
                             {
-                                MessageID = postDebugInfoRequest.MessageID,
-                                StatusCode = MediusCallbackStatus.MediusSuccess
+                                if (r.IsCompletedSuccessfully && r.Result != false)
+                                {
+                                    Logger.Info("PostDebugInfo success");
+                                    data.ClientObject.Queue(new MediusPostDebugInfoResponse
+                                    {
+                                        MessageID = postDebugInfoRequest.MessageID,
+                                        StatusCode = MediusCallbackStatus.MediusSuccess
+                                    });
+                                }
+                                else
+                                {
+                                    Logger.Warn("PostDebugInfo failed to post to database!");
+                                    data.ClientObject.Queue(new MediusPostDebugInfoResponse
+                                    {
+                                        MessageID = postDebugInfoRequest.MessageID,
+                                        StatusCode = MediusCallbackStatus.MediusDBError
+                                    });
+                                }
                             });
                         }
 
