@@ -16,14 +16,14 @@ namespace RT.Models
 
         public override byte PluginId => 31;
 
-        public int protocolInfo;
-        public int buildNumber;
+        public uint protocolInfo;
+        public uint buildNumber;
 
 
         public override void DeserializePlugin(MessageReader reader)
         {
-            protocolInfo = reader.ReadInt32();
-            buildNumber = reader.ReadInt32();
+            protocolInfo = reader.ReadUInt32();
+            buildNumber = reader.ReadUInt32();
 
         }
         public override void SerializePlugin(MessageWriter writer)
@@ -34,11 +34,12 @@ namespace RT.Models
 
         public override string ToString()
         {
-            var ProtoBytesReversed = ReverseBytes(protocolInfo);
+            var ProtoBytesReversed = ReverseBytesUInt(protocolInfo);
+            var BuildNumberReversed = ReverseBytesUInt(buildNumber);
 
             return base.ToString() + " " +
                 $"protocolInfo: {ProtoBytesReversed} " +
-                $"buildNumber: {buildNumber}";
+                $"buildNumber: {BuildNumberReversed}";
         }
     }
 }

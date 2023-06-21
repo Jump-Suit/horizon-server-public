@@ -160,7 +160,9 @@ namespace Server.Medius
                         data.ClientObject.MediusVersion = (int)scertClient.MediusVersion;
                         data.ClientObject.OnConnected();
 
-                        var ProtoBytesReversed = ReverseBytes(1725);
+                        
+                        var ProtoBytesReversed = ReverseBytesUInt(1958);
+                        var BuildNumber = ReverseBytesUInt(10);
                         data.ClientObject.Queue(new NetMessageTypeProtocolInfo()
                         {
                             protocolInfo = ProtoBytesReversed, //1725
