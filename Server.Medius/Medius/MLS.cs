@@ -8790,31 +8790,15 @@ namespace Server.Medius
                         }
                         else
                         {
-                            //Post DebugInfo to database
-                            await Program.Database.PostDebugInfo(data.ClientObject.AccountName, postDebugInfoRequest.Message, data.ClientObject.ApplicationId).ContinueWith((r) =>
+                            //to-do write file handler
+                            Logger.Info("PostDebugInfo success");
+                            data.ClientObject.Queue(new MediusPostDebugInfoResponse
                             {
-                                if (r.IsCompletedSuccessfully && r.Result != false)
-                                {
-                                    Logger.Info("PostDebugInfo success");
-                                    data.ClientObject.Queue(new MediusPostDebugInfoResponse
-                                    {
-                                        MessageID = postDebugInfoRequest.MessageID,
-                                        StatusCode = MediusCallbackStatus.MediusSuccess
-                                    });
-                                }
-                                else
-                                {
-                                    Logger.Warn("PostDebugInfo failed to post to database!");
-                                    data.ClientObject.Queue(new MediusPostDebugInfoResponse
-                                    {
-                                        MessageID = postDebugInfoRequest.MessageID,
-                                        StatusCode = MediusCallbackStatus.MediusDBError
-                                    });
-                                }
+                                MessageID = postDebugInfoRequest.MessageID,
+                                StatusCode = MediusCallbackStatus.MediusSuccess
                             });
-                        }
 
-                        break;
+                            break;
                     }
                 #endregion
 
