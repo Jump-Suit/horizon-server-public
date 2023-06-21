@@ -34,7 +34,6 @@ namespace Server.Database
         private List<AccountDTO> _simulatedAccounts = new List<AccountDTO>();
         private List<AccountRelationInviteDTO> _simulatedBuddyInvitations = new List<AccountRelationInviteDTO>();
         private List<NpIdDTO> _simulatedNpIdAccounts = new List<NpIdDTO>();
-        private List<PostDebugInfoDTO> _simulatedPostDebugInfo = new List<PostDebugInfoDTO>();
         private List<ClanDTO> _simulatedClans = new List<ClanDTO>();
         private List<MatchmakingSupersetDTO> _simulatedMatchmakingSupersets = new List<MatchmakingSupersetDTO>();
         private List<FileDTO> _simulatedMediusFiles = new List<FileDTO>();
@@ -2356,52 +2355,6 @@ namespace Server.Database
             return result;
         }
 
-        #endregion
-
-        #region DebugInfo
-        
-        /// <summary>
-        /// Post the DebugInfo to the database
-        /// </summary>
-        public async Task<bool> PostDebugInfo(string acctName, string Message, int appId)
-        {
-            bool result = false;
-
-            try
-            {
-                if (_settings.SimulatedMode)
-                {
-                    _simulatedPostDebugInfo.Add(new PostDebugInfoDTO()
-                    {
-                        AppId = appId,
-                        AccountName = acctName,
-                        Message = Message,
-                        CreateDt = DateTime.UtcNow
-                    });
-
-                    result = true;
-
-                    return result;
-                }
-                else
-                {
-                    result = (await PostDbAsync($"logs/postDebugInfo", JsonConvert.SerializeObject(new PostDebugInfoDTO
-                    {
-                        AppId = appId,
-                        AccountName = acctName,
-                        Message = Message,
-                        CreateDt = DateTime.UtcNow
-                    }))).IsSuccessStatusCode;
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e);
-            }
-
-            return result;
-        }
-        
         #endregion
 
         #region Announcements / Policy

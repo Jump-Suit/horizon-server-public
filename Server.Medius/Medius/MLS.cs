@@ -8798,7 +8798,8 @@ namespace Server.Medius
                                 StatusCode = MediusCallbackStatus.MediusSuccess
                             });
 
-                            break;
+                        }
+                        break;
                     }
                 #endregion
 

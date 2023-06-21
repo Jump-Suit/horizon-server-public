@@ -1,4 +1,5 @@
 ﻿using DotNetty.Common.Internal.Logging;
+using DotNetty.Common.Utilities;
 using DotNetty.Transport.Channels;
 using Microsoft.VisualBasic;
 using RT.Common;
@@ -232,8 +233,12 @@ namespace Server.Medius
         {
             return t.Substring(1, t.Length - 1) + t.Substring(0, 1);
         }
-
-        public static int ReverseBytes(int value)
+        public static uint ReverseBytesUInt(uint value)
+        {
+            return (uint)((value & 0x000000FFU) << 24 | (value & 0x0000FF00U) << 8 |
+                (value & 0x00FF0000U) >> 8 | (value & 0xFF000000U) >> 24);
+        }
+        public static int ReverseBytesInt(int value)
         {
             return (int)((value & 0x000000FFU) << 24 | (value & 0x0000FF00U) << 8 |
                 (value & 0x00FF0000U) >> 8 | (value & 0xFF000000U) >> 24);
