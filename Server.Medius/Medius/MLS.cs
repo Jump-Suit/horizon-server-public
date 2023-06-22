@@ -7821,84 +7821,86 @@ namespace Server.Medius
                             using (var md5 = MD5.Create())
                             {
                                 Logger.Info($"Generating file checksum for {path}");
-
-                                Logger.Info($"md5 checksum generated: {BitConverter.ToString(md5.ComputeHash(stream))}");
-                                string serverCheckSumGenerated = BitConverter.ToString(md5.ComputeHash(stream));
-
-
-                                Logger.Warn($"{serverCheckSumGenerated} checksum CHECK");
-                                FileDTO fileDTO = new FileDTO()
+                                using (var stream = File.OpenRead(path))
                                 {
-                                    AppId = data.ClientObject.ApplicationId,
-                                    FileName = fileCreateRequest.MediusFileToCreate.FileName,
-                                    ServerChecksum = string.Join("", serverCheckSumGenerated),
-                                    FileID = fileCreateRequest.MediusFileToCreate.FileID,
-                                    FileSize = fileCreateRequest.MediusFileToCreate.FileSize,
-                                    CreationTimeStamp = fileCreateRequest.MediusFileToCreate.CreationTimeStamp,
-                                    OwnerID = fileCreateRequest.MediusFileToCreate.OwnerID,
-                                    GroupID = fileCreateRequest.MediusFileToCreate.GroupID,
-                                    OwnerPermissionRWX = fileCreateRequest.MediusFileToCreate.OwnerPermissionRWX,
-                                    GroupPermissionRWX = fileCreateRequest.MediusFileToCreate.GroupPermissionRWX,
-                                    GlobalPermissionRWX = fileCreateRequest.MediusFileToCreate.GlobalPermissionRWX,
-                                    ServerOperationID = fileCreateRequest.MediusFileToCreate.ServerOperationID,
-                                    fileAttributesDTO = new FileAttributesDTO()
+                                    Logger.Info($"md5 checksum generated: {BitConverter.ToString(md5.ComputeHash(stream))}");
+                                    string serverCheckSumGenerated = BitConverter.ToString(md5.ComputeHash(stream));
+
+
+                                    Logger.Warn($"{serverCheckSumGenerated} checksum CHECK");
+                                    FileDTO fileDTO = new FileDTO()
                                     {
                                         AppId = data.ClientObject.ApplicationId,
                                         FileName = fileCreateRequest.MediusFileToCreate.FileName,
-                                        Description = fileCreateRequest.MediusFileCreateAttributes.Description,
-                                        LastChangedByUserID = fileCreateRequest.MediusFileCreateAttributes.LastChangedByUserID,
-                                        LastChangedTimeStamp = fileCreateRequest.MediusFileCreateAttributes.LastChangedTimeStamp,
-                                        NumberAccesses = fileCreateRequest.MediusFileCreateAttributes.NumberAccesses,
-                                        StreamableFlag = fileCreateRequest.MediusFileCreateAttributes.StreamableFlag,
-                                        StreamingDataRate = fileCreateRequest.MediusFileCreateAttributes.StreamingDataRate,
+                                        ServerChecksum = string.Join("", serverCheckSumGenerated),
+                                        FileID = fileCreateRequest.MediusFileToCreate.FileID,
+                                        FileSize = fileCreateRequest.MediusFileToCreate.FileSize,
+                                        CreationTimeStamp = fileCreateRequest.MediusFileToCreate.CreationTimeStamp,
+                                        OwnerID = fileCreateRequest.MediusFileToCreate.OwnerID,
+                                        GroupID = fileCreateRequest.MediusFileToCreate.GroupID,
+                                        OwnerPermissionRWX = fileCreateRequest.MediusFileToCreate.OwnerPermissionRWX,
+                                        GroupPermissionRWX = fileCreateRequest.MediusFileToCreate.GroupPermissionRWX,
+                                        GlobalPermissionRWX = fileCreateRequest.MediusFileToCreate.GlobalPermissionRWX,
+                                        ServerOperationID = fileCreateRequest.MediusFileToCreate.ServerOperationID,
+                                        fileAttributesDTO = new FileAttributesDTO()
+                                        {
+                                            AppId = data.ClientObject.ApplicationId,
+                                            FileName = fileCreateRequest.MediusFileToCreate.FileName,
+                                            Description = fileCreateRequest.MediusFileCreateAttributes.Description,
+                                            LastChangedByUserID = fileCreateRequest.MediusFileCreateAttributes.LastChangedByUserID,
+                                            LastChangedTimeStamp = fileCreateRequest.MediusFileCreateAttributes.LastChangedTimeStamp,
+                                            NumberAccesses = fileCreateRequest.MediusFileCreateAttributes.NumberAccesses,
+                                            StreamableFlag = fileCreateRequest.MediusFileCreateAttributes.StreamableFlag,
+                                            StreamingDataRate = fileCreateRequest.MediusFileCreateAttributes.StreamingDataRate,
+                                        }
+                                    };
+
+                                    if (Program.Database._settings.SimulatedMode == true)
+                                    {
+                                        data.ClientObject.Queue(new MediusFileCreateResponse()
+                                        {
+                                            MessageID = fileCreateRequest.MessageID,
+                                            StatusCode = MediusCallbackStatus.MediusFeatureNotEnabled
+                                        });
                                     }
-                                };
-
-                                if (Program.Database._settings.SimulatedMode == true)
-                                {
-                                    data.ClientObject.Queue(new MediusFileCreateResponse()
+                                    else
                                     {
-                                        MessageID = fileCreateRequest.MessageID,
-                                        StatusCode = MediusCallbackStatus.MediusFeatureNotEnabled
-                                    });
-                                }
-                                else
-                                {
-                                    await Program.Database.createFile(fileDTO).ContinueWith(r =>
-                                    {
-                                        if (r.IsCompletedSuccessfully && r.Result != false)
+                                        await Program.Database.createFile(fileDTO).ContinueWith(r =>
                                         {
-                                            data.ClientObject.Queue(new MediusFileCreateResponse()
+                                            if (r.IsCompletedSuccessfully && r.Result != false)
                                             {
-                                                MessageID = fileCreateRequest.MessageID,
-                                                StatusCode = MediusCallbackStatus.MediusSuccess,
-                                                MediusFileInfo = new MediusFile()
+                                                data.ClientObject.Queue(new MediusFileCreateResponse()
                                                 {
-                                                    FileID = fileDTO.FileID,
-                                                    ServerChecksum = serverCheckSumGenerated,
-                                                    FileName = fileCreateRequest.MediusFileToCreate.FileName,
-                                                    FileSize = fileCreateRequest.MediusFileToCreate.FileSize,
-                                                    CreationTimeStamp = fileCreateRequest.MediusFileToCreate.CreationTimeStamp,
-                                                    OwnerID = fileCreateRequest.MediusFileToCreate.OwnerID,
-                                                    GroupID = fileCreateRequest.MediusFileToCreate.GroupID,
-                                                    OwnerPermissionRWX = fileCreateRequest.MediusFileToCreate.OwnerPermissionRWX,
-                                                    GroupPermissionRWX = fileCreateRequest.MediusFileToCreate.GroupPermissionRWX,
-                                                    GlobalPermissionRWX = fileCreateRequest.MediusFileToCreate.GlobalPermissionRWX,
-                                                    ServerOperationID = fileCreateRequest.MediusFileToCreate.ServerOperationID
-                                                }
-                                            });
+                                                    MessageID = fileCreateRequest.MessageID,
+                                                    StatusCode = MediusCallbackStatus.MediusSuccess,
+                                                    MediusFileInfo = new MediusFile()
+                                                    {
+                                                        FileID = fileDTO.FileID,
+                                                        ServerChecksum = serverCheckSumGenerated,
+                                                        FileName = fileCreateRequest.MediusFileToCreate.FileName,
+                                                        FileSize = fileCreateRequest.MediusFileToCreate.FileSize,
+                                                        CreationTimeStamp = fileCreateRequest.MediusFileToCreate.CreationTimeStamp,
+                                                        OwnerID = fileCreateRequest.MediusFileToCreate.OwnerID,
+                                                        GroupID = fileCreateRequest.MediusFileToCreate.GroupID,
+                                                        OwnerPermissionRWX = fileCreateRequest.MediusFileToCreate.OwnerPermissionRWX,
+                                                        GroupPermissionRWX = fileCreateRequest.MediusFileToCreate.GroupPermissionRWX,
+                                                        GlobalPermissionRWX = fileCreateRequest.MediusFileToCreate.GlobalPermissionRWX,
+                                                        ServerOperationID = fileCreateRequest.MediusFileToCreate.ServerOperationID
+                                                    }
+                                                });
 
-                                            data.ClientObject.mediusFileToUpload = fileCreateRequest.MediusFileToCreate;
-                                        }
-                                        else
-                                        {
-                                            data.ClientObject.Queue(new MediusFileCreateResponse()
+                                                data.ClientObject.mediusFileToUpload = fileCreateRequest.MediusFileToCreate;
+                                            }
+                                            else
                                             {
-                                                MessageID = fileCreateRequest.MessageID,
-                                                StatusCode = MediusCallbackStatus.MediusFileAlreadyExists
-                                            });
-                                        }
-                                    });
+                                                data.ClientObject.Queue(new MediusFileCreateResponse()
+                                                {
+                                                    MessageID = fileCreateRequest.MessageID,
+                                                    StatusCode = MediusCallbackStatus.MediusFileAlreadyExists
+                                                });
+                                            }
+                                        });
+                                    }
                                 }
                             }
                             #endregion
