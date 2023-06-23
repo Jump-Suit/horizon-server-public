@@ -8781,7 +8781,6 @@ namespace Server.Medius
                         if (Settings.PostDebugInfoEnable == false)
                         {
                             Logger.Warn("PostDebugInfo feature not enabled");
-
                             data.ClientObject.Queue(new MediusPostDebugInfoResponse
                             {
                                 MessageID = postDebugInfoRequest.MessageID,
@@ -8790,14 +8789,22 @@ namespace Server.Medius
                         }
                         else
                         {
-                            //to-do write file handler
-                            Logger.Info("PostDebugInfo success");
+                            if (data.ClientObject.SessionKey != null)
+                            {
+                                Logger.Warn($"PostDebugInfo Unable to retrieve player from cache {data.ClientObject.AccountName}");
+                                data.ClientObject.Queue(new MediusPostDebugInfoResponse
+                                {
+                                    MessageID = postDebugInfoRequest.MessageID,
+                                    StatusCode = MediusCallbackStatus.MediusCacheFailure
+                                });
+                            }
+                            //Post DebugInfo to file
+                            Logger.Info($"POST_INFO: SKey[{data.ClientObject.SessionKey}] Message[{postDebugInfoRequest.Message}]");
                             data.ClientObject.Queue(new MediusPostDebugInfoResponse
                             {
                                 MessageID = postDebugInfoRequest.MessageID,
                                 StatusCode = MediusCallbackStatus.MediusSuccess
                             });
-
                         }
                         break;
                     }
