@@ -607,7 +607,7 @@ namespace Server.Medius.Models
                 else
                 {
                     await client.LeaveGame(this);
-                    await client.LeaveChannel(ChatChannel);
+                    //await client.LeaveChannel(ChatChannel);
                 }
             }
 
