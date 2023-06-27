@@ -18,11 +18,12 @@ namespace RT.Models
         /// <summary>
         /// Data packet to upload
         /// </summary>
-        public char[] PucDataStart;
+        public uint PucDataStart;
+        //public byte[] PucDataStart;
         /// <summary>
         /// Size of data packet to upload
         /// </summary>
-        public int UiDataSize;
+        public uint UiDataSize;
         /// <summary>
         /// ID specified by Client to assosciate with this request
         /// </summary>
@@ -35,8 +36,9 @@ namespace RT.Models
 
             // 
             MediusFileInfo = reader.Read<MediusFile>();
-            PucDataStart = reader.ReadChars(UiDataSize);
-            UiDataSize = reader.ReadInt32();
+            PucDataStart = reader.ReadUInt32();
+            //reader.ReadBytes((int)UiDataSize);
+            UiDataSize = reader.ReadUInt32();
 
 
             //

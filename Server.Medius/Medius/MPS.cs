@@ -113,7 +113,7 @@ namespace Server.Medius
                         data.ApplicationId = clientConnectTcp.AppId;
                         scertClient.ApplicationID = clientConnectTcp.AppId;
 
-                        List<int> pre108ServerConnect = new List<int>() { 10190, 10124, 10284, 10540, 10680 };
+                        List<int> pre108ServerConnect = new List<int>() { 10190, 10114, 10124, 10284, 10330, 10334, 10540, 10680 };
                         List<int> pre108NoServerConnect = new List<int>() { 10782 };
 
 
@@ -461,7 +461,7 @@ namespace Server.Medius
                                             {
                                                 AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                                 {
-                                                    new NetAddress() { Address = (data.ClientObject as DMEObject).IP.MapToIPv4().ToString(), Port = (uint)(data.ClientObject as DMEObject).Port, AddressType = NetAddressType.NetAddressTypeExternal},
+                                                    new NetAddress() { Address = (data.ClientObject as DMEObject).IP.MapToIPv4().ToString(), Port = (data.ClientObject as DMEObject).Port, AddressType = NetAddressType.NetAddressTypeExternal},
                                                     new NetAddress() { AddressType = NetAddressType.NetAddressNone},
                                                 }
                                             },
@@ -490,7 +490,7 @@ namespace Server.Medius
                                             {
                                                 AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                             {
-                                                        new NetAddress() { Address = (data.ClientObject as DMEObject).IP.MapToIPv4().ToString(), Port = (uint)(data.ClientObject as DMEObject).Port, AddressType = NetAddressType.NetAddressTypeExternal},
+                                                        new NetAddress() { Address = (data.ClientObject as DMEObject).IP.MapToIPv4().ToString(), Port = (data.ClientObject as DMEObject).Port, AddressType = NetAddressType.NetAddressTypeExternal},
                                                         new NetAddress() { AddressType = NetAddressType.NetAddressNone},
                                             }
                                             },

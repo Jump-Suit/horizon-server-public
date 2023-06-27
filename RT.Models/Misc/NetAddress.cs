@@ -14,12 +14,13 @@ namespace RT.Models
         public NetAddressType AddressType;
         public string Address;
         public uint BinaryAddress;
-        public uint Port;
+        public int Port;
 
         public byte IPBinaryBitOne;
         public byte IPBinaryBitTwo;
         public byte IPBinaryBitThree;
         public byte IPBinaryBitFour;
+        public uint BinaryPort;
 
         public void Deserialize(BinaryReader reader)
         {
@@ -29,7 +30,7 @@ namespace RT.Models
                 || AddressType == NetAddressType.NetAddressTypeBinaryInternal)
             {
                 BinaryAddress = reader.ReadUInt32();
-                Port = reader.ReadUInt32();
+                Port = reader.ReadInt32();
             }
 
             if(AddressType == NetAddressType.NetAddressTypeBinaryExternalVport
@@ -40,7 +41,7 @@ namespace RT.Models
                 IPBinaryBitThree = reader.ReadByte();
                 IPBinaryBitFour = reader.ReadByte();
                 reader.ReadBytes(12);
-                Port = reader.ReadUInt32();
+                BinaryPort = reader.ReadUInt32();
             }
 
             if(AddressType == NetAddressType.NetAddressTypeInternal
@@ -50,7 +51,7 @@ namespace RT.Models
                 || AddressType == NetAddressType.NetAddressNone)
             {
                 Address = reader.ReadString(Constants.NET_MAX_NETADDRESS_LENGTH);
-                Port = reader.ReadUInt32();
+                Port = reader.ReadInt32();
             }
             
         }
@@ -74,7 +75,7 @@ namespace RT.Models
                 writer.Write(IPBinaryBitFour);
 
                 writer.Write(new byte[12]);
-                writer.Write(Port);
+                writer.Write(BinaryPort);
             }
 
             if(AddressType == NetAddressType.NetAddressTypeInternal 
@@ -101,7 +102,7 @@ namespace RT.Models
                 return base.ToString() + " " +
                 $"AddressType: {AddressType} " +
                 $"(Binary) IP : {IPBinaryBitOne}.{IPBinaryBitTwo}.{IPBinaryBitThree}.{IPBinaryBitFour} " +
-                $"(Vport/Port) Port: {Port}"; 
+                $"(Vport/Port) Port: {BinaryPort}"; 
             } else {
                 return base.ToString() + " " +
                 $"AddressType: {AddressType} " +

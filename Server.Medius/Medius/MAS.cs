@@ -68,7 +68,7 @@ namespace Server.Medius
                     }
                 case RT_MSG_CLIENT_CONNECT_TCP clientConnectTcp:
                     {
-                        List<int> pre108ServerComplete = new List<int>() { 10164, 10190, 10124, 10284, 10414, 10442, 10540, 10680 };
+                        List<int> pre108ServerComplete = new List<int>() { 10114, 10164, 10190, 10124, 10284, 10330, 10334, 10414, 10442, 10540, 10680 };
 
                         data.ApplicationId = clientConnectTcp.AppId;
                         scertClient.ApplicationID = clientConnectTcp.AppId;
@@ -96,69 +96,25 @@ namespace Server.Medius
                             //Send a Server_Connect_Require with no Password needed
                             Queue(new RT_MSG_SERVER_CONNECT_REQUIRE() { ReqServerPassword = 0x00 }, clientChannel);
                         }
-                        // Deadlocked check can be simplifed
-                        else if (scertClient.MediusVersion >= 109 && scertClient.MediusVersion != null && scertClient.MediusVersion != 111)
+
+                        //Do NOT send hereCryptKey Game
+                        Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
                         {
-                            //Do NOT send hereCryptKey Game
-                            Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
-                            {
-                                PlayerId = 0,
-                                ScertId = GenerateNewScertClientId(),
-                                PlayerCount = 0x0001,
-                                IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
-                            }, clientChannel);
+                            PlayerId = 0,
+                            ScertId = GenerateNewScertClientId(),
+                            PlayerCount = 0x0001,
+                            IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
+                        }, clientChannel);
+
+                        if (scertClient.RsaAuthKey != null)
+                        {
+                            Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
                         }
 
-                        #region PSP specific
-                        // Games that DO NOT send a Client Hello 
-                        if (scertClient.MediusVersion == 111)
+                        if (pre108ServerComplete.Contains(data.ApplicationId))
                         {
-                            //Do NOT send hereCryptKey Game
-                            Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
-                            {
-                                PlayerId = 0,
-                                ScertId = GenerateNewScertClientId(),
-                                PlayerCount = 0x0001,
-                                IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
-                            }, clientChannel);
-
-                            if (scertClient.RsaAuthKey != null)
-                            {
-                                Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
-                            }
-
                             Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
                         }
-                        #endregion
-
-                        #region Legacy PS2 specific
-                        // Games that DO NOT send a Client Hello 
-                        if (scertClient.MediusVersion <= 108)
-                        {
-                            //Do NOT send hereCryptKey Game
-                            Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
-                            {
-                                PlayerId = 0,
-                                ScertId = GenerateNewScertClientId(),
-                                PlayerCount = 0x0001,
-                                IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
-                            }, clientChannel);
-                            
-                            if (scertClient.RsaAuthKey != null)
-                            {
-                                Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
-                            }
-
-                            if (scertClient.MediusVersion > 108)
-                            {
-                                Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
-                            } else if(pre108ServerComplete.Contains(data.ApplicationId))
-                            {
-                                Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
-                            }
-                            
-                        }
-                        #endregion
 
                         break;
                     }
@@ -301,7 +257,7 @@ namespace Server.Medius
                                         {
                                             AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                                 {
-                                                new NetAddress() { Address = host.AddressList.First().ToString(), Port = (uint)Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService },
+                                                new NetAddress() { Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService },
                                                 new NetAddress() { AddressType = NetAddressType.NetAddressNone },
                                                 }
                                         },
@@ -326,7 +282,7 @@ namespace Server.Medius
                                         {
                                             AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                                 {
-                                                new NetAddress() { Address = host.AddressList.First().ToString(), Port = (uint)Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService },
+                                                new NetAddress() { Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService },
                                                 new NetAddress() { AddressType = NetAddressType.NetAddressNone },
                                                 }
                                         },
@@ -369,7 +325,7 @@ namespace Server.Medius
                                 {
                                     AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                     {
-                                        new NetAddress() { Address = host.AddressList.First().ToString(), Port = (uint)Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService },
+                                        new NetAddress() { Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService },
                                         new NetAddress() { AddressType = NetAddressType.NetAddressNone },
                                     }
                                 },
@@ -409,7 +365,7 @@ namespace Server.Medius
                                 {
                                     AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                     {
-                                        new NetAddress() { Address = host.AddressList.First().ToString(), Port = (uint)Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService },
+                                        new NetAddress() { Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService },
                                         new NetAddress() { AddressType = NetAddressType.NetAddressNone },
                                     }
                                 },
@@ -470,7 +426,7 @@ namespace Server.Medius
                                     {
                                         AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                         {
-                                            new NetAddress() { Address = Program.ProxyServer.IPAddress.ToString(), Port = (uint)Program.ProxyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal },
+                                            new NetAddress() { Address = Program.ProxyServer.IPAddress.ToString(), Port = Program.ProxyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal },
                                             new NetAddress() { AddressType = NetAddressType.NetAddressNone }
                                         }
                                     },
@@ -498,7 +454,7 @@ namespace Server.Medius
                                     {
                                         AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                         {
-                                            new NetAddress() { Address = Program.ProxyServer.IPAddress.ToString(), Port = (uint)Program.ProxyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal },
+                                            new NetAddress() { Address = Program.ProxyServer.IPAddress.ToString(), Port = Program.ProxyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal },
                                             new NetAddress() { AddressType = NetAddressType.NetAddressNone },
                                         }
                                     },
@@ -2338,8 +2294,8 @@ namespace Server.Medius
                             {
                                 AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                             {
-                                new NetAddress() {Address = Program.LobbyServer.IPAddress.ToString(), Port = (uint)Program.LobbyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal},
-                                new NetAddress() {Address = host.AddressList.First().ToString(), Port = (uint)Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService},
+                                new NetAddress() {Address = Program.LobbyServer.IPAddress.ToString(), Port = Program.LobbyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal},
+                                new NetAddress() {Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService},
                             }
                             },
                             Type = NetConnectionType.NetConnectionTypeClientServerTCP
@@ -2378,8 +2334,8 @@ namespace Server.Medius
                             {
                                 AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                 {
-                                    new NetAddress() {Address = Program.LobbyServer.IPAddress.ToString(), Port = (uint)Program.LobbyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal},
-                                    new NetAddress() {Address = host.AddressList.First().ToString(), Port = (uint)Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService},
+                                    new NetAddress() {Address = Program.LobbyServer.IPAddress.ToString(), Port = Program.LobbyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal},
+                                    new NetAddress() {Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService},
                                 }
                             },
                             Type = NetConnectionType.NetConnectionTypeClientServerTCP
@@ -2418,8 +2374,8 @@ namespace Server.Medius
                             {
                                 AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                 {
-                                new NetAddress() {Address = Program.LobbyServer.IPAddress.ToString(), Port = (uint)Program.LobbyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal},
-                                new NetAddress() {Address = host.AddressList.First().ToString(), Port = (uint)Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService},
+                                new NetAddress() {Address = Program.LobbyServer.IPAddress.ToString(), Port = Program.LobbyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal},
+                                new NetAddress() {Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService},
                                 }
                             },
                             Type = NetConnectionType.NetConnectionTypeClientServerTCP
@@ -2446,8 +2402,8 @@ namespace Server.Medius
                             {
                                 AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                 {
-                                new NetAddress() {Address = Program.LobbyServer.IPAddress.ToString(), Port = (uint)Program.LobbyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal},
-                                new NetAddress() {Address = host.AddressList.First().ToString(), Port = (uint)Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService},
+                                new NetAddress() {Address = Program.LobbyServer.IPAddress.ToString(), Port = Program.LobbyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal},
+                                new NetAddress() {Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService},
                                 }
                             },
                             Type = NetConnectionType.NetConnectionTypeClientServerTCP
@@ -2512,8 +2468,8 @@ namespace Server.Medius
                     {
                         AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                         {
-                               new NetAddress() {Address = Program.LobbyServer.IPAddress.ToString(), Port = (uint)Program.LobbyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal},
-                               new NetAddress() {Address = host.AddressList.First().ToString(), Port = (uint)Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService},
+                               new NetAddress() {Address = Program.LobbyServer.IPAddress.ToString(), Port = Program.LobbyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal},
+                               new NetAddress() {Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService},
                         }
                     },
                     Type = NetConnectionType.NetConnectionTypeClientServerTCP

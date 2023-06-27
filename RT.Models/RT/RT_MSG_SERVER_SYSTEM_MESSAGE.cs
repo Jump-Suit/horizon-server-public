@@ -12,16 +12,16 @@ namespace RT.Models
         public override RT_MSG_TYPE Id => RT_MSG_TYPE.RT_MSG_SERVER_SYSTEM_MESSAGE;
 
         public byte Severity;
-        public byte EncodingType;
-        public byte LanguageType;
+        public DME_SERVER_ENCODING_TYPE EncodingType;
+        public DME_SERVER_LANGUAGE_TYPE LanguageType;
         public bool EndOfMessage;
         public string Message;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
             Severity = reader.ReadByte();
-            EncodingType = reader.ReadByte();
-            LanguageType = reader.ReadByte();
+            EncodingType = reader.Read<DME_SERVER_ENCODING_TYPE>();
+            LanguageType = reader.Read<DME_SERVER_LANGUAGE_TYPE>();
             EndOfMessage = reader.ReadBoolean();
             Message = reader.ReadRestAsString();
         }

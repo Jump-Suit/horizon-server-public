@@ -355,7 +355,7 @@ namespace Server.Dme
                                 ListenServerAddress = new NetAddress()
                                 {
                                     Address = Program.SERVER_IP.ToString(),
-                                    Port = (uint)Program.TcpServer.Port
+                                    Port = Program.TcpServer.Port
                                 }
                             }
                         });

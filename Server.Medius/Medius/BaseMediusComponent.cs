@@ -343,8 +343,8 @@ namespace Server.Medius
             data.SendQueue.Enqueue(new RT_MSG_SERVER_SYSTEM_MESSAGE()
             {
                 Severity = (byte)Program.GetAppSettingsOrDefault(data.ApplicationId).BanSystemMessageSeverity,
-                EncodingType = 1,
-                LanguageType = 2,
+                EncodingType = DME_SERVER_ENCODING_TYPE.DME_SERVER_ENCODING_UTF8,
+                LanguageType = DME_SERVER_LANGUAGE_TYPE.DME_SERVER_LANGUAGE_US_ENGLISH,
                 EndOfMessage = true,
                 Message = msg
             });
@@ -358,8 +358,8 @@ namespace Server.Medius
             data.SendQueue.Enqueue(new RT_MSG_SERVER_SYSTEM_MESSAGE()
             {
                 Severity = (byte)Program.GetAppSettingsOrDefault(data.ApplicationId).BanSystemMessageSeverity,
-                EncodingType = 1,
-                LanguageType = 2,
+                EncodingType = DME_SERVER_ENCODING_TYPE.DME_SERVER_ENCODING_UTF8,
+                LanguageType = DME_SERVER_LANGUAGE_TYPE.DME_SERVER_LANGUAGE_US_ENGLISH,
                 EndOfMessage = true,
                 Message = msg
             });

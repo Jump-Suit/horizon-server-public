@@ -62,6 +62,7 @@ namespace RT.Models
             GameHostType = reader.Read<MGCL_GAME_HOST_TYPE>();
             AddressList = reader.Read<NetAddressList>();
             WorldID = reader.ReadInt32();
+            AccountID = reader.ReadInt32();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -92,6 +93,7 @@ namespace RT.Models
             writer.Write(GameHostType);
             writer.Write(AddressList);
             writer.Write(WorldID);
+            writer.Write(AccountID);
         }
 
         public override string ToString()
@@ -117,7 +119,8 @@ namespace RT.Models
                 $"GenericField8: {GenericField8:X8} " +
                 $"GameHostType: {GameHostType} " +
                 $"AddressList: {AddressList} " +
-                $"WorldID: {WorldID} ";
+                $"WorldID: {WorldID} " +
+                $"AccountID: {AccountID}";
         }
     }
 }

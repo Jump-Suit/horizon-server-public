@@ -38,12 +38,5 @@ namespace RT.Models
             writer.Write(MessageID);
             writer.Write(Message, Constants.DEBUGMESSAGE_MAXLEN);
         }
-
-        public override string ToString()
-        {
-            return base.ToString() + " " +
-                $"MessageID: {MessageID} " +
-                $"Message: {Message}";
-        }
     }
 }

@@ -1,19 +1,21 @@
 ﻿using RT.Common;
+using RT.Models.Misc;
 using Server.Common;
 
 namespace RT.Models
 {
     [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.ChatMessage)]
-    public class MediusChatMessage : BaseLobbyExtMessage, IMediusRequest
+    public class MediusChatMessage : BaseLobbyExtMessage, IMediusChatMessage
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.ChatMessage;
 
+
         public MessageId MessageID { get; set; }
 
-        public string SessionKey;
-        public MediusChatMessageType MessageType;
-        public int TargetID;
-        public string Message;
+        public string SessionKey; // SESSIONKEY_MAXLEN
+        public MediusChatMessageType MessageType { get; set; }
+        public int TargetID { get; set; }
+        public string Message { get; set; }
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
