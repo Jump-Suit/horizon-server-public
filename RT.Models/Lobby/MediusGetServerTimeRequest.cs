@@ -28,7 +28,6 @@ namespace RT.Models
             writer.Write(MessageID ?? MessageId.Empty);
         }
 
-
         public override string ToString()
         {
             return base.ToString() + " " +

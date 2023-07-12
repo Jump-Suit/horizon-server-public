@@ -20,7 +20,7 @@ namespace RT.Models
         public byte IPBinaryBitTwo;
         public byte IPBinaryBitThree;
         public byte IPBinaryBitFour;
-        public uint BinaryPort;
+        public ushort BinaryPort;
 
         public void Deserialize(BinaryReader reader)
         {
@@ -41,7 +41,8 @@ namespace RT.Models
                 IPBinaryBitThree = reader.ReadByte();
                 IPBinaryBitFour = reader.ReadByte();
                 reader.ReadBytes(12);
-                BinaryPort = reader.ReadUInt32();
+                BinaryPort = reader.ReadUInt16();
+                reader.ReadBytes(2);
             }
 
             if(AddressType == NetAddressType.NetAddressTypeInternal
@@ -73,9 +74,9 @@ namespace RT.Models
                 writer.Write(IPBinaryBitTwo);
                 writer.Write(IPBinaryBitThree);
                 writer.Write(IPBinaryBitFour);
-
                 writer.Write(new byte[12]);
                 writer.Write(BinaryPort);
+                writer.Write(new byte[2]);
             }
 
             if(AddressType == NetAddressType.NetAddressTypeInternal 

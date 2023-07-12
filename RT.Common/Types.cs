@@ -2859,7 +2859,7 @@ namespace RT.Common
 
     #region DME 
 
-    public enum DME_SERVER_LANGUAGE_TYPE : int
+    public enum DME_SERVER_LANGUAGE_TYPE : byte
     {
          DME_SERVER_LANGUAGE_NONE = 0,
          DME_SERVER_LANGUAGE_US_ENGLISH = 1,
@@ -2876,7 +2876,7 @@ namespace RT.Common
          DME_SERVER_LANGUAGE_TAIWANESE = 12,
     }
 
-    public enum DME_SERVER_ENCODING_TYPE : int
+    public enum DME_SERVER_ENCODING_TYPE : byte
     {
          DME_SERVER_ENCODING_NONE,
          DME_SERVER_ENCODING_ISO_8859_1,

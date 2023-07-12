@@ -1592,7 +1592,7 @@ namespace Server.Medius
                                             _ = Program.Database.CreateAccount(new Database.Models.CreateAccountDTO()
                                             {
                                                 AccountName = ticketLoginRequest.UserOnlineId,
-                                                AccountPassword = null,
+                                                AccountPassword = "UNSET",
                                                 MachineId = data.MachineId,
                                                 MediusStats = Convert.ToBase64String(new byte[Constants.ACCOUNTSTATS_MAXLEN]),
                                                 AppId = data.ClientObject.ApplicationId

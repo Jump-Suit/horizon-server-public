@@ -412,26 +412,28 @@ namespace Server.Medius
                                         GameHostType = game.GameHostType,
                                         ConnectInfo = new NetConnectionInfo()
                                         {
-                                            AccessKey = joinGameResponse.AccessKey,
+                                            AccessKey = rClient.Token,
                                             SessionKey = rClient.SessionKey,
                                             WorldID = game.WorldID,
-                                            ServerKey = joinGameResponse.pubKey,
+                                            ServerKey = game.pubKey,
                                             AddressList = new NetAddressList()
                                             {
                                                 AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                                 {
-                                                    new NetAddress() { IPBinaryBitOne = game.netAddressList.AddressList[0].IPBinaryBitOne,
+                                                    new NetAddress() {
+                                                        AddressType = NetAddressType.NetAddressTypeBinaryExternalVport,
+                                                        IPBinaryBitOne = game.netAddressList.AddressList[0].IPBinaryBitOne,
                                                         IPBinaryBitTwo = game.netAddressList.AddressList[0].IPBinaryBitTwo,
                                                         IPBinaryBitThree = game.netAddressList.AddressList[0].IPBinaryBitThree,
                                                         IPBinaryBitFour = game.netAddressList.AddressList[0].IPBinaryBitFour,
-                                                        Port = game.netAddressList.AddressList[0].Port,
-                                                        AddressType = NetAddressType.NetAddressTypeBinaryExternalVport},
-                                                    new NetAddress() { IPBinaryBitOne = game.netAddressList.AddressList[1].IPBinaryBitOne,
+                                                        BinaryPort = game.netAddressList.AddressList[0].BinaryPort},
+                                                    new NetAddress() {
+                                                        AddressType = NetAddressType.NetAddressTypeBinaryInternalVport,
+                                                        IPBinaryBitOne = game.netAddressList.AddressList[1].IPBinaryBitOne,
                                                         IPBinaryBitTwo = game.netAddressList.AddressList[1].IPBinaryBitTwo,
                                                         IPBinaryBitThree = game.netAddressList.AddressList[1].IPBinaryBitThree,
                                                         IPBinaryBitFour = game.netAddressList.AddressList[1].IPBinaryBitFour,
-                                                        Port = game.netAddressList.AddressList[1].Port,
-                                                        AddressType = NetAddressType.NetAddressTypeBinaryExternalVport},
+                                                        BinaryPort = game.netAddressList.AddressList[1].BinaryPort},
                                                 }
                                             },
                                             Type = NetConnectionType.NetConnectionTypePeerToPeerUDP

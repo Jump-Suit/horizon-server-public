@@ -2674,7 +2674,7 @@ namespace Server.Database
                 else
                 {
                     Logger.Warn($"FileNameBeginsWith: {FileNameBeginsWith} OwnerByID: {OwnerByID} metaKey: {fileMetaData.Key}");
-                    result = await GetDbAsync<List<FileDTO>>($"FileServices/getFileListExt?AppId={appId}&FileNameBeginsWith={FileNameBeginsWith}&OwnerByID={OwnerByID}&metaKey={fileMetaData.Key}");
+                    result = await GetDbAsync<List<FileDTO>>($"FileServices/getFileListExt?AppId={appId}&FileNameBeginsWith={FileNameBeginsWith}&OwnerByID={OwnerByID}&metaKey={fileMetaData.Key}&metaValue={fileMetaData.Value}");
                 }
             }
             catch (Exception e)
@@ -2823,7 +2823,7 @@ namespace Server.Database
         /// <param name="appId">appId for MFS</param>
         /// <param name="mediusFile">MediusFile specified by UpdateFileMetaRequest</param>
         /// <param name="mediusFileMetaData">MediusFileMetaData specified by Game Developer.</param>
-        public async Task<List<FileMetaDataDTO>> GetFileMetaData(FileDTO file)
+        public async Task<List<FileMetaDataDTO>> GetFileMetaData(int appId, string fileName, string Key)
         {
             List<FileMetaDataDTO> result = null;
 
@@ -2834,15 +2834,11 @@ namespace Server.Database
                     if (_simulatedFileMetaData == null)
                         return result;
 
-                    _simulatedMediusFiles.Contains(file);
-                    _simulatedFileMetaData.Contains(file.fileMetaDataDTO);
-
-
                     result = _simulatedFileMetaData;
                 }
                 else
                 {
-                    result = await PostDbAsync<List<FileMetaDataDTO>>($"FileServices/getFileMetaData", file);
+                    result = await GetDbAsync<List<FileMetaDataDTO>>($"FileServices/getFileMetaData?appId={appId}&FileName={fileName}&Key={Key}");
                 }
             }
             catch (Exception e)

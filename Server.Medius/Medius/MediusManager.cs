@@ -667,7 +667,7 @@ namespace Server.Medius
 
             var appIdsInGroup = GetAppIdsInGroup(client.ApplicationId);
             string gameName = null;
-            NetAddressList gameNetAddressList = null;
+            NetAddressList gameNetAddressList = new NetAddressList();
             int worldId = -1;
 
             var p2pHostAddress = (channel.RemoteAddress as IPEndPoint).Address.ToString();
@@ -676,7 +676,29 @@ namespace Server.Medius
             if (request is MediusServerCreateGameOnMeRequest r)
             {
                 gameName = r.GameName;
-                gameNetAddressList = r.AddressList;
+
+                if (r.AddressList.AddressList[0].AddressType == NetAddressType.NetAddressTypeBinaryExternalVport ||
+                        r.AddressList.AddressList[1].AddressType == NetAddressType.NetAddressTypeBinaryInternalVport ) 
+                {
+                    gameNetAddressList.AddressList[0].IPBinaryBitOne = r.AddressList.AddressList[0].IPBinaryBitOne;
+                    gameNetAddressList.AddressList[0].IPBinaryBitTwo = r.AddressList.AddressList[0].IPBinaryBitTwo;
+                    gameNetAddressList.AddressList[0].IPBinaryBitThree = r.AddressList.AddressList[0].IPBinaryBitThree;
+                    gameNetAddressList.AddressList[0].IPBinaryBitFour = r.AddressList.AddressList[0].IPBinaryBitFour;
+                    gameNetAddressList.AddressList[0].BinaryPort = r.AddressList.AddressList[0].BinaryPort;
+
+
+                    gameNetAddressList.AddressList[1].IPBinaryBitOne = r.AddressList.AddressList[1].IPBinaryBitOne;
+                    gameNetAddressList.AddressList[1].IPBinaryBitTwo = r.AddressList.AddressList[1].IPBinaryBitTwo;
+                    gameNetAddressList.AddressList[1].IPBinaryBitThree = r.AddressList.AddressList[1].IPBinaryBitThree;
+                    gameNetAddressList.AddressList[1].IPBinaryBitFour = r.AddressList.AddressList[1].IPBinaryBitFour;
+                    gameNetAddressList.AddressList[1].BinaryPort = r.AddressList.AddressList[1].BinaryPort;
+
+                }
+                else
+                {
+                    gameNetAddressList = r.AddressList;
+                }
+
                 worldId = r.WorldID;
             }
             else if (request is MediusServerCreateGameOnSelfRequest r1)
@@ -738,6 +760,7 @@ namespace Server.Medius
 
                 //Set game host type to PeerToPeer for those speci
                 game.GameHostType = MediusGameHostType.MediusGameHostPeerToPeer;
+
                 game.ApplicationId = client.ApplicationId;
                 game.Host = client;
 
@@ -934,13 +957,13 @@ namespace Server.Medius
                                         IPBinaryBitTwo = request.AddressList.AddressList[0].IPBinaryBitTwo,
                                         IPBinaryBitThree = request.AddressList.AddressList[0].IPBinaryBitThree,
                                         IPBinaryBitFour = request.AddressList.AddressList[0].IPBinaryBitFour,
-                                        Port = request.AddressList.AddressList[0].Port,
+                                        BinaryPort = request.AddressList.AddressList[0].BinaryPort,
                                         AddressType = NetAddressType.NetAddressTypeBinaryExternalVport},
                                     new NetAddress() { IPBinaryBitOne = request.AddressList.AddressList[1].IPBinaryBitOne,
                                         IPBinaryBitTwo = request.AddressList.AddressList[1].IPBinaryBitTwo,
                                         IPBinaryBitThree = request.AddressList.AddressList[1].IPBinaryBitThree,
                                         IPBinaryBitFour = request.AddressList.AddressList[1].IPBinaryBitFour,
-                                        Port = request.AddressList.AddressList[1].Port,
+                                        BinaryPort = request.AddressList.AddressList[1].BinaryPort,
                                         AddressType = NetAddressType.NetAddressTypeBinaryInternalVport},
                                 }
                             },

@@ -25,8 +25,8 @@ namespace RT.Models
         /// </summary>
         public long MaxPlayers;
 
-        public List<int> approvedMaxPlayersAppIds = new List<int>() { 22500, 22920 };
-        public List<int> unapprovedMaxPlayersAppids = new List<int>() { 20624, 24000, 24180 };
+        public List<int> approvedMaxPlayersAppIds = new List<int>() { 20624, 22500, 22920};
+        public List<int> unapprovedMaxPlayersAppids = new List<int>() { 10782, 24000, 24180 };
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
