@@ -416,7 +416,7 @@ namespace Server.Medius
                                             AccessKey = rClient.Token,
                                             SessionKey = rClient.SessionKey,
                                             WorldID = game.WorldID,
-                                            ServerKey = game.pubKey,
+                                            ServerKey = joinGameResponse.pubKey,
                                             AddressList = new NetAddressList()
                                             {
                                                 AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
