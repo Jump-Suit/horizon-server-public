@@ -101,7 +101,7 @@ namespace Server.Medius
                     }
                 case RT_MSG_CLIENT_CONNECT_TCP clientConnectTcp:
                     {
-                        List<int> pre108ServerComplete = new List<int>() { 10114, 10164, 10190, 10124, 10284, 10330, 10334, 10414, 10442, 10540, 10680 };
+                        List<int> pre108ServerComplete = new List<int>() { 10114, 10164, 10190, 10124, 10284, 10330, 10334, 10414, 10442, 10540, 10680, 10683 };
                         List<int> pre108NoServerComplete = new List<int>() { 10010, 10031, 10274 };
 
 
@@ -846,6 +846,9 @@ namespace Server.Medius
                         {
                             MessageID = matchGetSupersetListRequest.MessageID,
                             StatusCode = MediusCallbackStatus.MediusSuccess,
+                            SupersetID = 1,
+                            SupersetName = "Test",
+                            SupersetDescription = "Test",
                             EndOfList = true,
                         });
 
@@ -900,7 +903,7 @@ namespace Server.Medius
                             data.ClientObject.Queue(new MediusMatchFindGameStatusResponse()
                             {
                                 MessageID = matchFindGameRequest.MessageID,
-                                StatusCode = MediusCallbackStatus.MediusRequestAccepted,
+                                StatusCode = MediusCallbackStatus.MediusMatchingInProgress,
                             });
                         } else
                         {
@@ -1496,7 +1499,7 @@ namespace Server.Medius
                         if (data.ClientObject.FriendsListPS3 == null)
                         {
                             //If Friends list from NP is actually null, send No Result
-                            data.ClientObject.Queue(new MediusBuddySetListResponse()
+                            data.ClientObject.Queue(new MediusIgnoreSetListStatusResponse()
                             {
                                 MessageID = ignoreSetListRequest.MessageID,
                                 StatusCode = MediusCallbackStatus.MediusNoResult,
@@ -1505,7 +1508,7 @@ namespace Server.Medius
                         else
                         {
                             // Success NP Buddy List is NOT NULL - Return Success!
-                            data.ClientObject.Queue(new MediusBuddySetListResponse()
+                            data.ClientObject.Queue(new MediusIgnoreSetListStatusResponse()
                             {
                                 MessageID = ignoreSetListRequest.MessageID,
                                 StatusCode = MediusCallbackStatus.MediusSuccess,
@@ -1825,7 +1828,7 @@ namespace Server.Medius
                                                     OnlineState = new MediusPlayerOnlineState()
                                                     {
                                                         ConnectStatus = (friendClient != null && friendClient.IsLoggedIn) ? friendClient.PlayerStatus : MediusPlayerStatus.MediusPlayerDisconnected,
-                                                        MediusLobbyWorldID = friendClient?.CurrentChannel?.Id ?? Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId).Id,
+                                                        MediusLobbyWorldID = friendClient?.CurrentChannel?.Id ?? -1, /*Program.Manager.GetOrCreateDefaultLobbyChannel(data.ApplicationId).Id*/
                                                         MediusGameWorldID = friendClient?.CurrentGame?.Id ?? -1,
                                                         GameName = friendClient?.CurrentGame?.GameName ?? "",
                                                         LobbyName = friendClient?.CurrentChannel?.Name ?? ""
@@ -3098,7 +3101,7 @@ namespace Server.Medius
                                 ApplicationID = data.ApplicationId,
                                 PlayerStatus = MediusPlayerStatus.MediusPlayerDisconnected,
                                 ConnectionClass = MediusConnectionType.Modem,
-                                Stats = null
+                                Stats = new byte[Constants.ACCOUNTSTATS_MAXLEN]
                             });
 
                             Logger.Info($"playerInfo response sent");
@@ -3137,7 +3140,7 @@ namespace Server.Medius
                                         ApplicationID = data.ApplicationId,
                                         PlayerStatus = MediusPlayerStatus.MediusPlayerDisconnected,
                                         ConnectionClass = MediusConnectionType.Modem,
-                                        Stats = null
+                                        Stats = new byte[Constants.ACCOUNTSTATS_MAXLEN]
                                     });
                                 }
                             });
@@ -6072,7 +6075,7 @@ namespace Server.Medius
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {worldReport} without being logged in.");
 
                         if (data.ClientObject.CurrentGame != null)
-                            await data.ClientObject.CurrentGame.OnWorldReport(worldReport);
+                            await data.ClientObject.CurrentGame.OnWorldReport(worldReport, data.ClientObject.ApplicationId);
                         break;
                     }
                     
@@ -6564,6 +6567,7 @@ namespace Server.Medius
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {joinChannelRequest} without being logged in.");
 
                         List<int> notSecure = new List<int>() { 10010, 10190 };
+                        IPHostEntry host = Dns.GetHostEntry(Program.Settings.NATIp);
 
                         var channel = Program.Manager.GetChannelByChannelId(joinChannelRequest.MediusWorldID, data.ClientObject.ApplicationId);
                         if (channel == null)
@@ -6612,8 +6616,8 @@ namespace Server.Medius
                                         {
                                             AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                             {
-                                                new NetAddress() { Address = Program.LobbyServer.IPAddress.ToString(), Port = Program.LobbyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal},
-                                                new NetAddress() { AddressType = NetAddressType.NetAddressNone},
+                                                new NetAddress() { Address = Program.LobbyServer.IPAddress.ToString(), Port = Program.LobbyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal },
+                                                new NetAddress() { Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService },
                                             }
                                         },
                                         Type = NetConnectionType.NetConnectionTypeClientServerTCP
@@ -6636,14 +6640,73 @@ namespace Server.Medius
                                         {
                                             AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                             {
-                                            new NetAddress() { Address = Program.LobbyServer.IPAddress.ToString(), Port = Program.LobbyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal},
-                                            new NetAddress() { AddressType = NetAddressType.NetAddressNone},
+                                            new NetAddress() { Address = Program.LobbyServer.IPAddress.ToString(), Port = Program.LobbyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal },
+                                            new NetAddress() { Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService },
                                             }
                                         },
                                         Type = NetConnectionType.NetConnectionTypeClientServerTCP
                                     }
                                 });
                             }
+
+                        }
+                        break;
+                    }
+
+                case MediusJoinLeastPopulatedChannelRequest joinLeastPopulatedChannelRequest:
+                    {
+                        // ERROR - Need a session
+                        if (data.ClientObject == null)
+                            throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {joinLeastPopulatedChannelRequest} without a session.");
+
+                        // ERROR -- Need to be logged in
+                        if (!data.ClientObject.IsLoggedIn)
+                            throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {joinLeastPopulatedChannelRequest} without being logged in.");
+
+                        var channel = Program.Manager.GetChannelLeastPoplated(data.ClientObject.ApplicationId);
+                        if (channel == null)
+                        {
+                            // Log
+                            Logger.Warn($"{data.ClientObject.AccountName} attempting to join non-existent channel {joinLeastPopulatedChannelRequest}");
+
+                            data.ClientObject.Queue(new MediusJoinLeastPopulatedChannelResponse()
+                            {
+                                MessageID = joinLeastPopulatedChannelRequest.MessageID,
+                                StatusCode = MediusCallbackStatus.MediusChannelNotFound
+                            });
+                        }
+                        else
+                        {
+                            Logger.Info($"Joining Least Populated Channel: {channel.Name} PlayerCount {channel.PlayerCount} Generic Fields: {channel.GenericField1} {channel.GenericField2} {channel.GenericField3} {channel.GenericField4} {channel.GenericFieldLevel} Type: {channel.Type}");
+
+                            // Join new channel
+                            await data.ClientObject.JoinChannel(channel);
+
+                            // Indicate the client is connecting to a different part of Medius
+                            data.ClientObject.KeepAliveUntilNextConnection();
+
+                            //
+                            data.ClientObject.Queue(new MediusJoinLeastPopulatedChannelResponse()
+                            {
+                                MessageID = joinLeastPopulatedChannelRequest.MessageID,
+                                StatusCode = MediusCallbackStatus.MediusSuccess,
+                                ConnectInfo = new NetConnectionInfo()
+                                {
+                                    AccessKey = data.ClientObject.Token,
+                                    SessionKey = data.ClientObject.SessionKey,
+                                    WorldID = channel.Id,
+                                    ServerKey = Program.GlobalAuthPublic,
+                                    AddressList = new NetAddressList()
+                                    {
+                                        AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
+                                        {
+                                            new NetAddress() { Address = Program.LobbyServer.IPAddress.ToString(), Port = Program.LobbyServer.TCPPort, AddressType = NetAddressType.NetAddressTypeExternal},
+                                            new NetAddress() { AddressType = NetAddressType.NetAddressNone},
+                                        }
+                                    },
+                                    Type = NetConnectionType.NetConnectionTypeClientServerTCP
+                                }
+                            });
 
                         }
                         break;
@@ -7551,7 +7614,7 @@ namespace Server.Medius
                                 data.ClientObject.Queue(new MediusFileGetMetaDataResponse()
                                 {
                                     MessageID = fileGetMetaDataRequest.MessageID,
-                                    StatusCode = MediusCallbackStatus.MediusDBError,
+                                    StatusCode = MediusCallbackStatus.MediusNoResult,
                                     MediusFileInfo = new MediusFile
                                     {
 
@@ -8257,18 +8320,35 @@ namespace Server.Medius
                                 if (len > Constants.MEDIUS_FILE_MAX_DOWNLOAD_DATA_SIZE)
                                     len = Constants.MEDIUS_FILE_MAX_DOWNLOAD_DATA_SIZE;
 
-                                var msg = new MediusFileDownloadResponse()
+                                if(len < Constants.MEDIUS_FILE_MAX_DOWNLOAD_DATA_SIZE)
                                 {
-                                    MessageID = fileDownloadRequest.MessageID,
-                                    iDataSize = len,
-                                    iPacketNumber = j,
-                                    iXferStatus = j == 0 ? MediusFileXferStatus.Initial : ((len + i) >= bytes.Length ? MediusFileXferStatus.End : MediusFileXferStatus.Mid),
-                                    iStartByteIndex = i,
-                                    StatusCode = MediusCallbackStatus.MediusSuccess
-                                };
-                                Array.Copy(bytes, i, msg.Data, 0, len);
+                                    var msg = new MediusFileDownloadResponse()
+                                    {
+                                        MessageID = fileDownloadRequest.MessageID,
+                                        iDataSize = len,
+                                        iPacketNumber = j,
+                                        iXferStatus = MediusFileXferStatus.End,
+                                        iStartByteIndex = i,
+                                        StatusCode = MediusCallbackStatus.MediusSuccess
+                                    };
+                                    Array.Copy(bytes, i, msg.Data, 0, len);
 
-                                data.ClientObject.Queue(msg);
+                                    data.ClientObject.Queue(msg);
+                                } else
+                                {
+                                    var msg = new MediusFileDownloadResponse()
+                                    {
+                                        MessageID = fileDownloadRequest.MessageID,
+                                        iDataSize = len,
+                                        iPacketNumber = j,
+                                        iXferStatus = j == 0 ? MediusFileXferStatus.Initial : ((len + i) >= bytes.Length ? MediusFileXferStatus.End : MediusFileXferStatus.Mid),
+                                        iStartByteIndex = i,
+                                        StatusCode = MediusCallbackStatus.MediusSuccess
+                                    };
+                                    Array.Copy(bytes, i, msg.Data, 0, len);
+
+                                    data.ClientObject.Queue(msg);
+                                }
 
                                 ++j;
                             }
@@ -9217,15 +9297,6 @@ namespace Server.Medius
             }
 
 
-
-
-
-
-
-
-            
-
-
             // Send to plugins
             //await Program.Plugins.OnEvent(PluginEvent.MEDIUS_PLAYER_ON_CHAT_MESSAGE, new OnPlayerChatMessageArgs() { Channel = channel, Player = clientObject, Message = chatMessage });
 
@@ -9482,7 +9553,7 @@ namespace Server.Medius
                 return _scertHandler.Group
                     .Select(x => _channelDatas[x.Id.AsLongText()]?.ClientObject)
                     .Where(x => x is DMEObject && x != null && (x.ApplicationId == appId || x.ApplicationId == 0))
-                    .MinBy(x => (x as DMEObject).CurrentWorlds) as DMEObject;
+                    .MediusMinBy(x => (x as DMEObject).CurrentWorlds) as DMEObject;
             }
             catch (Exception e)
             {

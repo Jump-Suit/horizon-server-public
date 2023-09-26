@@ -49,8 +49,8 @@ namespace RT.Models
         {
             return base.ToString() + " " +
                 $"MessageID:{MessageID} " +
-             $"AccountID:{AccountID} " +
-$"StatusCode:{StatusCode}";
+                $"AccountID:{AccountID} " +
+    $"StatusCode:{StatusCode}";
         }
     }
 }

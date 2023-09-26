@@ -261,7 +261,7 @@ namespace Server.Dme
 
             try
             {
-                _mpsChannel = await _bootstrap.ConnectAsync(new IPEndPoint(Utils.GetIp(Program.Settings.MPS.Ip), Program.Settings.MPS.Port));
+                 _mpsChannel = await _bootstrap.ConnectAsync(new IPEndPoint(Utils.GetIp(Program.Settings.MPS.Ip), Program.Settings.MPS.Port));
             }
             catch (Exception)
             {
@@ -377,7 +377,7 @@ namespace Server.Dme
                     }
                 case RT_MSG_SERVER_APP serverApp:
                     {
-                        ProcessMediusMessage(serverApp.Message, serverChannel);
+                        await ProcessMediusMessage(serverApp.Message, serverChannel);
                         break;
                     }
 
@@ -399,7 +399,7 @@ namespace Server.Dme
             return;
         }
 
-        private void ProcessMediusMessage(BaseMediusMessage message, IChannel clientChannel)
+        private async Task ProcessMediusMessage(BaseMediusMessage message, IChannel clientChannel)
         {
             if (message == null)
                 return;
@@ -452,7 +452,15 @@ namespace Server.Dme
                                 _worlds.Add(worldHome);
 
 
-                                Enqueue(worldHome.OnJoinGameRequest(joinGameRequest));
+                                Enqueue(await worldHome.OnJoinGameRequest(joinGameRequest));
+                            }
+                            else if (ApplicationId == 20374)
+                            {
+                                World worldHome = new World(this, 20374, 256);
+                                _worlds.Add(worldHome);
+
+
+                                Enqueue(await worldHome.OnJoinGameRequest(joinGameRequest));
                             } else {
 
                                 Enqueue(new MediusServerJoinGameResponse()
@@ -464,7 +472,7 @@ namespace Server.Dme
                         }
                         else
                         {
-                            Enqueue(world.OnJoinGameRequest(joinGameRequest));
+                            Enqueue(await world.OnJoinGameRequest(joinGameRequest));
                         }
                         break;
                     }

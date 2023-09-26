@@ -39,6 +39,7 @@ namespace Server.Medius.Models
         public MediusGameHostType GameHostType;
         public MGCL_GAME_HOST_TYPE GAME_HOST_TYPE;
         public NetAddressList netAddressList;
+        public RSA_KEY pubKey = new RSA_KEY();
         public int WorldID;
         public int AccountID;
         public int MinPlayers;
@@ -86,6 +87,7 @@ namespace Server.Medius.Models
         {
             if (createGame is MediusCreateGameRequest r)
                 FromCreateGameRequest(r);
+            }
             else if (createGame is MediusCreateGameRequest0 r0)
                 FromCreateGameRequest0(r0);
             else if (createGame is MediusCreateGameRequest1 r1)
@@ -251,7 +253,6 @@ namespace Server.Medius.Models
             GAME_HOST_TYPE = serverCreateGameOnMe.GameHostType;
             netAddressList = serverCreateGameOnMe.AddressList;
             WorldID = serverCreateGameOnMe.WorldID;
-            AccountID = serverCreateGameOnMe.AccountID;
         }
 
         private void FromCreateGameOnSelfRequest(MediusServerCreateGameOnSelfRequest serverCreateGameOnSelf)
@@ -607,7 +608,7 @@ namespace Server.Medius.Models
                 else
                 {
                     await client.LeaveGame(this);
-                    //await client.LeaveChannel(ChatChannel);
+                    await client.LeaveChannel(ChatChannel);
                 }
             }
 

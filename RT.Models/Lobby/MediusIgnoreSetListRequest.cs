@@ -63,7 +63,7 @@ namespace RT.Models
                 $"MessageID: {MessageID} " +
                 $"SessionKey: {SessionKey} " +
                 $"NumEntries: {NumEntries} " +
-                $"List: {Convert.ToString(List)}";
+                $"List: {string.Join(" ", List)}";
         }
     }
 }

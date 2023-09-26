@@ -8,10 +8,12 @@ namespace RT.Models
     /// StatusCode: MediusNoResult, MediusSuccess
     /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.MatchGetSupersetListResponse)]
-    public class MediusMatchGetSupersetListResponse : BaseLobbyExtMessage, IMediusRequest
+    public class MediusMatchGetSupersetListResponse : BaseLobbyExtMessage, IMediusResponse
     {
 
         public override byte PacketType => (byte)MediusLobbyExtMessageIds.MatchGetSupersetListResponse;
+
+        public bool IsSuccess => StatusCode >= 0;
 
         /// <summary>
         /// Message ID
@@ -28,7 +30,7 @@ namespace RT.Models
         /// <summary>
         /// Superset ID
         /// </summary>
-        public long SupersetID;
+        public uint SupersetID;
         /// <summary>
         /// Superset Name
         /// </summary>
@@ -55,7 +57,7 @@ namespace RT.Models
             EndOfList = reader.Read<bool>();
 
             //
-            SupersetID = reader.ReadInt32();
+            SupersetID = reader.ReadUInt32();
             SupersetName = reader.ReadString(Constants.SUPERSETNAME_MAXLEN);
             SupersetDescription = reader.ReadString(Constants.SUPERSETDESCRIPTION_MAXLEN);
             ExtraInfo = reader.ReadString(Constants.SUPERSETEXTRAINFO_MAXLEN);

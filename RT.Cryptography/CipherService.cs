@@ -39,6 +39,15 @@ namespace RT.Cryptography
                 _ciphers[context] = _factory.CreateNew(rsaKeyPair);
         }
 
+        public ICipher GetCipher(CipherContext context)
+        {
+            var cipher = _ciphers[context];
+            if (cipher == null)
+                throw new KeyNotFoundException($"The CipherContext {context} does not have a cipher associated with it.");
+
+            return cipher;
+        }
+
         public void SetCipher(CipherContext context, ICipher cipher)
         {
             if (!_ciphers.ContainsKey(context))

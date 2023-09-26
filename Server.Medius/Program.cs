@@ -25,12 +25,13 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DotNetty.Transport.Channels;
 using Server.libAntiCheat.Main;
+using Microsoft.Extensions.Options;
 
 namespace Server.Medius
 {
     public class Program
     {
-        private static string CONFIG_DIRECTIORY = "./";
+        private static string CONFIG_DIRECTIORY = "./static/Medius";
         public static string CONFIG_FILE => Path.Combine(CONFIG_DIRECTIORY, "medius.json");
         public static string DB_CONFIG_FILE => Path.Combine(CONFIG_DIRECTIORY, "db.config.json");
 
@@ -678,10 +679,10 @@ namespace Server.Medius
 
             // Optionally add console logger (always enabled when debugging)
 #if DEBUG
-            InternalLoggerFactory.DefaultFactory.AddProvider(new ConsoleLoggerProvider((s, level) => level >= LogSettings.Singleton.LogLevel, true));
+            InternalLoggerFactory.DefaultFactory.AddProvider(new ConsoleLoggerProvider(new OptionsMonitor<ConsoleLoggerOptions>(new ConsoleLoggerOptions())));
 #else
             if (Settings.Logging.LogToConsole)
-                InternalLoggerFactory.DefaultFactory.AddProvider(new ConsoleLoggerProvider((s, level) => level >= LogSettings.Singleton.LogLevel, true));
+                InternalLoggerFactory.DefaultFactory.AddProvider(new ConsoleLoggerProvider(new OptionsMonitor<ConsoleLoggerOptions>(new ConsoleLoggerOptions())));
 #endif
 
             // Initialize plugins
@@ -948,7 +949,9 @@ namespace Server.Medius
             };
 
             #region Dirs
+
             string root = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string ConfigPath = root + CONFIG_FILE;
             string subdirLogs = root + @"\logs";
             string subdirHorizonPlugins = root + @"\plugins";
             string subdirConfig = root + @"\config";
@@ -973,14 +976,14 @@ namespace Server.Medius
 
             #region Check Config.json
             // Create Defaults if File doesn't exist
-            if (!File.Exists(CONFIG_FILE))
+            if (!File.Exists(ConfigPath))
             {
-                File.WriteAllText(CONFIG_FILE, JsonConvert.SerializeObject(Settings, Formatting.Indented));
+                File.WriteAllText(ConfigPath, JsonConvert.SerializeObject(Settings, Formatting.Indented));
             }
             else
             {
                 // Populate existing object
-                JsonConvert.PopulateObject(File.ReadAllText(CONFIG_FILE), Settings, serializerSettings);
+                JsonConvert.PopulateObject(File.ReadAllText(ConfigPath), Settings, serializerSettings);
             }
             #endregion
 
@@ -1305,3 +1308,23 @@ namespace Server.Medius
     }
 }
 
+public class OptionsMonitor<T> : IOptionsMonitor<T>
+{
+    private readonly T options;
+
+    public OptionsMonitor(T options)
+    {
+        this.options = options;
+    }
+
+    public T CurrentValue => options;
+
+    public T Get(string name) => options;
+
+    public IDisposable OnChange(Action<T, string> listener) => new NullDisposable();
+
+    private class NullDisposable : IDisposable
+    {
+        public void Dispose() { }
+    }
+}

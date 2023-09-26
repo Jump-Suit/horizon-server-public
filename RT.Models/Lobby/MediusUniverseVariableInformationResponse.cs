@@ -31,9 +31,9 @@ namespace RT.Models
         public string SvoURL; // UNIVERSE_SVO_URL_MAXLEN
         public bool EndOfList;
 
-        public List<int> approvedList = new List<int> { 20371, 20374, 21624, 21834, 22920, 10994 };
+        public List<int> approvedList = new List<int> { 10994, 20043, 21093, 21624, 21834, 20371, 20374, 20464, 22500, 22920, };
 
-        public List<int> unapprovedList = new List<int> { 20060, 22500, 20474 };
+        public List<int> unapprovedList = new List<int> { 20060, 23360, 20474 };
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -79,11 +79,20 @@ namespace RT.Models
             if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_EXTRAINFO))
                 ExtendedInfo = reader.ReadString(Constants.UNIVERSE_EXTENDED_INFO_MAXLEN);
 
-            //if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_SVO_URL))
-            //    SvoURL = reader.ReadString(Constants.UNIVERSE_SVO_URL_MAXLEN);
+            if (approvedList.Contains(reader.AppId) && !unapprovedList.Contains(reader.AppId))
+            {
+                Console.WriteLine("Setting SVOURL");
+
+                if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_SVO_URL))
+                    SvoURL = reader.ReadString(Constants.UNIVERSE_SVO_URL_MAXLEN);
+            }
+            else
+            {
+                Console.WriteLine("Not writing SVOURL");
+            }
+
 
             EndOfList = reader.ReadBoolean();
-
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)

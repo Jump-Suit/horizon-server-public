@@ -4,10 +4,10 @@ using Server.Common;
 namespace RT.Models
 {
     /// <summary>
-    /// Introduced in Medius API v2.7.<br></br>
-    /// Allow an application to post ascii information about a <br></br>
-    /// problem that occurred during online gameplay.This function is strictly used <br></br>
-    /// only during development, QA and Public Beta phases of a title. <br></br> In general, an 
+    /// Introduced in Medius API v2.7.<br/>
+    /// Allow an application to post ascii information about a <br/>
+    /// problem that occurred during online gameplay.This function is strictly used <br/>
+    /// only during development, QA and Public Beta phases of a title. <br/> In general, an 
     /// application should not ship with calls to this function.
     /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.PostDebugInfo)]

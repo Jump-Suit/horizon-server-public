@@ -317,6 +317,7 @@ namespace Server.Medius
                         var game = Program.Manager.GetGameByGameId(gameId);
                         var rClient = Program.Manager.GetClientByAccountId(accountId, data.ClientObject.ApplicationId);
 
+                        IPHostEntry host = Dns.GetHostEntry(Program.Settings.NATIp);
 
                         if (!joinGameResponse.IsSuccess)
                         {
@@ -464,7 +465,7 @@ namespace Server.Medius
                                                 AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                                 {
                                                     new NetAddress() { Address = (data.ClientObject as DMEObject).IP.MapToIPv4().ToString(), Port = (data.ClientObject as DMEObject).Port, AddressType = NetAddressType.NetAddressTypeExternal},
-                                                    new NetAddress() { AddressType = NetAddressType.NetAddressNone},
+                                                    new NetAddress() { Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService },
                                                 }
                                             },
                                             Type = NetConnectionType.NetConnectionTypeClientServerTCP
@@ -493,7 +494,7 @@ namespace Server.Medius
                                                 AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
                                             {
                                                         new NetAddress() { Address = (data.ClientObject as DMEObject).IP.MapToIPv4().ToString(), Port = (data.ClientObject as DMEObject).Port, AddressType = NetAddressType.NetAddressTypeExternal},
-                                                        new NetAddress() { AddressType = NetAddressType.NetAddressNone},
+                                                        new NetAddress() { Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService },
                                             }
                                             },
                                             Type = NetConnectionType.NetConnectionTypeClientServerTCPAuxUDP
@@ -915,7 +916,7 @@ namespace Server.Medius
         public void SendServerCreateGameWithAttributesRequest(string messageId, int gameId, int gameAttributes, int clientAppId, int gameMaxPlayers)
         {
             Queue(new RT_MSG_SERVER_APP() { 
-                Message = new MediusServerCreateGameWithAttributesRequest()
+                Message = new MediusServerCreateGameWithAttributesRequest2()
                 {
                     MessageID = new MessageId($"{messageId}"),
                     MediusWorldUID = (uint)gameId,

@@ -77,7 +77,7 @@ namespace Server.Dme.Models
         /// <summary>
         /// 
         /// </summary>
-        public RT_RECV_FLAG RecvFlag { get; set; } = RT_RECV_FLAG.RECV_SINGLE;
+        public RT_RECV_FLAG RecvFlag { get; set; } = RT_RECV_FLAG.RECV_SINGLE | RT_RECV_FLAG.RECV_LIST;
 
         /// <summary>
         /// 
@@ -133,6 +133,12 @@ namespace Server.Dme.Models
         /// 
         /// </summary>
         long? LastAggTime { get; set; } = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool HasJoined { get; set; } = false;
+
 
         public virtual bool IsConnectingGracePeriod => !TimeAuthenticated.HasValue && (Utils.GetHighPrecisionUtcTime() - TimeCreated).TotalSeconds < Program.GetAppSettingsOrDefault(ApplicationId).ClientTimeoutSeconds;
         public virtual bool Timedout => !IsConnectingGracePeriod && ((Utils.GetHighPrecisionUtcTime() - UtcLastServerEchoReply).TotalSeconds > Program.GetAppSettingsOrDefault(ApplicationId).ClientTimeoutSeconds);
@@ -195,7 +201,7 @@ namespace Server.Dme.Models
             // so instead we'll increment our timeout dates by the client echo
             if (MediusVersion <= 108)
             {
-                UtcLastServerEchoSent = Utils.GetHighPrecisionUtcTime().AddSeconds(-1);
+                UtcLastServerEchoSent = Utils.GetHighPrecisionUtcTime().AddSeconds(1);
                 UtcLastServerEchoReply = Utils.GetHighPrecisionUtcTime();
             }
         }

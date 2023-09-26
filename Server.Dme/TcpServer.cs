@@ -345,16 +345,17 @@ namespace Server.Dme
                         }
                         #endregion
 
+                        /*
                         if (clientConnectTcpAuxUdp.Key == null)
                         {
                             scertClient.CipherService.GenerateCipher(CipherContext.RC_CLIENT_SESSION);
 
                             if (scertClient.CipherService.HasKey(CipherContext.RC_CLIENT_SESSION))
                             {
-                                Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
+                                //Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
                             }
                         } 
-
+                        */
 
 
                         data.ApplicationId = clientConnectTcpAuxUdp.AppId;
@@ -376,11 +377,11 @@ namespace Server.Dme
 
                         if (scertClient.IsPS3Client)
                         {
-                            Queue(new RT_MSG_SERVER_CONNECT_REQUIRE() { MaxPacketSize = 584, MaxUdpPacketSize = 584 }, clientChannel);
+                            Queue(new RT_MSG_SERVER_CONNECT_REQUIRE() { MaxPacketSize = Constants.MEDIUS_MESSAGE_MAXLEN, MaxUdpPacketSize = Constants.MEDIUS_UDP_MESSAGE_MAXLEN }, clientChannel);
                         }
                         else if (scertClient.MediusVersion > 108)
                         {
-                            Queue(new RT_MSG_SERVER_CONNECT_REQUIRE() { MaxPacketSize = 584, MaxUdpPacketSize = 584 }, clientChannel);
+                            Queue(new RT_MSG_SERVER_CONNECT_REQUIRE() { MaxPacketSize = Constants.MEDIUS_MESSAGE_MAXLEN, MaxUdpPacketSize = Constants.MEDIUS_UDP_MESSAGE_MAXLEN }, clientChannel);
                         }
                         else
                         {
@@ -407,7 +408,7 @@ namespace Server.Dme
 
                         if (!scertClient.IsPS3Client && scertClient.CipherService.HasKey(CipherContext.RC_CLIENT_SESSION))
                         {
-                            Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
+                            //Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
                         }
                         Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
                         {
@@ -417,7 +418,7 @@ namespace Server.Dme
                             IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
                         }, clientChannel);
 
-                        if(scertClient.MediusVersion == 108)
+                        if(scertClient.MediusVersion == 108 || scertClient.ApplicationID == 10683)
                         {
                             Queue(new RT_MSG_SERVER_CONNECT_COMPLETE()
                             {
@@ -572,7 +573,7 @@ namespace Server.Dme
                 case RT_MSG_CLIENT_DISCONNECT _:
                 case RT_MSG_CLIENT_DISCONNECT_WITH_REASON _:
                     {
-                        //_ = clientChannel.CloseAsync();
+                        _ = clientChannel.CloseAsync();
                         break;
                     }
                 default:

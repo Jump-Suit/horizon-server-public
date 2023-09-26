@@ -21,6 +21,7 @@ using System.Threading.Tasks;
 using Server.Dme.PluginArgs;
 using Server.Plugins.Interface;
 using Server.Pipeline.Attribute;
+using Org.BouncyCastle.Crypto;
 
 namespace Server.Dme
 {
@@ -79,6 +80,7 @@ namespace Server.Dme
             //
             _workerGroup = new MultithreadEventLoopGroup();
             _scertHandler = new ScertDatagramHandler();
+            var _scertClient = new ScertClientAttribute();
 
             //
             _scertHandler.OnChannelActive = channel =>
@@ -86,10 +88,10 @@ namespace Server.Dme
                 // get scert client
                 if (!channel.HasAttribute(Pipeline.Constants.SCERT_CLIENT))
                     channel.GetAttribute(Pipeline.Constants.SCERT_CLIENT).Set(new ScertClientAttribute());
-                var scertClient = channel.GetAttribute(Pipeline.Constants.SCERT_CLIENT).Get();
+                _scertClient = channel.GetAttribute(Pipeline.Constants.SCERT_CLIENT).Get();
 
                 // pass medius version
-                scertClient.MediusVersion = ClientObject.MediusVersion;
+                _scertClient.MediusVersion = ClientObject.MediusVersion;
             };
 
             // Queue all incoming messages
@@ -107,6 +109,7 @@ namespace Server.Dme
                 if (!pluginArgs.Ignore)
                     _recvQueue.Enqueue(message);
             };
+
 
             var bootstrap = new Bootstrap();
             bootstrap

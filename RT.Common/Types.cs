@@ -554,7 +554,7 @@ namespace RT.Common
         MediusPasswordNotSet,
         MediusPasswordSet,
     }
-
+    
     public enum MediusAccountType : int
     {
         MediusChildAccount,
@@ -1860,6 +1860,7 @@ namespace RT.Common
         ServerSetAttributesResponse = 0x17,
         ServerCreateGameWithAttributesRequest = 0x18,
         ServerCreateGameWithAttributesResponse = 0x19,
+        ServerWorldReportOnMe = 0x20,
         ServerSessionBeginRequest1 = 0x21,
         ServerSessionBeginResponse1 = 0x22,
         ServerSessionBeginRequest2 = 0x24,
@@ -1869,7 +1870,6 @@ namespace RT.Common
         ServerCreateGameOnSelfRequest = 0x1D,
         ServerDisconnectPlayerRequest = 0x1E,
         ServerCreateGameOnMeRequest = 0x1F,
-        ServerWorldReportOnMe = 0x20,
     }
     #endregion
 
@@ -2872,7 +2872,7 @@ namespace RT.Common
          DME_SERVER_LANGUAGE_FRENCH = 8,
          DME_SERVER_LANGUAGE_DUTCH = 9,
          DME_SERVER_LANGUAGE_PORTUGUESE = 10,
-         DME_SERVER_LANGUAGE_CHINESE = 1,
+         DME_SERVER_LANGUAGE_CHINESE = 11,
          DME_SERVER_LANGUAGE_TAIWANESE = 12,
     }
 

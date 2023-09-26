@@ -16,6 +16,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Server.Dme
@@ -23,7 +24,7 @@ namespace Server.Dme
 
     class Program
     {
-        private static string CONFIG_DIRECTIORY = "./";
+        private static string CONFIG_DIRECTIORY = @"\static\DME";
         public static string CONFIG_FILE => Path.Combine(CONFIG_DIRECTIORY, "dme.json");
         public static string DB_CONFIG_FILE => Path.Combine(CONFIG_DIRECTIORY, "db.config.json");
 
@@ -62,7 +63,7 @@ namespace Server.Dme
         static string metricPrintString = null;
         static int metricIndent = 0;
 
-        static async Task TickAsync()
+        private static async Task TickAsync()
         {
             try
             {
@@ -195,7 +196,7 @@ namespace Server.Dme
             }
         }
 
-        static async Task StartServerAsync()
+        private static async Task StartServerAsync()
         {
             int waitMs = Settings.MainLoopSleepMs;
 
@@ -301,10 +302,8 @@ namespace Server.Dme
             if (args.Length > 0)
                 CONFIG_DIRECTIORY = args[0];
 
-            // 
             Database = new DbController(DB_CONFIG_FILE);
 
-            // 
             Initialize();
 
             // Add file logger if path is valid
@@ -331,11 +330,10 @@ namespace Server.Dme
             // Initialize plugins
             Plugins = new PluginsManager(Settings.PluginsPath);
 
-            // 
             await StartServerAsync();
         }
 
-        static void Initialize()
+        private static void Initialize()
         {
             RefreshServerIp();
             RefreshConfig();
@@ -344,10 +342,11 @@ namespace Server.Dme
         /// <summary>
         /// 
         /// </summary>
-        static void RefreshConfig()
+        private static void RefreshConfig()
         {
             var usePublicIp = Settings.UsePublicIp;
-
+            string root = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string ConfigPath = root + @"\dme.json";
             // 
             var serializerSettings = new JsonSerializerSettings()
             {
@@ -355,15 +354,15 @@ namespace Server.Dme
             };
 
             // Load settings
-            if (File.Exists(CONFIG_FILE))
+            if (File.Exists(ConfigPath))
             {
                 // Populate existing object
-                JsonConvert.PopulateObject(File.ReadAllText(CONFIG_FILE), Settings, serializerSettings);
+                JsonConvert.PopulateObject(File.ReadAllText(ConfigPath), Settings, serializerSettings);
             }
             else
             {
                 // Save defaults
-                File.WriteAllText(CONFIG_FILE, JsonConvert.SerializeObject(Settings, Formatting.Indented));
+                File.WriteAllText(ConfigPath, JsonConvert.SerializeObject(Settings, Formatting.Indented));
             }
 
             // Set LogSettings singleton
@@ -461,14 +460,6 @@ namespace Server.Dme
         public static ClientObject GetClientByAccessToken(string accessToken)
         {
             return Managers.Select(x => x.Value.GetClientByAccessToken(accessToken)).FirstOrDefault(x => x != null);
-        }
-
-        public static string GenerateSessionKey()
-        {
-            lock (_sessionKeyCounterLock)
-            {
-                return (++_sessionKeyCounter).ToString();
-            }
         }
 
         public static AppSettings GetAppSettingsOrDefault(int appId)

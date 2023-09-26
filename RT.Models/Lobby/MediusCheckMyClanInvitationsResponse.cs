@@ -36,7 +36,7 @@ namespace RT.Models
             ClanInvitationID = reader.ReadInt32();
             ClanID = reader.ReadInt32();
             ResponseStatus = reader.Read<MediusClanInvitationsResponseStatus>();
-            if(reader.MediusVersion >= 112)
+            if(reader.MediusVersion == 113)
             {
                 Message = reader.ReadString(Constants.CLANMSG_MAXLEN_113);
             } else
@@ -63,7 +63,7 @@ namespace RT.Models
             writer.Write(ClanInvitationID);
             writer.Write(ClanID);
             writer.Write(ResponseStatus);
-            if(writer.MediusVersion >= 112)
+            if(writer.MediusVersion == 113)
             {
                 writer.Write(Message, Constants.CLANMSG_MAXLEN_113);
             } else

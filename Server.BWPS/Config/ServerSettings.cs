@@ -29,6 +29,16 @@ namespace Server.BWPS.Config
         public bool EncryptMessages { get; set; } = true;
 
         /// <summary>
+        /// Number of milliseconds for main loop thread to sleep.
+        /// </summary>
+        public int MainLoopSleepMs { get; set; } = 5;
+
+        /// <summary>
+        /// Milliseconds between plugin ticks.
+        /// </summary>
+        public int PluginTickIntervalMs { get; set; } = 50;
+
+        /// <summary>
         /// Logging settings.
         /// </summary>
         public LogSettings Logging { get; set; } = new LogSettings();

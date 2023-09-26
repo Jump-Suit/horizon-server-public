@@ -100,7 +100,7 @@ namespace Server.Medius
 
                 //
                 OnConnected(channel);
-
+                /*
                 // Check if IP is banned
                 Program.Database.GetIsIpBanned((channel.RemoteAddress as IPEndPoint).Address.MapToIPv4().ToString()).ContinueWith((r) =>
                 {
@@ -110,6 +110,7 @@ namespace Server.Medius
                         QueueBanMessage(data, "Your IP has been banned!");
                     }
                 });
+                */
             };
             // Remove client on disconnect
             _scertHandler.OnChannelInactive += async (channel) =>
@@ -337,7 +338,7 @@ namespace Server.Medius
             }
         }
 
-        protected virtual void QueueBanMessage(ChannelData data, string msg = "You have been banned!")
+        protected virtual async Task QueueBanMessage(ChannelData data, string msg = "You have been banned!")
         {
             // Send ban message
             data.SendQueue.Enqueue(new RT_MSG_SERVER_SYSTEM_MESSAGE()

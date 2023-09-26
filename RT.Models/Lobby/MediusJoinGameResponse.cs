@@ -25,8 +25,7 @@ namespace RT.Models
         /// </summary>
         public long MaxPlayers;
 
-        public List<int> approvedMaxPlayersAppIds = new List<int>() { 20624, 22500, 22920};
-        public List<int> unapprovedMaxPlayersAppids = new List<int>() { 10782, 24000, 24180 };
+        public List<int> approvedMaxPlayersAppIds = new List<int>() { 20371, 20374, 20624, 22500, 22920,24000, 24180 };
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -42,7 +41,7 @@ namespace RT.Models
             GameHostType = reader.Read<MediusGameHostType>();
             ConnectInfo = reader.Read<NetConnectionInfo>();
 
-            if (reader.MediusVersion == 113  && approvedMaxPlayersAppIds.Contains(reader.AppId) && !approvedMaxPlayersAppIds.Contains(reader.AppId))
+            if (reader.MediusVersion == 113 && approvedMaxPlayersAppIds.Contains(reader.AppId))
             {
                 MaxPlayers = reader.ReadInt64();
             }
@@ -62,9 +61,9 @@ namespace RT.Models
             writer.Write(GameHostType);
             writer.Write(ConnectInfo);
 
-            if (writer.MediusVersion == 113 && approvedMaxPlayersAppIds.Contains(writer.AppId) && !approvedMaxPlayersAppIds.Contains(writer.AppId))
+            
+            if (writer.MediusVersion == 113 && approvedMaxPlayersAppIds.Contains(writer.AppId))
             {
-                Console.WriteLine("Setting MaxPlayers");
                 writer.Write(MaxPlayers);
             }
         }

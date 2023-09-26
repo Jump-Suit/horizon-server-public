@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Reflection.PortableExecutable;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -48,13 +49,13 @@ namespace Server.Database
         {
             #region Dirs
             string root = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string subdirConfigDir = root + @"\config\";
+            string subdirConfigDir = root + @"\static\";
             // Load db settings
-            string subdirConfigFile = subdirConfigDir + configFile;
+            string subdirConfigFile = root + configFile;
             #endregion
 
             #region if db.config.json exists
-            if (File.Exists(configFile))
+            if (File.Exists(subdirConfigFile))
             {
                 // Populate existing object
                 try { JsonConvert.PopulateObject(File.ReadAllText(configFile), _settings); }
@@ -65,12 +66,12 @@ namespace Server.Database
             {
                 #region Create Dir and Save Default db config
                 // If Logs directory does not exist, create it. 
-                if (!Directory.Exists(configFile))
+                if (!Directory.Exists(subdirConfigFile))
                 {
-                    //Directory.CreateDirectory(subdirConfigDir);
+                    Directory.CreateDirectory(subdirConfigFile.Remove(104));
 
                     // Save default db config
-                    File.WriteAllText(configFile, JsonConvert.SerializeObject(_settings, Formatting.Indented));
+                    File.WriteAllText(subdirConfigFile, JsonConvert.SerializeObject(_settings, Formatting.Indented));
                 }
                 #endregion
             }
@@ -620,7 +621,7 @@ namespace Server.Database
                         IpAddress = ip
                     };
                     System.Text.Json.JsonSerializer.Serialize(IpBanArray);
-                    result = await PostDbAsync<bool>($"Account/getIpIsBanned", IpBanArray);
+                    result = (await GetDbAsync($"Account/getIpIsBanned?ipAddress={ip}")).IsSuccessStatusCode;
                 }
             }
             catch (Exception e)
@@ -652,7 +653,7 @@ namespace Server.Database
                         MacAddress = mac
                     };
                     System.Text.Json.JsonSerializer.Serialize(MacBanArray);
-                    result = await PostDbAsync<bool>($"Account/getMacIsBanned", MacBanArray);
+                    result = (await GetDbAsync($"Account/getMacIsBanned?macAddress={mac}")).IsSuccessStatusCode;
                 }
             }
             catch (Exception e)
@@ -3132,6 +3133,26 @@ namespace Server.Database
                         */
                         new ChannelDTO()
                         {
+                            AppId = 10683,
+                            Id = 1,
+                            Name = "CY00000000-00",
+                            MaxPlayers = 256,
+                            GenericField1 = 1,
+                            GenericField2 = 1,
+                            GenericFieldFilter = 32
+                        },
+                        new ChannelDTO()
+                        {
+                            AppId = 10683,
+                            Id = 2,
+                            Name = "CY00000000-00",
+                            MaxPlayers = 256,
+                            GenericField1 = 4294967295,
+                            GenericField2 = 4294967295,
+                            GenericFieldFilter = 32
+                        },
+                        new ChannelDTO()
+                        {
                             AppId = 20624,
                             Id = 1,
                             Name = "US",
@@ -3326,6 +3347,22 @@ namespace Server.Database
             {
                 if (_settings.SimulatedMode)
                 {
+                    if(appId == 24000)
+                    {
+
+                        return new LocationDTO[]
+                        {
+
+
+                            new LocationDTO()
+                            {
+                                AppId = 24000,
+                                Id = 0,
+                                Name = "Aquatos"
+                            },
+                        };
+
+                    }
                     return new LocationDTO[]
                     {
                         new LocationDTO()
@@ -3333,12 +3370,6 @@ namespace Server.Database
                             AppId = 0,
                             Id = 0,
                             Name = "Location 1"
-                        },
-                        new LocationDTO()
-                        {
-                            AppId = 24000,
-                            Id = 0,
-                            Name = "Aquatos"
                         },
                         new LocationDTO()
                         {

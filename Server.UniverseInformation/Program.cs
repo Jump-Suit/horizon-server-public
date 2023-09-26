@@ -1,6 +1,7 @@
 ﻿using DotNetty.Common.Internal.Logging;
 using Haukcode.HighResolutionTimer;
 using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using NReco.Logging.File;
 using RT.Common;
@@ -26,7 +27,7 @@ namespace Server.UniverseInformation
 {
     class Program
     {
-        private static string CONFIG_DIRECTIORY = "./";
+        private static string CONFIG_DIRECTIORY = "./static/MUIS";
         public static string CONFIG_FILE => Path.Combine(CONFIG_DIRECTIORY, "muis.json");
         public static string DB_CONFIG_FILE => Path.Combine(CONFIG_DIRECTIORY, "db.config.json");
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<Program>();
@@ -53,7 +54,7 @@ namespace Server.UniverseInformation
         private static Stopwatch _sw = new Stopwatch();
         private static HighResolutionTimer _timer;
 
-        static async Task TickAsync()
+        private static async Task TickAsync()
         {
 
 
@@ -241,8 +242,8 @@ namespace Server.UniverseInformation
                 InternalLoggerFactory.DefaultFactory.AddProvider(new ConsoleLoggerProvider((s, level) => level >= LogSettings.Singleton.LogLevel, true));
 #endif
 
-            // 
-            await StartServerAsync();
+            _ = StartServerAsync();
+            return;
         }
 
         static void Initialize()

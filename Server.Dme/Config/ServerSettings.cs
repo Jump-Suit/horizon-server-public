@@ -91,7 +91,7 @@ namespace Server.Dme.Config
         /// clients can optionally establish an unreliable udp channel in parallel to 
         /// their primary tcp channel.
         /// </summary>
-        public bool EnableAuxUDP = false; // (DEFAULT: 0)
+        public bool EnableAuxUDP = true; // (DEFAULT: 0)
 
         /// <summary>
         /// The configuration setting determines whether or not the primary server thread 

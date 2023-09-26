@@ -383,11 +383,6 @@ namespace Server.Medius
             // Create and add
             try
             {
-                if(client.ApplicationId == 10994)
-                {
-
-                }
-
                 var game = new Game(client, request, client.CurrentChannel, dme);
                 await AddGame(game);
 
@@ -539,7 +534,7 @@ namespace Server.Medius
                     client.appDataSize = matchCreateGameRequest.ApplicationDataSize;
                     client.appData = matchCreateGameRequest.ApplicationData;
                     
-                    // Try to get next free dme server
+                    // Try to get next free MPS server
                     // If none exist, return error to clist
                     //var dme = Program.ProxyServer.GetFreeDme(client.ApplicationId);
                     MPS mps = Program.GetMPS();
@@ -554,7 +549,7 @@ namespace Server.Medius
                         return;
                     }
 
-                    //mps.SendServerCreateGameWithAttributesRequest(matchCreateGameRequest.MessageID.ToString(), game.Id, (int)game.Attributes, client.ApplicationId, game.MaxPlayers);
+                    mps.SendServerCreateGameWithAttributesRequest(matchCreateGameRequest.MessageID.ToString(), game.Id, (int)game.Attributes, client.ApplicationId, game.MaxPlayers);
 
 
                     /*
@@ -568,7 +563,7 @@ namespace Server.Medius
                         MaxClients = game.MaxPlayers
                     });
                     */
-                    
+                    /*
                     client.Queue(new MediusMatchCreateGameResponse()
                     {
                         MessageID = matchCreateGameRequest.MessageID,
@@ -579,7 +574,7 @@ namespace Server.Medius
                         ApplicationDataSize = matchCreateGameRequest.ApplicationDataSize,
                         ApplicationData = matchCreateGameRequest.ApplicationData,
                     });
-                    
+                    */
                     return;
                 }
                 catch (Exception e)
@@ -1236,6 +1231,21 @@ namespace Server.Medius
                     x.ApplicationId == appId)
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize);
+        }
+
+        /// <summary>
+        /// Filter Worlds by AppId
+        /// </summary>
+        /// <param name="appId">ApplicationId</param>
+        /// <returns></returns>
+        public Channel GetChannelLeastPoplated(int appId)
+        {
+            var appIdsInGroup = GetAppIdsInGroup(appId);
+
+            return _lookupsByAppId
+                .Where(x => appIdsInGroup.Contains(x.Key))
+                .SelectMany(x => x.Value.ChannelIdToChannel.Select(x => x.Value))
+                .Where(x => x.ApplicationId == appId).OrderBy(kvp => kvp.PlayerCount).First();
         }
         #endregion
 

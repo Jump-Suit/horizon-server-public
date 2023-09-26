@@ -3,22 +3,15 @@ using Server.Common;
 
 namespace RT.Models
 {
-    /// <summary>
-    /// Sent as request to retrieve version string of current connected Medius Server
-    /// </summary>
-    [MediusMessage(NetMessageClass.MessageClassLobby, MediusLobbyMessageIds.VersionServer)]
-    public class MediusVersionServerRequest : BaseLobbyMessage, IMediusRequest
+    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.JoinLeastPopulatedChannelRequest)]
+    public class MediusJoinLeastPopulatedChannelRequest : BaseLobbyExtMessage, IMediusRequest
     {
-        public override byte PacketType => (byte)MediusLobbyMessageIds.VersionServer;
+        public override byte PacketType => (byte)MediusLobbyExtMessageIds.JoinLeastPopulatedChannelRequest;
 
-        /// <summary>
-        /// Message ID
-        /// </summary>
         public MessageId MessageID { get; set; }
-        /// <summary>
-        /// Session Key
-        /// </summary>
+
         public string SessionKey; // SESSIONKEY_MAXLEN
+        public bool AlwaysLeaveCurrentLobbyServer;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -27,9 +20,11 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
-
-            // 
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
+            reader.ReadBytes(2);
+
+            //
+            AlwaysLeaveCurrentLobbyServer = reader.ReadBoolean();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -39,16 +34,19 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
-
-            // 
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
+            writer.Write(new byte[2]);
+
+            //
+            writer.Write(AlwaysLeaveCurrentLobbyServer);
         }
 
         public override string ToString()
         {
             return base.ToString() + " " +
                 $"MessageID: {MessageID} " +
-                $"SessionKey: {SessionKey}";
+                $"SessionKey: {SessionKey} " +
+                $"AlwaysLeaveCurrentLobbyServer: {AlwaysLeaveCurrentLobbyServer}";
         }
     }
 }

@@ -9,7 +9,6 @@ namespace RT.Models
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.ChatMessage;
 
-
         public MessageId MessageID { get; set; }
 
         public string SessionKey; // SESSIONKEY_MAXLEN

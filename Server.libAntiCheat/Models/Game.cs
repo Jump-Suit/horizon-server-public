@@ -184,7 +184,6 @@ namespace Server.libAntiCheat.Models
             GAME_HOST_TYPE = serverCreateGameOnMe.GameHostType;
             netAddressList = serverCreateGameOnMe.AddressList;
             WorldID = serverCreateGameOnMe.WorldID;
-            AccountID = serverCreateGameOnMe.AccountID;
         }
 
         private void FromCreateGameOnSelfRequest(MediusServerCreateGameOnSelfRequest serverCreateGameOnSelf)

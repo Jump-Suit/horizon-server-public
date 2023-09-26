@@ -1,4 +1,5 @@
 ﻿using HpTimeStamps;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -103,13 +104,13 @@ namespace Server.Common
         /// By user Ash on
         /// https://stackoverflow.com/questions/914109/how-to-use-linq-to-select-object-with-minimum-or-maximum-property-value
         /// </summary>
-        public static TSource MinBy<TSource, TKey>(this IEnumerable<TSource> source,
+        public static TSource MediusMinBy<TSource, TKey>(this IEnumerable<TSource> source,
     Func<TSource, TKey> selector)
         {
-            return source.MinBy(selector, null);
+            return source.MediusMinBy(selector, null);
         }
 
-        public static TSource MinBy<TSource, TKey>(this IEnumerable<TSource> source,
+        public static TSource MediusMinBy<TSource, TKey>(this IEnumerable<TSource> source,
             Func<TSource, TKey> selector, IComparer<TKey> comparer)
         {
             if (source == null) throw new ArgumentNullException("source");
@@ -220,17 +221,25 @@ namespace Server.Common
 
         public static IPAddress GetIp(string hostname)
         {
-            if (hostname == "localhost")
-                return IPAddress.Loopback;
-
-            switch (Uri.CheckHostName(hostname))
+            try
             {
-                case UriHostNameType.IPv4: return IPAddress.Parse(hostname);
-                case UriHostNameType.Dns: return Dns.GetHostAddresses(hostname).FirstOrDefault()?.MapToIPv4() ?? IPAddress.Any;
-                default:
-                    {
-                        return null;
-                    }
+
+                if (hostname == "localhost")
+                    return IPAddress.Loopback;
+
+                switch (Uri.CheckHostName(hostname))
+                {
+                    case UriHostNameType.IPv4: return IPAddress.Parse(hostname);
+                    case UriHostNameType.Dns: return Dns.GetHostAddresses(hostname).FirstOrDefault()?.MapToIPv4() ?? IPAddress.Any;
+                    default:
+                        {
+                            return null;
+                        }
+                }
+            } catch (Exception e) 
+            {
+                Console.WriteLine(e.ToString());
+                return null;
             }
         }
 
