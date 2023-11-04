@@ -1,5 +1,6 @@
 using RT.Common;
 using Server.Common;
+using System.Collections.Generic;
 
 namespace RT.Models
 {
@@ -7,6 +8,7 @@ namespace RT.Models
     public class MediusSessionBeginResponse : BaseLobbyMessage, IMediusResponse
     {
         public override byte PacketType => (byte)MediusLobbyMessageIds.SessionBeginResponse;
+        List<int> shortPadding = new List<int> { 10694, 21064 };
 
         public bool IsSuccess => StatusCode >= 0;
 
@@ -27,7 +29,14 @@ namespace RT.Models
             reader.ReadBytes(3);
             StatusCode = reader.Read<MediusCallbackStatus>();
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
-            reader.ReadBytes(3);
+            if (shortPadding.Contains(reader.AppId))
+            {
+                reader.ReadBytes(1);
+            }
+            else
+            {
+                reader.ReadBytes(3);
+            }
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -42,7 +51,13 @@ namespace RT.Models
             writer.Write(new byte[3]);
             writer.Write(StatusCode);
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
-            writer.Write(new byte[3]);
+            if(shortPadding.Contains(writer.AppId))
+            {
+                writer.Write(new byte[1]);
+            } else
+            {
+                writer.Write(new byte[3]);
+            }
         }
 
         public override string ToString()

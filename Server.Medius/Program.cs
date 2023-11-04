@@ -31,9 +31,9 @@ namespace Server.Medius
 {
     public class Program
     {
-        private static string CONFIG_DIRECTIORY = "./static/Medius";
-        public static string CONFIG_FILE => Path.Combine(CONFIG_DIRECTIORY, "medius.json");
-        public static string DB_CONFIG_FILE => Path.Combine(CONFIG_DIRECTIORY, "db.config.json");
+        private static string CONFIG_DIRECTIORY = "/static/Medius";
+        public static string CONFIG_FILE => "medius.json";//Path.Combine(CONFIG_DIRECTIORY, "medius.json");
+        public static string DB_CONFIG_FILE => "db.config.json"; //Path.Combine(CONFIG_DIRECTIORY, "db.config.json");
 
         public static RSA_KEY GlobalAuthPublic = null;
 
@@ -630,6 +630,7 @@ namespace Server.Medius
                 CONFIG_DIRECTIORY = args[0];
 
             // 
+            Console.WriteLine(DB_CONFIG_FILE);
             Database = new DbController(DB_CONFIG_FILE);
 
             // 
@@ -707,231 +708,6 @@ namespace Server.Medius
             });
 
 
-            /*
-            #region Locations TEMP
-            if (Settings.Locations != null)
-            {
-                foreach (var location in Settings.Locations)
-                {
-                    if (location.AppIds == null || location.AppIds.Length == 0)
-                    {
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = 0,
-                            MaxPlayers = 256,
-                            Name = location.ChannelName ?? location.Name,
-                            GenericFieldLevel = location.GenericFieldLevel,
-                            Id = location.Id,
-                            Type = ChannelType.Lobby
-                        });
-                    }
-                    else
-                    {
-                        foreach (var appId in location.AppIds)
-                        {
-                            Manager.AddChannel(new Channel()
-                            {
-                                ApplicationId = appId,
-                                MaxPlayers = 256,
-                                Name = location.ChannelName ?? location.Name,
-                                GenericFieldLevel = location.GenericFieldLevel,
-                                Id = location.Id,
-                                Type = ChannelType.Lobby
-                            });
-                        }
-                    }
-                }
-            }
-            #endregion
-            /*
-            if (Settings.ApplicationIds != null)
-            {
-                foreach (var appId in Settings.ApplicationIds)
-                {
-
-                    #region Motorstorm 1 / Monument Valley
-                    //SCEA SCEE SCEI SCEK
-                    else if (appId == 20764 || appId == 20364 || appId == 21000 || appId == 21044)
-                    {
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "Motorstorm US West",
-                            Type = ChannelType.Lobby
-                        });
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "Motorstorm US Central",
-                            Type = ChannelType.Lobby
-                        });
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "Motorstorm US East",
-                            Type = ChannelType.Lobby
-                        });
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "Motorstorm EU",
-                            Type = ChannelType.Lobby
-                        });
-                        /*
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "モーターストームJP",
-                            Type = ChannelType.Lobby
-                        });
-                    }
-                    #endregion
-
-                    #region NBA 07
-                    else if (appId == 20244)
-                    {
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "SportsConnect US",
-                            Type = ChannelType.Lobby,
-                            GenericField1 = 1,
-                            GenericField2 = 1,
-                        });
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "SportsConnect EU",
-                            Type = ChannelType.Lobby,
-                            GenericField1 = 1,
-                            GenericField2 = 1,
-                        });
-                    }
-                    #endregion
-
-                    #region WRC 4
-                    else if (appId == 10394)
-                    {
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "Region US",
-                            Type = ChannelType.Lobby,
-                        });
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "Region EU",
-                            Type = ChannelType.Lobby,
-                        });
-                    }
-                    #endregion
-
-                    #region Socom 1
-                    else if (appId == 10274)
-                    {
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "Region US",
-                            Type = ChannelType.Lobby,
-                        });
-                    }
-                    #endregion
-
-                    #region Arc the Lad: End of Darkness
-                    else if (appId == 10984)
-                    {
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "Yewbell",
-                            Type = ChannelType.Lobby,
-                        });
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "Rueloon",
-                            Type = ChannelType.Lobby,
-                        });
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "Dilzweld",
-                            Type = ChannelType.Lobby,
-                        });
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "Milmarna",
-                            Type = ChannelType.Lobby,
-                        });
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "Romastle Plains",
-                            Type = ChannelType.Lobby,
-                        });
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "Halshinne",
-                            Type = ChannelType.Lobby,
-                        });
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "Lamda Temple",
-                            Type = ChannelType.Lobby,
-                        });
-                    }
-                    #endregion
-
-                    #region Default 
-                    if (Manager.GetDefaultLobbyChannel(appId) == null)
-                    {
-                        Manager.AddChannel(new Channel()
-                        {
-                            ApplicationId = appId,
-                            MaxPlayers = 256,
-                            Name = "Default",
-                            Type = ChannelType.Lobby
-                        });
-                    }
-                    #endregion
-                }
-            }
-            else
-            {
-                if (Manager.GetDefaultLobbyChannel(0) == null)
-                {
-                    Manager.AddChannel(new Channel()
-                    {
-                        ApplicationId = 0,
-                        MaxPlayers = 256,
-                        Name = "Default",
-                        Type = ChannelType.Lobby
-                    });
-                }
-            }
-            */
 
         }
 
@@ -951,7 +727,7 @@ namespace Server.Medius
             #region Dirs
 
             string root = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string ConfigPath = root + CONFIG_FILE;
+            string ConfigPath = root + "/" + CONFIG_FILE;
             string subdirLogs = root + @"\logs";
             string subdirHorizonPlugins = root + @"\plugins";
             string subdirConfig = root + @"\config";

@@ -6,40 +6,44 @@ using System.IO;
 
 namespace RT.Models
 {
-    [MediusMessage(NetMessageClass.MessageClassApplication, NetMessageTypeIds.NetMessageTypeProtocolInfo)]
-    public class NetMessageTypeProtocolInfo : BaseApplicationMessage
+    [MediusMessage(NetMessageClass.MessageClassApplication, NetMessageTypeIds.NetMessageTypeMAPSHelloMessage)]
+    public class NetMAPSHelloMessage : BaseApplicationMessage
     {
-        public override NetMessageTypeIds PacketType => NetMessageTypeIds.NetMessageTypeProtocolInfo;
+        public override NetMessageTypeIds PacketType => NetMessageTypeIds.NetMessageTypeMAPSHelloMessage;
 
         public override byte IncomingMessage => 0;
         public override byte Size => 5;
 
         public override byte PluginId => 31;
 
-        public uint protocolInfo;
-        public uint buildNumber;
+        public bool m_success;
+        public bool m_isOnline;
 
+        public byte[] m_availableFactions = new byte[0];
 
         public override void DeserializePlugin(MessageReader reader)
         {
-            protocolInfo = reader.ReadUInt32();
-            buildNumber = reader.ReadUInt32();
-
+            m_success = reader.ReadBoolean();
+            m_isOnline = reader.ReadBoolean();
+            reader.ReadBytes(2);
+            m_availableFactions = reader.ReadBytes(m_availableFactions.Length);
         }
         public override void SerializePlugin(MessageWriter writer)
         {
-            writer.Write(protocolInfo);
-            writer.Write(buildNumber);
+            writer.Write(m_success);
+            writer.Write(m_isOnline);
+            writer.Write(new byte[2]);
+            writer.Write(m_availableFactions);
         }
 
         public override string ToString()
         {
-            var ProtoBytesReversed = ReverseBytesUInt(protocolInfo);
-            var BuildNumberReversed = ReverseBytesUInt(buildNumber);
+            //var ProtoBytesReversed = ReverseBytes(protocolInfo);
 
             return base.ToString() + " " +
-                $"protocolInfo: {ProtoBytesReversed} " +
-                $"buildNumber: {BuildNumberReversed}";
+                $"m_success: {m_success} " +
+                $"m_isOnline: {m_isOnline} " +
+                $"m_availableFactions: {m_availableFactions.ToString()}";
         }
     }
 }

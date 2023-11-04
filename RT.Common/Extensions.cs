@@ -1,4 +1,7 @@
-﻿namespace RT.Common
+﻿using System.Collections.Generic;
+using System;
+
+namespace RT.Common
 {
     public static class Extensions
     {
@@ -45,5 +48,36 @@
 
         #endregion
 
+
+
     }
+}
+
+public static class TimeZoneInfoExtensions
+{
+
+    public static string Abbreviation(this TimeZoneInfo Source)
+    {
+
+        var TimeZoneMap = new Dictionary<string, string>()
+        {
+            {"eastern standard time", "est"},
+            {"mountain standard time", "mst"},
+            {"central standard time", "cst"},
+            {"pacific standard time", "pst"},
+            {"alaska standard time", "akst"},
+            {"hawaii-aleutian standard time", "hast"},
+            {"atlantic standard time", "ast"},
+            {"greenwich mean time", "gmt"},
+            {"central european standard time", "cest"},
+            {"indian standard time", "ist"},
+            {"japan standard time", "jst"},
+            {"australian eastern standard time", "aest"},
+            // Add more timezones and acronyms as needed
+        };
+
+        return TimeZoneMap[Source.Id.ToLower()].ToUpper();
+
+    }
+
 }

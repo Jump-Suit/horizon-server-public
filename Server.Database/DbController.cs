@@ -51,9 +51,10 @@ namespace Server.Database
             string root = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string subdirConfigDir = root + @"\static\";
             // Load db settings
-            string subdirConfigFile = root + configFile;
+            string subdirConfigFile = root + "/" + configFile;
             #endregion
 
+            Console.WriteLine(subdirConfigFile);
             #region if db.config.json exists
             if (File.Exists(subdirConfigFile))
             {
@@ -2442,7 +2443,7 @@ namespace Server.Database
             {
                 if (_settings.SimulatedMode)
                 {
-                    /*
+                    
                     return new DimEula()
                     {
                         Id = 1,
@@ -2452,7 +2453,7 @@ namespace Server.Database
                         EulaBody = "Eula Body",
 
                     };
-                    */
+                    
                 }
                 else
                 {
@@ -3130,7 +3131,6 @@ namespace Server.Database
                             GenericField1 = 1,
                             GenericFieldFilter = 1
                         },
-                        */
                         new ChannelDTO()
                         {
                             AppId = 10683,
@@ -3150,6 +3150,17 @@ namespace Server.Database
                             GenericField1 = 4294967295,
                             GenericField2 = 4294967295,
                             GenericFieldFilter = 32
+                        },
+                        */
+                        new ChannelDTO()
+                        {
+                            AppId = 10694,
+                            Id = 1,
+                            Name = "US",
+                            MaxPlayers = 128,
+                            GenericField1 = 1,
+                            GenericField2 = 1,
+                            GenericFieldFilter = 64
                         },
                         new ChannelDTO()
                         {

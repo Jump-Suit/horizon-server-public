@@ -113,8 +113,8 @@ namespace Server.Medius
                         data.ApplicationId = clientConnectTcp.AppId;
                         scertClient.ApplicationID = clientConnectTcp.AppId;
 
-                        List<int> pre108ServerConnect = new List<int>() { 10190, 10114, 10124, 10284, 10330, 10334, 10540, 10680 };
-                        List<int> pre108NoServerConnect = new List<int>() { 10782 };
+                        List<int> pre108ServerConnect = new List<int>() { 10190, 10114, 10124, 10284, 10330, 10334, 10421, 10540, 10680 };
+                        //List<int> pre108NoServerConnect = new List<int>() { 10782 };
 
 
                         if (clientConnectTcp.AccessToken != null)
@@ -139,7 +139,7 @@ namespace Server.Medius
 
                         #region 108 SERVER_CONNECT_COMPLETE
                         // Depending on game, complete connection or not.
-                        if (scertClient.MediusVersion == 108 || !pre108NoServerConnect.Contains(scertClient.ApplicationID) && pre108ServerConnect.Contains(scertClient.ApplicationID))
+                        if (scertClient.MediusVersion == 108 && pre108ServerConnect.Contains(scertClient.ApplicationID))
                         {
                             Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
                         }
@@ -416,7 +416,7 @@ namespace Server.Medius
                                             AccessKey = rClient.Token,
                                             SessionKey = rClient.SessionKey,
                                             WorldID = game.WorldID,
-                                            ServerKey = joinGameResponse.pubKey,
+                                            ServerKey = game.pubKey,
                                             AddressList = new NetAddressList()
                                             {
                                                 AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
@@ -788,10 +788,9 @@ namespace Server.Medius
 
                 #region MediusServerReport
                 case MediusServerReport serverReport:
-                    {
-
+                    { 
                         (data.ClientObject as DMEObject)?.OnServerReport(serverReport);
-                        //data.ClientObject.OnConnected();
+                        data.ClientObject.OnConnected();
                         //data.ClientObject.KeepAliveUntilNextConnection();
                         //Logger.Info($"ServerReport SessionKey {serverReport.SessionKey} MaxWorlds {serverReport.MaxWorlds} MaxPlayersPerWorld {serverReport.MaxPlayersPerWorld} TotalWorlds {serverReport.ActiveWorldCount} TotalPlayers {serverReport.TotalActivePlayers} Alert {serverReport.AlertLevel} ConnIndex {data.ClientObject.DmeId} WorldID {data.ClientObject.WorldId}");
                         break;
@@ -916,7 +915,7 @@ namespace Server.Medius
         public void SendServerCreateGameWithAttributesRequest(string messageId, int gameId, int gameAttributes, int clientAppId, int gameMaxPlayers)
         {
             Queue(new RT_MSG_SERVER_APP() { 
-                Message = new MediusServerCreateGameWithAttributesRequest2()
+                Message = new MediusServerCreateGameWithAttributesRequest()
                 {
                     MessageID = new MessageId($"{messageId}"),
                     MediusWorldUID = (uint)gameId,

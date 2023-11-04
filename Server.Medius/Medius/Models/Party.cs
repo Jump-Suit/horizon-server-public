@@ -68,7 +68,7 @@ namespace Server.Medius.Models
 
         public int PlayerCount => Clients.Count(x => x != null && x.Client.IsConnected && x.InGame);
 
-        public Party(ClientObject client, IMediusRequest partyCreate, Channel chatChannel)
+        public Party(ClientObject client, IMediusRequest partyCreate, Channel chatChannel, DMEObject dmeServer)
         {
             if (partyCreate is MediusPartyCreateRequest r)
                 FromPartyCreateRequest(r);
@@ -78,6 +78,7 @@ namespace Server.Medius.Models
             utcTimeCreated = Utils.GetHighPrecisionUtcTime();
             utcTimeEmpty = null;
             ChatChannel = chatChannel;
+            DMEServer = dmeServer;
             ChatChannel?.RegisterParty(this);
             Host = client;
 

@@ -27,7 +27,7 @@ namespace Server.UniverseInformation
 {
     class Program
     {
-        private static string CONFIG_DIRECTIORY = "./static/MUIS";
+        private static string CONFIG_DIRECTIORY = "./";
         public static string CONFIG_FILE => Path.Combine(CONFIG_DIRECTIORY, "muis.json");
         public static string DB_CONFIG_FILE => Path.Combine(CONFIG_DIRECTIORY, "db.config.json");
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<Program>();
@@ -241,9 +241,8 @@ namespace Server.UniverseInformation
             if (Settings.Logging.LogToConsole)
                 InternalLoggerFactory.DefaultFactory.AddProvider(new ConsoleLoggerProvider((s, level) => level >= LogSettings.Singleton.LogLevel, true));
 #endif
-
-            _ = StartServerAsync();
-            return;
+            //
+            await StartServerAsync();
         }
 
         static void Initialize()

@@ -56,6 +56,11 @@ namespace Server.Medius.Models
         public int GenericField6;
         public int GenericField7;
         public int GenericField8;
+        public string RequestData;
+        public uint GroupMemberListSize;
+        public char[] GroupMemberList;
+        public uint AppDataSize;
+        public char[] AppData;
         public MediusWorldStatus WorldStatus => _worldStatus;
         public MediusWorldAttributesType Attributes;
         public MediusMatchOptions MatchOptions;
@@ -86,6 +91,11 @@ namespace Server.Medius.Models
         public Game(ClientObject client, IMediusRequest createGame, Channel chatChannel, DMEObject dmeServer)
         {
             if (createGame is MediusCreateGameRequest r)
+            {
+                if(client.ApplicationId == 24180)
+                {
+                    r.MaxPlayers = 10;
+                }
                 FromCreateGameRequest(r);
             }
             else if (createGame is MediusCreateGameRequest0 r0)
@@ -462,12 +472,16 @@ namespace Server.Medius.Models
             }
         }
 
-        public virtual async Task OnWorldReport(MediusWorldReport report)
+        public virtual async Task OnWorldReport(MediusWorldReport report, int appId)
         {
             // Ensure report is for correct game world
             if (report.MediusWorldID != Id)
                 return;
 
+            if(appId == 24180)
+            {
+                report.MaxPlayers = 10;
+            }
 
             //Id = report.MediusWorldID;
             GameName = report.GameName;

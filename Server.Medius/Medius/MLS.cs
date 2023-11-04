@@ -5,6 +5,7 @@ using Org.BouncyCastle.Asn1.Ocsp;
 using RT.Common;
 using RT.Cryptography;
 using RT.Models;
+using RT.Models.Lobby;
 using RT.Models.Misc;
 using Server.Common;
 using Server.Database.Models;
@@ -25,6 +26,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using static System.Net.WebRequestMethods;
 using File = System.IO.File;
@@ -101,7 +103,7 @@ namespace Server.Medius
                     }
                 case RT_MSG_CLIENT_CONNECT_TCP clientConnectTcp:
                     {
-                        List<int> pre108ServerComplete = new List<int>() { 10114, 10164, 10190, 10124, 10284, 10330, 10334, 10414, 10442, 10540, 10680, 10683 };
+                        List<int> pre108ServerComplete = new List<int>() { 10114, 10164, 10190, 10124, 10284, 10330, 10334, 10414, 10421, 10442, 10540, 10680, 10683, 10984 };
                         List<int> pre108NoServerComplete = new List<int>() { 10010, 10031, 10274 };
 
 
@@ -119,10 +121,23 @@ namespace Server.Medius
                         scertClient.ApplicationID = clientConnectTcp.AppId;
 
                         data.ClientObject = Program.Manager.GetClientByAccessToken(clientConnectTcp.AccessToken, clientConnectTcp.AppId);
-                        if(data.ClientObject == null)
+                        if (data.ClientObject == null)
                         {
-                            Logger.Warn("CLIENTOBJECT NULL FALLBACK TO SESSIONKEY!!");
-                            data.ClientObject = Program.Manager.GetClientBySessionKey(clientConnectTcp.SessionKey, clientConnectTcp.AppId);
+                            Logger.Warn("CLIENTOBJECT NULL FALLBACK");
+                            //data.ClientObject = Program.Manager.GetClientBySessionKey(clientConnectTcp.SessionKey, clientConnectTcp.AppId);
+                            if(data.ClientObject == null)
+                            {
+                                var clients = Program.Manager.GetClients(clientConnectTcp.AppId);
+                                Logger.Warn($"Clients Count for AppId {clients.Count()}");
+                                foreach (var client in clients)
+                                {
+                                    if (client.Token == clientConnectTcp.AccessToken) {
+
+                                        Logger.Warn("CLIENTOBJECT FALLBACK FOUND!!");
+                                        data.ClientObject = client;
+                                    }
+                                }
+                            }
                         }
 
                         #region Client Object Null?
@@ -130,11 +145,13 @@ namespace Server.Medius
                         if (data.ClientObject == null)
                         {
                             Logger.Error($"IGNORING CLIENT {data} || {data.ClientObject}");
-                            data.Ignore = true;
+                            //data.Ignore = true;
                         }
                         #endregion
                         else
                         {
+                            Logger.Debug("Client valid!");
+
                             // 
                             data.ClientObject.OnConnected();
 
@@ -245,7 +262,7 @@ namespace Server.Medius
                     }
                 case RT_MSG_CLIENT_CONNECT_READY_REQUIRE clientConnectReadyRequire:
                     {
-                        if (!scertClient.IsPS3Client)
+                        if (!scertClient.IsPS3Client && scertClient.CipherService.EnableEncryption == true)
                         {
                             Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
                         }
@@ -459,14 +476,23 @@ namespace Server.Medius
                         // ERROR -- Need to be logged in
                         if (!data.ClientObject.IsLoggedIn)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {getAccessLevelInfoRequest} without being logged in.");
-
+                        /*
                         //int adminAccessLevel = 4;
-
+                        if (data.ClientObject.ApplicationId == 21834)
+                        {
+                            Queue(new RT_MSG_SERVER_MEMORY_POKE()
+                            {
+                                start_Address = 0x00D0AF60,
+                                Payload = BitConverter.GetBytes(0x687474703A2F),
+                                SkipEncryption = true,
+                            }, clientChannel);
+                        }
+                        */
                         data.ClientObject.Queue(new MediusGetAccessLevelInfoResponse()
                         {
                             MessageID = getAccessLevelInfoRequest.MessageID,
                             StatusCode = MediusCallbackStatus.MediusSuccess,
-                            AccessLevel = MediusAccessLevelType.MEDIUS_ACCESSLEVEL_DEFAULT,
+                            AccessLevel = MediusAccessLevelType.MEDIUS_ACCESSLEVEL_MODERATOR,
                         });
                         break;
                     }
@@ -846,9 +872,7 @@ namespace Server.Medius
                         {
                             MessageID = matchGetSupersetListRequest.MessageID,
                             StatusCode = MediusCallbackStatus.MediusSuccess,
-                            SupersetID = 1,
-                            SupersetName = "Test",
-                            SupersetDescription = "Test",
+                            SupersetID = 0,
                             EndOfList = true,
                         });
 
@@ -883,7 +907,6 @@ namespace Server.Medius
                         break;
                     }
 
-                //Unimplemented
                 case MediusMatchFindGameRequest matchFindGameRequest:
                     {
                         // ERROR - Need a session
@@ -893,32 +916,15 @@ namespace Server.Medius
                         // ERROR -- Need to be logged in
                         if (!data.ClientObject.IsLoggedIn)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {matchFindGameRequest} without being logged in.");
-
-                        uint gameCount = Program.Manager.GetGameCount(data.ClientObject.ApplicationId);
-
-                        if(gameCount == 0)
+                        
+                        // Tell the client their now MatchingInProgress
+                        data.ClientObject.Queue(new MediusMatchFindGameStatusResponse()
                         {
+                            MessageID = matchFindGameRequest.MessageID,
+                            StatusCode = MediusCallbackStatus.MediusMatchingInProgress,
+                        });
 
-                            // Tell the client their now MatchingInProgress
-                            data.ClientObject.Queue(new MediusMatchFindGameStatusResponse()
-                            {
-                                MessageID = matchFindGameRequest.MessageID,
-                                StatusCode = MediusCallbackStatus.MediusMatchingInProgress,
-                            });
-                        } else
-                        {
-
-                            // Tell the client their now MatchingInProgress
-                            data.ClientObject.Queue(new MediusMatchFindGameStatusResponse()
-                            {
-                                MessageID = matchFindGameRequest.MessageID,
-                                StatusCode = MediusCallbackStatus.MediusMatchingInProgress,
-                            });
-                        }
-
-
-
-
+                        Task.Delay(5000).ContinueWith((r => AssignGameToJoin(data.ClientObject, matchFindGameRequest)));
                         break;
                     }
 
@@ -2731,13 +2737,18 @@ namespace Server.Medius
                         if (!data.ClientObject.IsLoggedIn)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {getTotalUsersRequest} without being logged in.");
 
-                        var channel = data.ClientObject.CurrentChannel;
-                        if (channel == null)
+                        var totalGames = Program.Manager.GetGameCount(data.ClientObject.ApplicationId);
+                        var totalUsers = Program.Manager.GetClients(data.ClientObject.ApplicationId);
+                        if (totalUsers.Count == 0)
                         {
+                            await data.ClientObject.JoinChannel(Program.Manager.GetOrCreateDefaultLobbyChannel(data.ClientObject.ApplicationId));
+
                             data.ClientObject.Queue(new MediusGetTotalUsersResponse()
                             {
                                 MessageID = getTotalUsersRequest.MessageID,
-                                StatusCode = MediusCallbackStatus.MediusWMError
+                                TotalInSystem = 0,
+                                TotalInGame = 0,
+                                StatusCode = MediusCallbackStatus.MediusNoResult
                             });
                         }
                         else
@@ -2746,8 +2757,8 @@ namespace Server.Medius
                             data.ClientObject.Queue(new MediusGetTotalUsersResponse()
                             {
                                 MessageID = getTotalUsersRequest.MessageID,
-                                TotalInSystem = (uint)channel.Clients.Count(),
-                                TotalInGame = (uint)channel.GameCount,
+                                TotalInSystem = (uint)totalUsers.Count,
+                                TotalInGame = totalGames,
                                 StatusCode = MediusCallbackStatus.MediusSuccess
                             });
                         }
@@ -3593,7 +3604,20 @@ namespace Server.Medius
                         if (!data.ClientObject.IsLoggedIn)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {getClanMemberList_ExtraInfoRequest} without being logged in.");
 
-                        _ = Program.Database.GetClanById(getClanMemberList_ExtraInfoRequest.ClanID,
+                        if(getClanMemberList_ExtraInfoRequest.ClanID == -1)
+                        {
+                            data.ClientObject.Queue(new MediusGetClanMemberList_ExtraInfoResponse()
+                            {
+                                MessageID = getClanMemberList_ExtraInfoRequest.MessageID,
+                                StatusCode = MediusCallbackStatus.MediusNoResult,
+                                OnlineState = new MediusPlayerOnlineState()
+                                {
+                                },
+                                EndOfList = true
+                            });
+                        } else
+                        {
+                            _ = Program.Database.GetClanById(getClanMemberList_ExtraInfoRequest.ClanID,
                             data.ClientObject.ApplicationId)
                         .ContinueWith(r =>
                         {
@@ -3639,23 +3663,31 @@ namespace Server.Medius
                                     {
                                         MessageID = getClanMemberList_ExtraInfoRequest.MessageID,
                                         StatusCode = MediusCallbackStatus.MediusClanNotFound,
+                                        OnlineState = new MediusPlayerOnlineState()
+                                        {
+                                        },
                                         EndOfList = true
                                     });
                                 }
 
                                 responses[responses.Count - 1].EndOfList = true;
                                 data.ClientObject.Queue(responses);
-                            } else
+                            }
+                            else
                             {
                                 data.ClientObject.Queue(new MediusGetClanMemberList_ExtraInfoResponse()
                                 {
                                     MessageID = getClanMemberList_ExtraInfoRequest.MessageID,
                                     StatusCode = MediusCallbackStatus.MediusDBError,
+                                    OnlineState = new MediusPlayerOnlineState()
+                                    {
+                                    },
                                     EndOfList = true
                                 });
                             }
 
                         });
+                        }
                         break;
                     }
 
@@ -3669,42 +3701,56 @@ namespace Server.Medius
                         if (!data.ClientObject.IsLoggedIn)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {getClanInvitiationsSentRequest} without being logged in.");
 
-                        _ = Program.Database.GetClanById(data.ClientObject.ClanId.Value,
-                            data.ClientObject.ApplicationId)
-                        .ContinueWith(r =>
+                        // ERROR -- Need clan
+                        if (!data.ClientObject.ClanId.HasValue)
                         {
-                            List<MediusGetClanInvitationsSentResponse> responses = new List<MediusGetClanInvitationsSentResponse>();
-                            if (r.IsCompletedSuccessfully && r.Result != null)
+                            Logger.Warn("Not leader of clan. -  Only a clan leader can get ClanInvitationsSent.");
+                            data.ClientObject.Queue(new MediusGetClanInvitationsSentResponse()
                             {
-                                responses.AddRange(r.Result.ClanMemberInvitations
-                                    .Where(x => x.ResponseStatus == 0) // only return undecided
-                                    .Skip((getClanInvitiationsSentRequest.Start - 1) * getClanInvitiationsSentRequest.PageSize)
-                                    .Take(getClanInvitiationsSentRequest.PageSize)
-                                    .Select(x => new MediusGetClanInvitationsSentResponse()
-                                    {
-                                        AccountID = x.TargetAccountId,
-                                        AccountName = x.TargetAccountName,
-                                        StatusCode = MediusCallbackStatus.MediusSuccess,
-                                        ResponseMsg = x.ResponseMessage,
-                                        ResponseStatus = (MediusClanInvitationsResponseStatus)x.ResponseStatus,
-                                        ResponseTime = x.ResponseTime,
-                                        EndOfList = false
-                                    }));
-                            }
-
-                            if (responses.Count == 0)
+                                MessageID = getClanInvitiationsSentRequest.MessageID,
+                                StatusCode = MediusCallbackStatus.MediusNoResult,
+                                EndOfList = true
+                            });
+                        } else
+                        {
+                            _ = Program.Database.GetClanById(data.ClientObject.ClanId.Value,
+                            data.ClientObject.ApplicationId).ContinueWith(r =>
                             {
-                                responses.Add(new MediusGetClanInvitationsSentResponse()
+                                List<MediusGetClanInvitationsSentResponse> responses = new List<MediusGetClanInvitationsSentResponse>();
+                                if (r.IsCompletedSuccessfully && r.Result != null)
                                 {
-                                    MessageID = getClanInvitiationsSentRequest.MessageID,
-                                    StatusCode = MediusCallbackStatus.MediusNoResult,
-                                    EndOfList = true
-                                });
-                            }
+                                    responses.AddRange(r.Result.ClanMemberInvitations
+                                        .Where(x => x.ResponseStatus == 0) // only return undecided
+                                        .Skip((getClanInvitiationsSentRequest.Start - 1) * getClanInvitiationsSentRequest.PageSize)
+                                        .Take(getClanInvitiationsSentRequest.PageSize)
+                                        .Select(x => new MediusGetClanInvitationsSentResponse()
+                                        {
+                                            AccountID = x.TargetAccountId,
+                                            AccountName = x.TargetAccountName,
+                                            StatusCode = MediusCallbackStatus.MediusSuccess,
+                                            ResponseMsg = x.ResponseMessage,
+                                            ResponseStatus = (MediusClanInvitationsResponseStatus)x.ResponseStatus,
+                                            ResponseTime = x.ResponseTime,
+                                            EndOfList = false
+                                        }));
+                                }
 
-                            responses[responses.Count - 1].EndOfList = true;
-                            data.ClientObject.Queue(responses);
-                        });
+                                if (responses.Count == 0)
+                                {
+                                    responses.Add(new MediusGetClanInvitationsSentResponse()
+                                    {
+                                        MessageID = getClanInvitiationsSentRequest.MessageID,
+                                        StatusCode = MediusCallbackStatus.MediusNoResult,
+                                        EndOfList = true
+                                    });
+                                }
+
+                                responses[responses.Count - 1].EndOfList = true;
+                                data.ClientObject.Queue(responses);
+                            });
+                        }
+
+                        
                         break;
                     }
 
@@ -4469,45 +4515,48 @@ namespace Server.Medius
                             data.ClientObject.Queue(new MediusGetAllClanMessagesResponse()
                             {
                                 MessageID = getAllClanMessagesRequest.MessageID,
-                                StatusCode = MediusCallbackStatus.MediusNotClanLeader,
+                                StatusCode = MediusCallbackStatus.MediusNoResult,
                                 EndOfList = true
                             });
-                        }
-
-                        _ = Program.Database.GetClanMessages(data.ClientObject.AccountId,
+                        } else
+                        {
+                            _ = Program.Database.GetClanMessages(data.ClientObject.AccountId,
                             data.ClientObject.ClanId.Value,
                             getAllClanMessagesRequest.Start,
                             getAllClanMessagesRequest.PageSize,
                             data.ClientObject.ApplicationId)
-                        .ContinueWith((r) =>
-                        {
-                            List<MediusGetAllClanMessagesResponse> responses = new List<MediusGetAllClanMessagesResponse>();
-                            if (r.IsCompletedSuccessfully && r.Result != null)
+                            .ContinueWith((r) =>
                             {
-                                responses.AddRange(r.Result
-                                    .Select(x => new MediusGetAllClanMessagesResponse()
+                                List<MediusGetAllClanMessagesResponse> responses = new List<MediusGetAllClanMessagesResponse>();
+                                if (r.IsCompletedSuccessfully && r.Result != null)
+                                {
+                                    responses.AddRange(r.Result
+                                        .Select(x => new MediusGetAllClanMessagesResponse()
+                                        {
+                                            MessageID = getAllClanMessagesRequest.MessageID,
+                                            StatusCode = MediusCallbackStatus.MediusSuccess,
+                                            ClanMessageID = x.Id,
+                                            Message = x.Message,
+                                            Status = MediusClanMessageStatus.ClanMessageRead
+                                        }));
+                                }
+
+                                if (responses.Count == 0)
+                                {
+                                    responses.Add(new MediusGetAllClanMessagesResponse()
                                     {
                                         MessageID = getAllClanMessagesRequest.MessageID,
-                                        StatusCode = MediusCallbackStatus.MediusSuccess,
-                                        ClanMessageID = x.Id,
-                                        Message = x.Message,
-                                        Status = MediusClanMessageStatus.ClanMessageRead
-                                    }));
-                            }
+                                        StatusCode = MediusCallbackStatus.MediusNoResult,
+                                        EndOfList = true
+                                    });
+                                }
 
-                            if (responses.Count == 0)
-                            {
-                                responses.Add(new MediusGetAllClanMessagesResponse()
-                                {
-                                    MessageID = getAllClanMessagesRequest.MessageID,
-                                    StatusCode = MediusCallbackStatus.MediusNoResult,
-                                    EndOfList = true
-                                });
-                            }
+                                responses[responses.Count - 1].EndOfList = true;
+                                data.ClientObject.Queue(responses);
+                            });
+                        }
 
-                            responses[responses.Count - 1].EndOfList = true;
-                            data.ClientObject.Queue(responses);
-                        });
+                        
 
                         break;
                     }
@@ -5940,6 +5989,17 @@ namespace Server.Medius
                                 StatusCode = MediusCallbackStatus.MediusFail
                             });
                             return;
+                        }
+
+                        if(createGameRequest.ApplicationID == 24180 || createGameRequest.ApplicationID == 20095)
+                        {
+                            //Change Deadlocked HD's default player count from 6 -> 10
+                            Queue(new RT_MSG_SERVER_MEMORY_POKE()
+                            {
+                                start_Address = 0x009E6708,
+                                Payload = BitConverter.GetBytes(0x0000000A),
+                                SkipEncryption = true
+                            }, clientChannel);
                         }
 
                         // Send to plugins
@@ -8746,7 +8806,7 @@ namespace Server.Medius
                             data.ClientObject.Queue(new MediusTextFilterResponse()
                             {
                                 MessageID = textFilterRequest.MessageID,
-                                StatusCode = MediusCallbackStatus.MediusSuccess,
+                                StatusCode = MediusCallbackStatus.MediusPass,
                                 Text = Program.FilterTextFilter(data.ClientObject.ApplicationId, TextFilterContext.DEFAULT, textFilterRequest.Text).Trim()
                             });
                         }
@@ -8948,7 +9008,7 @@ namespace Server.Medius
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {getMyIpRequest} without being logged in.");
 
                         // Ban Mac Check if their in-game
-                        _ = Program.Database.GetIsMacBanned(data.MachineId).ContinueWith((r) =>
+                        await Program.Database.GetIsMacBanned(data.MachineId).ContinueWith((r) =>
                         {
                             if (r.Result == true)
                             {
@@ -9450,6 +9510,134 @@ namespace Server.Medius
             }
         }
         #endregion
+
+        public void AssignGameToJoin(ClientObject clientObject, MediusMatchFindGameRequest matchFindGameRequest) {
+
+            IPHostEntry host = Dns.GetHostEntry(Program.Settings.NATIp);
+
+            uint gameCount = Program.Manager.GetGameCount(clientObject.ApplicationId);
+            if (gameCount == 0)
+            {
+
+                //We Sleep for a bit so we return another packet for the matchmaked game we may have found!
+                clientObject.Queue(new MediusAssignedGameToJoinMessage()
+                {
+                    MessageID = matchFindGameRequest.MessageID,
+                    StatusCode = MediusCallbackStatus.MediusNoResult
+                });
+            }
+            else
+            {
+
+                //We Sleep for a bit so we return another packet for the matchmaked game we may have found!
+                if ((int)matchFindGameRequest.GameWorldID != 0)
+                {
+                    var gameInfo = Program.Manager.GetGameByGameId((int)matchFindGameRequest.GameWorldID);
+
+                    var dmeServer = gameInfo.DMEServer;
+
+                    // Tell the client their new assigned game
+                    clientObject.Queue(new MediusAssignedGameToJoinMessage()
+                    {
+                        AssignedGameMessageID = 1,
+                        AssignedGameType = MediusAssignedGameType.AssignedGameTypeMMS,
+                        AssignedGameMessageRequestData = gameInfo.RequestData,
+                        StatusCode = MediusCallbackStatus.MediusJoinAssignedGame,
+                        SystemSpecificStatusCode = 0,
+
+                        GameWorldID = (uint)gameInfo.WorldID,
+                        TeamID = 0,
+                        PlayerCount = gameInfo.PlayerCount,
+                        GameName = gameInfo.GameName,
+                        GameStats = gameInfo.GameStats,
+                        MinPlayers = gameInfo.MinPlayers,
+                        MaxPlayers = gameInfo.MaxPlayers,
+                        GameLevel = gameInfo.GameLevel,
+                        PlayerSkillLevel = gameInfo.PlayerSkillLevel,
+                        GenericField1 = gameInfo.GenericField1,
+                        GenericField2 = gameInfo.GenericField2,
+                        GenericField3 = gameInfo.GenericField3,
+                        GenericField4 = gameInfo.GenericField4,
+                        GenericField5 = gameInfo.GenericField5,
+                        GenericField6 = gameInfo.GenericField6,
+                        GenericField7 = gameInfo.GenericField7,
+                        GenericField8 = gameInfo.GenericField8,
+                        WorldStatus = gameInfo.WorldStatus,
+                        JoinType = MediusJoinType.MediusJoinAsPlayer,
+                        GamePassword = gameInfo.GamePassword,
+                        GameHostType = gameInfo.GameHostType,
+                        //AddressList = gameInfo.netAddressList,
+                        
+                        AddressList = new NetAddressList()
+                        {
+                            AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
+                                                {
+                                                    new NetAddress() { Address = dmeServer.IP.MapToIPv4().ToString(), Port = dmeServer.Port, AddressType = NetAddressType.NetAddressTypeExternal},
+                                                    new NetAddress() { Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService },
+                                                }
+                        },
+                        
+                        AppDataSize = (uint)gameInfo.AppDataSize,
+                        AppData = gameInfo.AppData
+
+                    });
+                }
+                else
+                {
+                    var gameMatchFound = Program.Manager.GetGameList(clientObject.ApplicationId, 1, 5, null).First();
+
+
+                    var dmeServer = gameMatchFound.DMEServer;
+
+                    // Tell the client their new assigned game
+                    clientObject.Queue(new MediusAssignedGameToJoinMessage()
+                    {
+                        AssignedGameMessageID = Convert.ToUInt32(matchFindGameRequest.MessageID),
+                        AssignedGameType = MediusAssignedGameType.AssignedGameTypeMMS,
+                        AssignedGameMessageRequestData = gameMatchFound.RequestData,
+                        StatusCode = MediusCallbackStatus.MediusJoinAssignedGame,
+                        SystemSpecificStatusCode = 0,
+
+                        GameWorldID = (uint)gameMatchFound.Id,
+                        TeamID = 0,
+                        PlayerCount = gameMatchFound.PlayerCount,
+                        GameName = gameMatchFound.GameName,
+                        GameStats = gameMatchFound.GameStats,
+                        MinPlayers = gameMatchFound.MinPlayers,
+                        MaxPlayers = gameMatchFound.MaxPlayers,
+                        GameLevel = gameMatchFound.GameLevel,
+                        PlayerSkillLevel = gameMatchFound.PlayerSkillLevel,
+                        RulesSet = gameMatchFound.RulesSet,
+                        GenericField1 = gameMatchFound.GenericField1,
+                        GenericField2 = gameMatchFound.GenericField2,
+                        GenericField3 = gameMatchFound.GenericField3,
+                        GenericField4 = gameMatchFound.GenericField4,
+                        GenericField5 = gameMatchFound.GenericField5,
+                        GenericField6 = gameMatchFound.GenericField6,
+                        GenericField7 = gameMatchFound.GenericField7,
+                        GenericField8 = gameMatchFound.GenericField8,
+                        WorldStatus = gameMatchFound.WorldStatus,
+                        JoinType = MediusJoinType.MediusJoinAsPlayer,
+                        GamePassword = gameMatchFound.GamePassword,
+                        GameHostType = gameMatchFound.GameHostType,
+                        //AddressList = gameMatchFound.netAddressList,
+                        
+                        AddressList = new NetAddressList()
+                        {
+                            AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
+                                                {
+                                                    new NetAddress() { Address = dmeServer.IP.MapToIPv4().ToString(), Port = dmeServer.Port, AddressType = NetAddressType.NetAddressTypeExternal},
+                                                    new NetAddress() { Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService },
+                                                }
+                        },
+                        
+                        AppDataSize = (uint)gameMatchFound.AppDataSize,
+                        AppData = gameMatchFound.AppData
+
+                    });
+                }
+            }
+        }
 
         public Task<ONLINE_STATUS_TYPE> MediusChatStatusToOnlineStatus(MediusChatStatus status)
         {

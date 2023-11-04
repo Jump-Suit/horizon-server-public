@@ -5,11 +5,11 @@ using System.IO;
 
 namespace RT.Models
 {
-
-    //[MediusMessage(NetMessageClass.MessageClassApplication, NetMessageTypeIds.NetMessageNewsEulaResponse)]
+    
+    [MediusMessage(NetMessageClass.MessageClassDME, NetMessageTypeIds.NetMessageNewsEUlaResponse)]
     public class NetMessageNewsEulaResponse : BaseApplicationMessage
     {
-        public override NetMessageTypeIds PacketType => NetMessageTypeIds.kNetGameMessageTypeStart;
+        public override NetMessageTypeIds PacketType => NetMessageTypeIds.NetMessageNewsEUlaResponse;
 
         public override byte IncomingMessage => 0;
         public override byte Size => 10;
@@ -49,4 +49,5 @@ namespace RT.Models
                 $"m_timestamp: {m_timestamp}";
         }
     }
+    
 }

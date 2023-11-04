@@ -36,10 +36,10 @@ namespace RT.Models
         public MediusMatchOptions MatchOptions;
         public string ServerSessionKey; // SESSIONKEY_MAXLEN
         public string RequestData; // REQUESTDATA_MAXLEN
-        public int GroupMemberListSize;
-        public int ApplicationDataSize;
-        public string GroupMemberAccountIDList;
-        public string ApplicationData;
+        public uint GroupMemberListSize;
+        public uint ApplicationDataSize;
+        public char[] GroupMemberAccountIDList;
+        public char[] ApplicationData;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -80,10 +80,10 @@ namespace RT.Models
             //reader.ReadBytes(3);
 
             //
-            GroupMemberListSize = reader.ReadInt32();
-            ApplicationDataSize = reader.ReadInt32();
-            GroupMemberAccountIDList = reader.ReadString(GroupMemberListSize);
-            ApplicationData = reader.ReadString(ApplicationDataSize);
+            GroupMemberListSize = reader.ReadUInt32();
+            ApplicationDataSize = reader.ReadUInt32();
+            GroupMemberAccountIDList = reader.ReadChars((int)GroupMemberListSize);
+            ApplicationData = reader.ReadChars((int)ApplicationDataSize);
 
         }
 
@@ -128,8 +128,8 @@ namespace RT.Models
             //
             writer.Write(GroupMemberListSize);
             writer.Write(ApplicationDataSize);
-            writer.Write(GroupMemberAccountIDList, GroupMemberListSize);
-            writer.Write(ApplicationData, ApplicationDataSize);
+            writer.Write(GroupMemberAccountIDList);
+            writer.Write(ApplicationData);
         }
 
         public override string ToString()

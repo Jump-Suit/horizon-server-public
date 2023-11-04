@@ -218,19 +218,32 @@ namespace Server.UniverseInformation
                         data.ApplicationId = clientConnectTcp.AppId;
                         scertClient.ApplicationID = clientConnectTcp.AppId;
 
-                        List<int> pre108ServerComplete = new List<int>() { 10334, 10540 };
+                        List<int> pre108ServerComplete = new List<int>() { 10334, 10421, 10540 };
 
-                        if (scertClient.CipherService.HasKey(CipherContext.RC_CLIENT_SESSION))
+                        if (scertClient.CipherService.HasKey(CipherContext.RC_CLIENT_SESSION) && scertClient.RsaAuthKey != null && scertClient.CipherService.EnableEncryption == true)
                         {
                             Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
                         }
 
-                        Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
+                        //If this is a PS3 client
+                        if (scertClient.IsPS3Client || scertClient.MediusVersion >= 109)
                         {
-                            IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address,
-                        }, clientChannel);
+                            //Send a Server_Connect_Require with no Password needed
+                            Queue(new RT_MSG_SERVER_CONNECT_REQUIRE() { ReqServerPassword = 0x00 }, clientChannel);
+                        }
+                        else
+                        {
+                            //Do NOT send hereCryptKey Game
+                            Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
+                            {
+                                PlayerId = 0,
+                                ScertId = GenerateNewScertClientId(),
+                                PlayerCount = 0x0001,
+                                IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
+                            }, clientChannel);
+                        }
 
-                        if(pre108ServerComplete.Contains(data.ApplicationId))
+                        if (pre108ServerComplete.Contains(data.ApplicationId))
                         {
                             Queue(new RT_MSG_SERVER_CONNECT_COMPLETE() { ClientCountAtConnect = 0x0001 }, clientChannel);
                         }
@@ -238,10 +251,11 @@ namespace Server.UniverseInformation
                     }
                 case RT_MSG_CLIENT_CONNECT_READY_REQUIRE clientConnectReadyRequire:
                     {
-                        if (scertClient.MediusVersion >= 109 && scertClient.CipherService.EnableEncryption == true)
+                        if (scertClient.CipherService.HasKey(CipherContext.RC_CLIENT_SESSION) && scertClient.RsaAuthKey != null && scertClient.MediusVersion >= 109 && scertClient.CipherService.EnableEncryption == true)
                         {
                             Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
                         }
+
                         Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
                         {
                             PlayerId = 0,

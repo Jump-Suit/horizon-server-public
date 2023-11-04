@@ -149,7 +149,7 @@ namespace Server.Medius.Config
         /// Provide the IP of the SCE-RT NAT Service
         /// Default is: natservice.pdonline.scea.com:10070
         /// </summary>
-        public string NATIp { get; set; } = null;
+        public string NATIp { get; set; } = "natservice.pdonline.scea.com";
 
         /// <summary>
         /// Port of the NAT server.

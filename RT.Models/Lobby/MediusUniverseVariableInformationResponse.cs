@@ -31,7 +31,7 @@ namespace RT.Models
         public string SvoURL; // UNIVERSE_SVO_URL_MAXLEN
         public bool EndOfList;
 
-        public List<int> approvedList = new List<int> { 10994, 20043, 21093, 21624, 21834, 20371, 20374, 20464, 22500, 22920, };
+        public List<int> approvedList = new List<int> { 10421, 10994, 20043, 20464, 21093, 21614, 21624, 21834, 20371, 20374, 21324, 21514, 22073, 22500, 22920, 22924};
 
         public List<int> unapprovedList = new List<int> { 20060, 23360, 20474 };
 
@@ -79,7 +79,7 @@ namespace RT.Models
             if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_EXTRAINFO))
                 ExtendedInfo = reader.ReadString(Constants.UNIVERSE_EXTENDED_INFO_MAXLEN);
 
-            if (approvedList.Contains(reader.AppId) && !unapprovedList.Contains(reader.AppId))
+            if (approvedList.Contains(reader.AppId))
             {
                 Console.WriteLine("Setting SVOURL");
 
@@ -139,8 +139,7 @@ namespace RT.Models
             if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_EXTRAINFO))
                 writer.Write(ExtendedInfo, Constants.UNIVERSE_EXTENDED_INFO_MAXLEN);
 
-            if(approvedList.Contains(writer.AppId) && 
-                !unapprovedList.Contains(writer.AppId))
+            if(approvedList.Contains(writer.AppId))
             {
                 Console.WriteLine("Setting SVOURL");
                 if (InfoFilter.IsSet(MediusUniverseVariableInformationInfoFilter.INFO_SVO_URL))
@@ -151,6 +150,7 @@ namespace RT.Models
             }
 
             writer.Write(EndOfList);
+            //writer.Write(new byte[3]);
         }
 
         public override string ToString()

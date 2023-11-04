@@ -3,6 +3,7 @@ using Server.Common.Stream;
 
 namespace RT.Models.ServerPlugins
 {
+    /*
     [MediusMessage(NetMessageClass.MessageClassApplication, NetMessageTypeIds.NetMessageTypeKeepAlive)]
     public class NetMessageTypeKeepAlive : BaseApplicationMessage
     {
@@ -28,4 +29,5 @@ namespace RT.Models.ServerPlugins
             return base.ToString() + " ";
         }
     }
+    */
 }

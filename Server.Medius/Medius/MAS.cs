@@ -11,6 +11,7 @@ using Server.Medius.PluginArgs;
 using Server.Plugins.Interface;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -68,7 +69,14 @@ namespace Server.Medius
                     }
                 case RT_MSG_CLIENT_CONNECT_TCP clientConnectTcp:
                     {
-                        List<int> pre108ServerComplete = new List<int>() { 10114, 10164, 10190, 10124, 10284, 10330, 10334, 10414, 10442, 10540, 10680, 10683 };
+                        //Pre ProtovolVer 108 games that need ServerComplete
+                        List<int> pre108ServerComplete = new List<int>() { 10114, 10164, 10190, 10124, 10284, 10330, 10334, 10414, 10421, 10442, 10540, 10680, 10683 };
+                        
+                        ///<summary>
+                        /// Some do not post-108 so we have to account for those too!
+                        /// tmheadon 10694 does not for initial
+                        /// </summary>
+                        List<int> post108ServerComplete = new List<int>() { 10694 };
 
                         data.ApplicationId = clientConnectTcp.AppId;
                         scertClient.ApplicationID = clientConnectTcp.AppId;
@@ -91,7 +99,7 @@ namespace Server.Medius
                         }
 
                         //If this is a PS3 client
-                        if (scertClient.IsPS3Client)
+                        if (scertClient.IsPS3Client || scertClient.MediusVersion >= 109)
                         {
                             //Send a Server_Connect_Require with no Password needed
                             Queue(new RT_MSG_SERVER_CONNECT_REQUIRE() { ReqServerPassword = 0x00 }, clientChannel);
@@ -107,9 +115,7 @@ namespace Server.Medius
                             }, clientChannel);
                         }
 
-                        
-
-                        if (scertClient.RsaAuthKey != null)
+                        if (scertClient.RsaAuthKey != null && scertClient.CipherService.EnableEncryption == true)
                         {
                             Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
                         }
@@ -2103,7 +2109,7 @@ namespace Server.Medius
                                     {
                                         MessageID = textFilterRequest.MessageID,
                                         StatusCode = MediusCallbackStatus.MediusSuccess,
-                                        Text = Program.FilterTextFilter(data.ApplicationId, Config.TextFilterContext.ACCOUNT_NAME, textFilterRequest.Text).Trim()
+                                        Text = Program.FilterTextFilter(data.ApplicationId, TextFilterContext.ACCOUNT_NAME, textFilterRequest.Text).Trim()
                                     });
                                     break;
                                 }
@@ -2120,12 +2126,20 @@ namespace Server.Medius
                         if (data.ClientObject == null)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {getServerTimeRequest} without a session.");
 
-                        // ERROR -- Need to be logged in
-                        if (!data.ClientObject.IsLoggedIn)
-                            throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {getServerTimeRequest} without being logged in.");
+                        //Doesn't need to be logged in to get ServerTime
 
                         var time = DateTime.Now;
 
+                        //default
+                        data.ClientObject.Queue(new MediusGetServerTimeResponse()
+                        {
+                            MessageID = getServerTimeRequest.MessageID,
+                            StatusCode = MediusCallbackStatus.MediusSuccess,
+                            Local_server_timezone = MediusTimeZone.MediusTimeZone_GMT,
+                        });
+
+
+                        /*
                         _ = GetTimeZone(time).ContinueWith((r) =>
                         {
                             if (r.IsCompletedSuccessfully)
@@ -2148,6 +2162,7 @@ namespace Server.Medius
                                 });
                             }
                         });
+                        */
                         break;
                     }
                 #endregion
@@ -2521,48 +2536,57 @@ namespace Server.Medius
         public Task<MediusTimeZone> GetTimeZone(DateTime time) {
 
             var tz = TimeZoneInfo.Local;
-            var tzInt = Convert.ToInt32(tz.Id);
+            string CurrentTimeZoneAbbreviation = System.TimeZoneInfo.Local.Abbreviation();
 
-
-            var tzStanName = tz.StandardName;
-
-            /*
-            if (tzTime. == 7200)
+            if(CurrentTimeZoneAbbreviation.Contains(tz.StandardName))
             {
 
-            }
-            */
+                /*
+                if (tzTime. == 7200)
+                {
 
-            if (tzStanName == "CEST")
+                }
+                */
+
+                if (CurrentTimeZoneAbbreviation == "CEST")
+                {
+                    return Task.FromResult(MediusTimeZone.MediusTimeZone_CEST);
+                }
+                /*
+                else if (tzInt == 83 && (tzInt + 1) == 83 && (tzInt + 2) == 84)
+                {
+                    return Task.FromResult(MediusTimeZone.MediusTimeZone_SWEDISHST);
+                }
+                else if (tzInt == 70 && (tzInt + 1) == 83 && (tzInt + 2) == 84)
+                {
+                    return Task.FromResult(MediusTimeZone.MediusTimeZone_FST);
+                }
+                else if (tzInt == 67 && (tzInt + 1) == 65 && (tzInt + 2) == 84)
+                {
+                    return Task.FromResult(MediusTimeZone.MediusTimeZone_CAT);
+                }
+                */
+                else if (CurrentTimeZoneAbbreviation == "SAST")
+                {
+                    return Task.FromResult(MediusTimeZone.MediusTimeZone_SAST);
+                }
+                /*
+                else if (tzInt == 69 && (tzInt + 1) == 65 && (tzInt + 2) == 84)
+                {
+                    return Task.FromResult(MediusTimeZone.MediusTimeZone_EET);
+                }
+                else if (tzInt == 73 && (tzInt + 1) == 65 && (tzInt + 2) == 84)
+                {
+                    return Task.FromResult(MediusTimeZone.MediusTimeZone_ISRAELST);
+                }
+                */
+                return Task.FromResult(MediusTimeZone.MediusTimeZone_GMT);
+            } else
             {
-                return Task.FromResult(MediusTimeZone.MediusTimeZone_CEST);
-            }
-            else if (tzInt == 83 && (tzInt + 1) == 83 && (tzInt + 2) == 84)
-            {
-                return Task.FromResult(MediusTimeZone.MediusTimeZone_SWEDISHST);
-            }
-            else if (tzInt == 70 && (tzInt + 1) == 83 && (tzInt + 2) == 84)
-            {
-                return Task.FromResult(MediusTimeZone.MediusTimeZone_FST);
-            } 
-            else if (tzInt == 67 && (tzInt + 1) == 65 && (tzInt + 2) == 84)
-            {
-                return Task.FromResult(MediusTimeZone.MediusTimeZone_CAT);
-            }
-            else if (tzStanName == "SAST")
-            {
-                return Task.FromResult(MediusTimeZone.MediusTimeZone_SAST);
-            }
-            else if (tzInt == 69 && (tzInt + 1) == 65 && (tzInt + 2) == 84)
-            {
-                return Task.FromResult(MediusTimeZone.MediusTimeZone_EET);
-            }
-            else if (tzInt == 73 && (tzInt + 1) == 65 && (tzInt + 2) == 84)
-            {
-                return Task.FromResult(MediusTimeZone.MediusTimeZone_ISRAELST);
+                Console.WriteLine($"Timezone not supported! {tz.DisplayName}");
+                return Task.FromResult(MediusTimeZone.MediusTimeZone_GMT);
             }
 
-            return Task.FromResult(MediusTimeZone.MediusTimeZone_GMT);
         }
         #endregion
 

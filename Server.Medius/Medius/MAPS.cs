@@ -33,7 +33,7 @@ namespace Server.Medius
         protected override async Task ProcessMessage(BaseScertMessage message, IChannel clientChannel, ChannelData data)
         {
             // Get ScertClient data
-            var scertClient = clientChannel.GetAttribute(Server.Pipeline.Constants.SCERT_CLIENT).Get();
+            var scertClient = clientChannel.GetAttribute(Pipeline.Constants.SCERT_CLIENT).Get();
             var enableEncryption = Program.GetAppSettingsOrDefault(data.ApplicationId).EnableEncryption;
             scertClient.CipherService.EnableEncryption = enableEncryption;
 
@@ -165,16 +165,25 @@ namespace Server.Medius
                         var BuildNumber = ReverseBytesUInt(10);
                         data.ClientObject.Queue(new NetMessageTypeProtocolInfo()
                         {
-                            protocolInfo = ProtoBytesReversed, //1725
+                            protocolInfo = ProtoBytesReversed, //1725 //1958
                             //protocolInfo = 1958,
-                            buildNumber = 0
+                            buildNumber = BuildNumber
                         });
 
+                        /*
+                    data.ClientObject.Queue(new NetMAPSHelloMessage()
+                    {
+                        m_success = true,
+                        m_isOnline = true,
+                        m_availableFactions = new byte[1] { 1 }
+                    });
+                        */
                         break;
                     }
 
                 case NetMessageTypeProtocolInfo protocolInfo:
                     {
+
                         //Time
                         DateTime time = DateTime.Now;
                         var timeBS = time.Ticks >> 1;
@@ -185,41 +194,46 @@ namespace Server.Medius
                         string newsBs = ShiftString("Test News");
                         string eulaBs = ShiftString("Test Eula");
                         // News/Eula Type bitshifted
-                        var newsBS = Convert.ToInt32(NetMessageNewsEulaResponseContentType.News) >> 1;
-                        var eulaBS = Convert.ToInt32(NetMessageNewsEulaResponseContentType.Eula) >> 1;
+                        var newsBS = 0;//Convert.ToInt32(NetMessageNewsEulaResponseContentType.News) >> 1;
+                        var eulaBS = 1;//Convert.ToInt32(NetMessageNewsEulaResponseContentType.Eula) >> 1;
+
+                        var sequence = new byte[1];
+                        var type = new byte[1];
 
                         data.ClientObject.Queue(new NetMessageNewsEulaResponse()
                         {
-                            m_finished = 1 >> 1,
+                            m_finished = BitShift(sequence, 1).First(),
                             m_content = newsBs,
-                            m_type = (NetMessageNewsEulaResponseContentType)newsBS,
+                            m_type = (NetMessageNewsEulaResponseContentType)BitShift(type, 1).First(),
                             m_timestamp = timeBS
                         });
-
+                        /*
                         data.ClientObject.Queue(new NetMessageNewsEulaResponse()
                         {
-                            m_finished = 1 >> 1,
+                            m_finished = 1,
                             m_content = eulaBs,
                             m_type = (NetMessageNewsEulaResponseContentType)eulaBS,
                             m_timestamp = timeBS
                         });
+                        
+                        */
                         break;
                     }
-                    
+                    /*
                 case NetMessageTypeKeepAlive keepAlive:
                     {
                         data.ClientObject.KeepAliveUntilNextConnection();
                         break;
                     }
-                    
+                    */
                 case NetMessageAccountLogoutRequest accountLogoutRequest:
                     {
-                        /*
+                        bool success = true;
                         data.ClientObject.Queue(new NetMessageAccountLogoutResponse()
                         {
-                            m_success = 0x0,
+                            m_success = success,
                         });
-                        */
+                     
                         break;
                     }
 
@@ -257,6 +271,24 @@ namespace Server.Medius
             return (ushort)((ushort)((nValue >> 8)) | (nValue << 8));
         }
         #endregion
+
+        public byte[] BitShift(byte[] sequence, int length)
+        {
+            // Check if the length is valid
+            if (length <= 0 || length >= 8)
+            {
+                throw new ArgumentException("Invalid shift length. The length must be between 1 and 7.");
+            }
+
+            // Perform the bitwise shift operation
+            byte[] shiftedSequence = new byte[sequence.Length];
+            for (int i = 0; i < sequence.Length; i++)
+            {
+                shiftedSequence[i] = (byte)(sequence[i] << length);
+            }
+
+            return shiftedSequence;
+        }
 
         public ClientObject ReserveClient(NetMessageHello request)
         {

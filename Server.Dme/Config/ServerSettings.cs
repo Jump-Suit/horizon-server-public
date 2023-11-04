@@ -133,7 +133,7 @@ namespace Server.Dme.Config
         /// <summary>
         /// Ip of the Medius Authentication Server.
         /// </summary>
-        public string Ip { get; set; } = "127.0.0.1";
+        public string Ip { get; set; } = "localhost";
 
         /// <summary>
         /// The port that the Proxy Server is bound to.
@@ -155,7 +155,7 @@ namespace Server.Dme.Config
         /// <summary>
         /// Ip of the Medius Proxy Server.
         /// </summary>
-        public string Ip { get; set; } = "127.0.0.1";
+        public string Ip { get; set; } = "localhost";
 
         /// <summary>
         /// The port that the Proxy Server is bound to.

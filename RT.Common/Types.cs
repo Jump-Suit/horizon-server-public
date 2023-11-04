@@ -163,6 +163,12 @@ namespace RT.Common
         MODE_UNSECURED
     }
 
+    public enum MediusAssignedGameType : int
+    {
+        AssignedGameTypeMMS = 0,
+        AssignedGameTypeTournament = 1,
+    }
+
     #region MediusCallbackStatus
     public enum MediusCallbackStatus : int
     {
@@ -1864,6 +1870,7 @@ namespace RT.Common
         ServerSessionBeginRequest1 = 0x21,
         ServerSessionBeginResponse1 = 0x22,
         ServerSessionBeginRequest2 = 0x24,
+        ServerCreateGameWithAttributesRequest2 = 0x26, //TEST
         ServerConnectGamesRequest = 0x1A,
         ServerConnectGamesResponse = 0x1B,
         ServerConnectNotification = 0x1C,
@@ -3039,7 +3046,7 @@ namespace RT.Common
     public enum NetMessageTypeIds : int
     {
         //MAG
-        /*
+        
         kNetKernelMessageTypeStart = 0,
         NetMessageTypeHello = 1,
         NetMessageTypeProtocolInfo = 2,
@@ -3126,11 +3133,11 @@ namespace RT.Common
         NetMessageNewsEUlaResponse = 575,
         NetMessageServerStatusRequest = 587,
         NetMessageServerStatusResponse = 588, //Needs Debug Check
-        */
+        
 
 
         // SOCOM 4
-        
+        /*
         kNetKernelMessageTypeStart = 0,
         NetMessageTypeHello = 1,
         NetMessageTypeProtocolInfo = 2,
@@ -3226,7 +3233,7 @@ namespace RT.Common
         NetMessageTypeForcePlayerIntoGameResponse = 0x7D8,
         NetMessageTypeShutdownGameServer = 0x7D9,
         kNetPluginMessageTypeEnd = 0x7DA,
-        
+        */
     }
     #endregion
 

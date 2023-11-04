@@ -15,18 +15,16 @@ namespace RT.Models.ServerPlugins
 
         public override byte PluginId => 0;
 
-        public byte m_success;
+        public bool m_success;
 
         public override void DeserializePlugin(MessageReader reader)
         {
-            m_success = reader.ReadByte();
-            reader.ReadBytes(3);
+            m_success = reader.ReadBoolean();
         }
 
         public override void SerializePlugin(MessageWriter writer)
         {
             writer.Write(m_success);
-            writer.Write(new byte[3]);
         }
 
         public override string ToString()
