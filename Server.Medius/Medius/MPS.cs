@@ -12,6 +12,7 @@ using Server.Pipeline.Attribute;
 using Server.Plugins.Interface;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Numerics;
@@ -233,13 +234,27 @@ namespace Server.Medius
                 #region MediusServerCreateGameWithAttributesResponse
                 case MediusServerCreateGameWithAttributesResponse createGameWithAttrResponse:
                     {
-                        int gameId = int.Parse(createGameWithAttrResponse.MessageID.Value.Split('-')[0]);
+                        int gameOrPartyId = int.Parse(createGameWithAttrResponse.MessageID.Value.Split('-')[0]);
                         int accountId = int.Parse(createGameWithAttrResponse.MessageID.Value.Split('-')[1]);
                         string msgId = createGameWithAttrResponse.MessageID.Value.Split('-')[2];
-                        var game = Program.Manager.GetGameByGameId(gameId);
-                        var rClient = Program.Manager.GetClientByAccountId(accountId, data.ClientObject.ApplicationId);
+                        bool partyType = bool.Parse(createGameWithAttrResponse.MessageID.Value.Split('-')[3]);
 
-                        if (data.ApplicationId == 22920 || data.ApplicationId == 21834)
+                        var game = Program.Manager.GetGameByGameId(gameOrPartyId);
+                        var party = Program.Manager.GetPartyByPartyId(gameOrPartyId);
+
+                        var rClient = Program.Manager.GetClientByAccountId(accountId, data.ClientObject.ApplicationId);
+                        if(partyType == true)
+                        {
+                            party.DMEWorldId = createGameWithAttrResponse.WorldID;
+                            await party.PartyCreated();
+
+                            rClient?.Queue(new MediusPartyCreateResponse() {
+                                MessageID = new MessageId(msgId),
+                                MediusWorldID = gameOrPartyId,
+                                StatusCode = MediusCallbackStatus.MediusSuccess
+                            });
+                        }
+                        else if (data.ApplicationId == 22920 || data.ApplicationId == 21834)
                         {
                             //Send Matchmaking create game
                             if (!createGameWithAttrResponse.IsSuccess)
@@ -311,15 +326,46 @@ namespace Server.Medius
                 #region MediusServerJoinGameResponse
                 case MediusServerJoinGameResponse joinGameResponse:
                     {
-                        int gameId = int.Parse(joinGameResponse.MessageID.Value.Split('-')[0]);
+                        int gameOrPartyId = int.Parse(joinGameResponse.MessageID.Value.Split('-')[0]);
                         int accountId = int.Parse(joinGameResponse.MessageID.Value.Split('-')[1]);
                         string msgId = joinGameResponse.MessageID.Value.Split('-')[2];
-                        var game = Program.Manager.GetGameByGameId(gameId);
+                        bool partyType = bool.Parse(joinGameResponse.MessageID.Value.Split('-')[3]);
+
+                        var game = Program.Manager.GetGameByGameId(gameOrPartyId);
+                        var party = Program.Manager.GetPartyByPartyId(gameOrPartyId);
                         var rClient = Program.Manager.GetClientByAccountId(accountId, data.ClientObject.ApplicationId);
 
                         IPHostEntry host = Dns.GetHostEntry(Program.Settings.NATIp);
 
-                        if (!joinGameResponse.IsSuccess)
+                        if(partyType == true)
+                        {
+                            rClient?.Queue(new MediusPartyJoinByIndexResponse()
+                            {
+                                MessageID = new MessageId(msgId),
+                                StatusCode = MediusCallbackStatus.MediusSuccess,
+                                PartyHostType = party.PartyHostType,
+                                ConnectionInfo = new NetConnectionInfo()
+                                {
+                                    AccessKey = rClient.Token,
+                                    SessionKey = rClient.SessionKey,
+                                    WorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(rClient.ApplicationId).Id,
+                                    ServerKey = new RSA_KEY(),
+                                    AddressList = new NetAddressList()
+                                    {
+                                        AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
+                                                {
+                                                    new NetAddress() { Address = (data.ClientObject as DMEObject).IP.MapToIPv4().ToString(), Port = (data.ClientObject as DMEObject).Port, AddressType = NetAddressType.NetAddressTypeExternal},
+                                                    new NetAddress() { Address = host.AddressList.First().ToString(), Port = Program.Settings.NATPort, AddressType = NetAddressType.NetAddressTypeNATService },
+                                                }
+                                    },
+                                    Type = NetConnectionType.NetConnectionTypeClientServerTCPAuxUDP
+                                },
+                                partyIndex = party.Id,
+                                maxPlayers = party.MaxPlayers
+                            });
+                        }
+
+                        else if (!joinGameResponse.IsSuccess)
                         {
                             rClient?.Queue(new MediusJoinGameResponse()
                             {
@@ -330,7 +376,7 @@ namespace Server.Medius
                         else
                         {
 
-                            if (gameId != 0)
+                            if (gameOrPartyId != 0)
                             {
                                 #region P2P
                                 if (game.GameHostType == MediusGameHostType.MediusGameHostPeerToPeer &&
@@ -801,7 +847,15 @@ namespace Server.Medius
                 case MediusServerConnectNotification connectNotification:
                     {
                         Logger.Info("MediusServerConnectNotification Received");
-                        await Program.Manager.GetGameByDmeWorldId((data.ClientObject as DMEObject).SessionKey, (int)connectNotification.MediusWorldUID)?.OnMediusServerConnectNotification(connectNotification);
+                        if(Program.Manager.GetGameByDmeWorldId((data.ClientObject as DMEObject).SessionKey, (int)connectNotification.MediusWorldUID) != null)
+                        {
+                            await Program.Manager.GetGameByDmeWorldId((data.ClientObject as DMEObject).SessionKey, (int)connectNotification.MediusWorldUID)?.OnMediusServerConnectNotification(connectNotification);
+
+                        } else
+                        {
+                            await Program.Manager.GetPartyByDmeWorldId((data.ClientObject as DMEObject).SessionKey, (int)connectNotification.MediusWorldUID)?.OnMediusServerConnectNotification(connectNotification);
+
+                        }
 
                         //MediusServerConnectNotification -  sent Notify msg to MUM
                         //DmeServerGetConnectKeys
@@ -912,12 +966,12 @@ namespace Server.Medius
             return null;
         }
 
-        public void SendServerCreateGameWithAttributesRequest(string messageId, int gameId, int gameAttributes, int clientAppId, int gameMaxPlayers)
+        public void SendServerCreateGameWithAttributesRequest(string messageId, int acctId, int gameId, bool partyType, int gameAttributes, int clientAppId, int gameMaxPlayers)
         {
             Queue(new RT_MSG_SERVER_APP() { 
                 Message = new MediusServerCreateGameWithAttributesRequest()
                 {
-                    MessageID = new MessageId($"{messageId}"),
+                    MessageID = new MessageId($"{gameId}-{acctId}-{messageId}-{partyType}"),
                     MediusWorldUID = (uint)gameId,
                     Attributes = (MediusWorldAttributesType)gameAttributes,
                     ApplicationID = clientAppId,

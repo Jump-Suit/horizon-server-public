@@ -24,7 +24,7 @@ namespace Server.Dme
 
     class Program
     {
-        private static string CONFIG_DIRECTIORY = @"\static\DME";
+        private static string CONFIG_DIRECTIORY = "./";
         public static string CONFIG_FILE => Path.Combine(CONFIG_DIRECTIORY, "dme.json");
         public static string DB_CONFIG_FILE => Path.Combine(CONFIG_DIRECTIORY, "db.config.json");
 
@@ -299,8 +299,8 @@ namespace Server.Dme
         static async Task Main(string[] args)
         {
             // get path to config directory from first argument
-            if (args.Length > 0)
-                CONFIG_DIRECTIORY = args[0];
+            //if (args.Length > 0)
+            //    CONFIG_DIRECTIORY = args[0];
 
             Database = new DbController(DB_CONFIG_FILE);
 
@@ -345,8 +345,7 @@ namespace Server.Dme
         private static void RefreshConfig()
         {
             var usePublicIp = Settings.UsePublicIp;
-            string root = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string ConfigPath = root + @"\dme.json";
+
             // 
             var serializerSettings = new JsonSerializerSettings()
             {
@@ -354,15 +353,15 @@ namespace Server.Dme
             };
 
             // Load settings
-            if (File.Exists(ConfigPath))
+            if (File.Exists(CONFIG_FILE))
             {
                 // Populate existing object
-                JsonConvert.PopulateObject(File.ReadAllText(ConfigPath), Settings, serializerSettings);
+                JsonConvert.PopulateObject(File.ReadAllText(CONFIG_FILE), Settings, serializerSettings);
             }
             else
             {
                 // Save defaults
-                File.WriteAllText(ConfigPath, JsonConvert.SerializeObject(Settings, Formatting.Indented));
+                File.WriteAllText(CONFIG_FILE, JsonConvert.SerializeObject(Settings, Formatting.Indented));
             }
 
             // Set LogSettings singleton
@@ -460,6 +459,11 @@ namespace Server.Dme
         public static ClientObject GetClientByAccessToken(string accessToken)
         {
             return Managers.Select(x => x.Value.GetClientByAccessToken(accessToken)).FirstOrDefault(x => x != null);
+        }
+
+        public static ClientObject GetClientBySessionKey(string sessionKey)
+        {
+            return Managers.Select(x => x.Value.GetClientBySessionKey(sessionKey)).FirstOrDefault(x => x != null);
         }
 
         public static AppSettings GetAppSettingsOrDefault(int appId)

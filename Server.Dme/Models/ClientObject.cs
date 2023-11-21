@@ -169,6 +169,22 @@ namespace Server.Dme.Models
             Token = Convert.ToBase64String(tokenBuf);
         }
 
+        public ClientObject(string sessionKey)
+        {
+            // 
+            SessionKey = sessionKey;
+
+            // 
+            //this.DmeId = dmeId;
+            //this.DmeWorld = dmeWorld;
+            this.AggTimeMs = Program.GetAppSettingsOrDefault(ApplicationId).DefaultClientWorldAggTime;
+
+            // Generate new token
+            byte[] tokenBuf = new byte[12];
+            RNG.NextBytes(tokenBuf);
+            Token = Convert.ToBase64String(tokenBuf);
+        }
+
         public void BeginUdp()
         {
             if (Udp != null)

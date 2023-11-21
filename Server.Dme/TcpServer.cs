@@ -360,6 +360,25 @@ namespace Server.Dme
 
                         data.ApplicationId = clientConnectTcpAuxUdp.AppId;
                         data.ClientObject = Program.GetClientByAccessToken(clientConnectTcpAuxUdp.AccessToken);
+                        
+                        
+                        if(data.ClientObject == null)
+                        {
+                            Logger.Warn("Access Token for client not found, fallback to Sessionkey!");
+                            data.ClientObject = Program.GetClientBySessionKey(clientConnectTcpAuxUdp.SessionKey);
+                        }
+
+                        
+                        if (data.ClientObject == null)
+                        {
+                            Logger.Warn("AccessToken and SessionKey null! FALLBACK WITH NEW CLIENTOBJECT!");
+                            //var clients = Program.GetClientsByAppId(clientConnectTcpAuxUdp.AppId);
+                            //data.ClientObject = clients.Where(x => x.Token == clientConnectTcpAuxUdp.AccessToken).FirstOrDefault();  
+                            ClientObject clientObject = new ClientObject(clientConnectTcpAuxUdp.SessionKey);
+                            clientObject.ApplicationId = clientConnectTcpAuxUdp.AppId;
+                            data.ClientObject = clientObject;
+                        }
+                        
                         /*
                         if (data.ClientObject == null || data.ClientObject.DmeWorld == null || data.ClientObject.DmeWorld.WorldId != clientConnectTcpAuxUdp.ARG1)
                             throw new Exception($"Client connected with invalid world id!");

@@ -484,19 +484,19 @@ namespace RT.Common
         /// </summary>
         MediusPass = 4,
         /// <summary>
-        /// Join Queue?
+        /// Join Queue for PS3 TicketLogin
         /// </summary>
         MediusInQueue = 5,
         /// <summary>
-        /// Join Assigned Game pre-determined by database/server
+        /// Join Assigned Game pre-determined by server
         /// </summary>
-        MediusJoinAssignedGame = 6, //MediusTypeAssignedGameToJoinMessage
+        MediusJoinAssignedGame = 6,
         /// <summary>
         /// If no games exist for matchmaking host one pre-determined by database/server
         /// </summary>
         MediusMatchTypeHostGame = 7,
         /// <summary>
-        /// Referral to Medius Matchmaking Server <br></br> 
+        /// Referral to Medius Matchmaking Service <br></br> 
         /// 3rd possible response from MediusMatchPartyResponse 
         /// </summary>
         MediusMatchTypeReferral = 8,
@@ -560,7 +560,7 @@ namespace RT.Common
         MediusPasswordNotSet,
         MediusPasswordSet,
     }
-    
+
     public enum MediusAccountType : int
     {
         MediusChildAccount,
@@ -1326,7 +1326,7 @@ namespace RT.Common
         /// </summary>
         WorldStaging,
         /// <summary>
-        /// Players are playing in the game world.
+        /// Players are to join and play in the game world.
         /// </summary>
         WorldActive,
         /// <summary>
@@ -2868,26 +2868,26 @@ namespace RT.Common
 
     public enum DME_SERVER_LANGUAGE_TYPE : byte
     {
-         DME_SERVER_LANGUAGE_NONE = 0,
-         DME_SERVER_LANGUAGE_US_ENGLISH = 1,
-         DME_SERVER_LANGUAGE_UK_ENGLISH = 2,
-         DME_SERVER_LANGUAGE_JAPANESE = 3,
-         DME_SERVER_LANGUAGE_KOREAN = 4,
-         DME_SERVER_LANGUAGE_ITALIAN = 5,
-         DME_SERVER_LANGUAGE_SPANISH = 6,
-         DME_SERVER_LANGUAGE_GERMAN = 7,
-         DME_SERVER_LANGUAGE_FRENCH = 8,
-         DME_SERVER_LANGUAGE_DUTCH = 9,
-         DME_SERVER_LANGUAGE_PORTUGUESE = 10,
-         DME_SERVER_LANGUAGE_CHINESE = 11,
-         DME_SERVER_LANGUAGE_TAIWANESE = 12,
+        DME_SERVER_LANGUAGE_NONE = 0,
+        DME_SERVER_LANGUAGE_US_ENGLISH = 1,
+        DME_SERVER_LANGUAGE_UK_ENGLISH = 2,
+        DME_SERVER_LANGUAGE_JAPANESE = 3,
+        DME_SERVER_LANGUAGE_KOREAN = 4,
+        DME_SERVER_LANGUAGE_ITALIAN = 5,
+        DME_SERVER_LANGUAGE_SPANISH = 6,
+        DME_SERVER_LANGUAGE_GERMAN = 7,
+        DME_SERVER_LANGUAGE_FRENCH = 8,
+        DME_SERVER_LANGUAGE_DUTCH = 9,
+        DME_SERVER_LANGUAGE_PORTUGUESE = 10,
+        DME_SERVER_LANGUAGE_CHINESE = 11,
+        DME_SERVER_LANGUAGE_TAIWANESE = 12,
     }
 
     public enum DME_SERVER_ENCODING_TYPE : byte
     {
-         DME_SERVER_ENCODING_NONE,
-         DME_SERVER_ENCODING_ISO_8859_1,
-         DME_SERVER_ENCODING_UTF8
+        DME_SERVER_ENCODING_NONE,
+        DME_SERVER_ENCODING_ISO_8859_1,
+        DME_SERVER_ENCODING_UTF8
     }
 
     #endregion
@@ -3046,7 +3046,7 @@ namespace RT.Common
     public enum NetMessageTypeIds : int
     {
         //MAG
-        
+
         kNetKernelMessageTypeStart = 0,
         NetMessageTypeHello = 1,
         NetMessageTypeProtocolInfo = 2,
@@ -3133,7 +3133,7 @@ namespace RT.Common
         NetMessageNewsEUlaResponse = 575,
         NetMessageServerStatusRequest = 587,
         NetMessageServerStatusResponse = 588, //Needs Debug Check
-        
+
 
 
         // SOCOM 4
@@ -3561,6 +3561,46 @@ namespace RT.Common
         kOtgResultCategory_Assertion = 0xA,
         kOtgResultCategory_Count = 0xB,
         kOtgResultCategory_ResultExtra = -1
+    }
+
+    #endregion
+
+    #region SVO
+
+    public enum SVOStatsState : int
+    {
+        kCompleted_0 = 1,
+        kHostDisconnect_0 = 2,
+        kLocalDisconnect_0 = 3,
+        kLostConnection_0 = 4,
+        kGamePlayError_0 = 5,
+        kHostPlayerKicked_0 = 6,
+        kLocalPlayerKicked_0 = 7
+    }
+
+    public enum SVOBinaryStatsStarhawk : int
+    {
+        kDeprecrated1 = 1,
+        kPlayerDetailsData = 1,
+        kPlayerDetailsPost = 2,
+        KPlayerSummary = 2,
+        kClanDetailsPost = 3,
+        kTournamentAwardsSummary = 3,
+        kTournamentSoloPost = 4,
+        kVehiclesSummary = 4,
+        kTournamentClanPost = 5,
+        kBnBPartsSummary = 5,
+        kWeaponDetailsPost = 6,
+        kAwardsSummary = 6,
+        kVehicleDetailsPost = 7,
+        kTroopWeaponsSummary = 7,
+        kBnBPartDetailsPost = 8,
+        kStarhawkWeaponsSummary = 8,
+        kAwardDetailsPost = 9,
+        kBaseWeaponDetailsData = 0x64,
+        kBaseVehicleDetailsData = 0x12C,
+        kBaseBnBPartDetailsData = 0x1F4
+
     }
 
     #endregion

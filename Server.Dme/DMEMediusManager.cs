@@ -81,7 +81,6 @@ namespace Server.Dme
             return null;
         }
 
-
         public void AddClient(ClientObject client)
         {
             if (client.Destroy)
@@ -261,7 +260,7 @@ namespace Server.Dme
 
             try
             {
-                 _mpsChannel = await _bootstrap.ConnectAsync(new IPEndPoint(Utils.GetIp(Program.Settings.MPS.Ip), Program.Settings.MPS.Port));
+                _mpsChannel = await _bootstrap.ConnectAsync(new IPEndPoint(Utils.GetIp(Program.Settings.MPS.Ip), Program.Settings.MPS.Port));
             }
             catch (Exception)
             {
@@ -446,7 +445,7 @@ namespace Server.Dme
                         {
 
 
-                            if(ApplicationId == 20371)
+                            if (ApplicationId == 20371)
                             {
                                 World worldHome = new World(this, 20371, 256);
                                 _worlds.Add(worldHome);
@@ -461,6 +460,13 @@ namespace Server.Dme
 
 
                                 Enqueue(await worldHome.OnJoinGameRequest(joinGameRequest));
+                            }
+                            else if  (ApplicationId == 22920) {
+                                World worldParty = new World(this, ApplicationId, 64);
+                                _worlds.Add(worldParty);
+
+
+                                Enqueue(await worldParty.OnJoinGameRequest(joinGameRequest));
                             } else {
 
                                 Enqueue(new MediusServerJoinGameResponse()

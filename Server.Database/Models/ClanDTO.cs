@@ -1,4 +1,5 @@
 ﻿using RT.Common;
+using System;
 using System.Collections.Generic;
 
 namespace Server.Database.Models
@@ -8,27 +9,32 @@ namespace Server.Database.Models
 
         public int ClanId { get; set; }
         public string ClanName { get; set; }
+        public string ClanTAG { get; set; }
         public AccountDTO ClanLeaderAccount { get; set; }
-        public List<AccountDTO> ClanMemberAccounts { get; set; }
-        public List<ClanInvitationDTO> ClanMemberInvitations { get; set; }
+        public List<AccountDTO> ClanMember { get; set; }
+        public List<ClanInvitationDTO> ClanInvitation { get; set; }
         public List<ClanMessageDTO> ClanMessages { get; set; }
-        public List<ClanTeamChallengeDTO> ClanTeamChallenges { get; set; }
+        public List<ClanMetaDataDTO> SVOClanMetaData { get; set; }
+        public List<ClanNewsDTO> SVOClanNews { get; set; }
+        public DateTime CreateDt { get; set; }
+        public DateTime? ModifiedDt { get; set; }
+        public int Status { get; set; }
         public int AppId { get; set; }
         public bool IsDisbanded { get; set; }
         public string ClanMediusStats { get; set; }
-
+        
         /// <summary>
         /// Collection of ladder stats.
         /// </summary>
         public int[] ClanStats { get; set; }
 
         /// <summary>
-        /// Collection of ladder wide stats.
+        /// Collection of ladder stats.
         /// </summary>
         public int[] ClanWideStats { get; set; }
 
         /// <summary>
-        /// Collection of ladder wide stats.
+        /// Collection of custom ladder stats.
         /// </summary>
         public int[] ClanCustomWideStats { get; set; }
     }
@@ -36,22 +42,55 @@ namespace Server.Database.Models
     public class CreateClanDTO
     {
         public string ClanName { get; set; }
+        public string ClanTAG { get; set; }
         public int AccountId { get; set; }
+        public int AppId { get; set; }
+    }
+
+    public class ClanPlayerDTO
+    {
+        public int ClanId { get; set; }
+        public int ClanPlayerId { get; set; }
+        public int AccountId { get; set; }
+        public DateTime playerLevelUpdateDate { get; set; }
+        public string playerName { get; set; }
+        public DateTime playerStatusUpdateDate { get; set; }
+        public int status { get; set; }
+        public int clanPlayerLevelId { get; set; }
+        public int lastMsgRead { get; set; }
+        public int? ModifiedBy { get; set; }
+    }
+
+    public class ClanMetaDataDTO
+    {
+        public string ClanId { get; set; }
+        public string MetaDataKey { get; set; }
+        public string MetaDataValue { get; set; }
+    }
+
+    public class ClanNewsDTO
+    {
+        public int Id { get; set; }
+        public string ClanId { get; set; }
+        public string newsBody { get; set; }
+        public DateTime CreateDt { get; set; }
         public int AppId { get; set; }
     }
 
     public class ClanInvitationDTO
     {
-        public int InvitationId { get; set; }
+        public int Id { get; set; }
         public int ClanId { get; set; }
         public string ClanName { get; set; }
-        public int TargetAccountId { get; set; }
-        public string TargetAccountName { get; set; }
-        public string Message { get; set; }
+        public int AccountId { get; set; }
+        public string AccountName { get; set; }
+        public string InviteMsg { get; set; }
         public int AppId { get; set; }
         public int ResponseStatus { get; set; }
         public int ResponseTime { get; set; }
+        public DateTime CreateDt { get; set; }
         public string ResponseMessage { get; set; }
+        public string ClanLeaderName { get; set; }
     }
 
     public class AccountClanInvitationDTO
@@ -85,6 +124,7 @@ namespace Server.Database.Models
 
     public class ClanTeamChallengeDTO
     {
+        public int Id { get; set; }
         public int ChallengerClanID { get; set; }
         public int AgainstClanID { get; set; }
         public int Status { get; set; }

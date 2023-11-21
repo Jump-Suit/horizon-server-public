@@ -25,7 +25,11 @@ namespace RT.Models
             // 
             reader.ReadBytes(3);
             ClanID = reader.ReadInt32();
-            LadderStatIndex = reader.ReadInt32();
+            if(reader.MediusVersion != 113)
+            {
+                LadderStatIndex = reader.ReadInt32();
+            }
+
             SortOrder = reader.Read<MediusSortOrder>();
         }
 
@@ -40,7 +44,10 @@ namespace RT.Models
             // 
             writer.Write(new byte[3]);
             writer.Write(ClanID);
-            writer.Write(LadderStatIndex);
+            if(writer.MediusVersion != 113)
+            {
+                writer.Write(LadderStatIndex);
+            }
             writer.Write(SortOrder);
         }
 
