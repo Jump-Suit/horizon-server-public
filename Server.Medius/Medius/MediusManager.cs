@@ -418,7 +418,7 @@ namespace Server.Medius
                 // Send create game request to dme server
                 dme.Queue(new MediusServerCreateGameWithAttributesRequest()
                 {
-                    MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
+                    MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}-{0}"),
                     MediusWorldUID = (uint)game.Id,
                     Attributes = game.Attributes,
                     ApplicationID = client.ApplicationId,
@@ -493,7 +493,7 @@ namespace Server.Medius
                 // Send create game request to dme server
                 dme.Queue(new MediusServerCreateGameWithAttributesRequest()
                 {
-                    MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
+                    MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}-{0}"),
                     MediusWorldUID = (uint)game.Id,
                     Attributes = game.Attributes,
                     ApplicationID = client.ApplicationId,
@@ -642,7 +642,7 @@ namespace Server.Medius
                     // Send create game request to dme server
                     dme.Queue(new MediusServerCreateGameWithAttributesRequest()
                     {
-                        MessageID = new MessageId($"{game.Id}-{client.AccountId}-{matchCreateGameRequest.MessageID}-{false}"),
+                        MessageID = new MessageId($"{game.Id}-{client.AccountId}-{matchCreateGameRequest.MessageID}-{0}"),
                         MediusWorldUID = (uint)game.Id,
                         Attributes = game.Attributes,
                         ApplicationID = client.ApplicationId,
@@ -1012,7 +1012,7 @@ namespace Server.Medius
                     {
                         dme.Queue(new MediusServerJoinGameRequest()
                         {
-                            MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
+                            MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}-{0}"),
                             ConnectInfo = new NetConnectionInfo()
                             {
                                 Type = NetConnectionType.NetConnectionTypeClientServerTCPAuxUDP,
@@ -1025,7 +1025,7 @@ namespace Server.Medius
                     } else {
                         dme.Queue(new MediusServerJoinGameRequest()
                         {
-                            MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
+                            MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}-{0}"),
                             ConnectInfo = new NetConnectionInfo()
                             {
                                 Type = NetConnectionType.NetConnectionTypeClientServerTCP,
@@ -1078,7 +1078,7 @@ namespace Server.Medius
                 // if This is a Peer to Peer Player Host as DME we treat differently
                 if (game.GameHostType == MediusGameHostType.MediusGameHostPeerToPeer)
                 {
-                    dme.Queue(new MediusServerJoinGameRequest()
+                    game.Host.Queue(new MediusServerJoinGameRequest()
                     {
                         MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
                         ConnectInfo = new NetConnectionInfo()
@@ -1095,7 +1095,7 @@ namespace Server.Medius
                 {
                     dme.Queue(new MediusServerJoinGameRequest()
                     {
-                        MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
+                        MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}-{0}"),
                         ConnectInfo = new NetConnectionInfo()
                         {
                             Type = NetConnectionType.NetConnectionTypeClientServerTCP,
@@ -1329,11 +1329,13 @@ namespace Server.Medius
             if (party == null)
             {
                 Logger.Warn($"Join Game Request Handler Error: Error in retrieving party info from MUM cache [{request.MediusWorldID}]");
+                /*
                 client.Queue(new MediusPartyJoinByIndexResponse()
                 {
                     MessageID = request.MessageID,
                     StatusCode = MediusCallbackStatus.MediusNoResult
                 });
+                */
             }
 
             #region Password
@@ -1382,7 +1384,7 @@ namespace Server.Medius
 
                 dme.Queue(new MediusServerJoinGameRequest()
                 {
-                    MessageID = new MessageId($"{party.Id}-{client.AccountId}-{request.MessageID}-{true}"),
+                    MessageID = new MessageId($"{party.Id}-{client.AccountId}-{request.MessageID}-{1}"),
                     ConnectInfo = new NetConnectionInfo()
                     {
                         Type = NetConnectionType.NetConnectionTypeClientServerTCPAuxUDP,
@@ -1392,22 +1394,6 @@ namespace Server.Medius
                         ServerKey = Program.GlobalAuthPublic
                     }
                 });
-
-                /*
-                dme.Queue(new MediusServerJoinGameRequest()
-                {
-                    MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
-                    ConnectInfo = new NetConnectionInfo()
-                    {
-                        Type = NetConnectionType.NetConnectionTypeClientServerTCPAuxUDP,
-                        WorldID = game.DMEWorldId,
-                        AccessKey = client.Token,
-                        SessionKey = client.SessionKey,
-                        ServerKey = Program.GlobalAuthPublic
-                    }
-                });
-                */
-                // 
 
                 /* RESPONSE FOR MPS
                 client?.Queue(new MediusPartyJoinByIndexResponse()
@@ -1946,12 +1932,13 @@ namespace Server.Medius
             // Tick games
             foreach (var quickLookup in _lookupsByAppId)
             {
+                int appId = quickLookup.Key;
                 foreach (var gameKeyPair in quickLookup.Value.GameIdToGame)
                 {
                     if (gameKeyPair.Value.ReadyToDestroy)
                     {
                         Logger.Info($"Destroying Game {gameKeyPair.Value}");
-                        await gameKeyPair.Value.EndGame();
+                        await gameKeyPair.Value.EndGame(appId);
                         gamesToRemove.Enqueue((quickLookup.Value, gameKeyPair.Key));
                     }
                     else

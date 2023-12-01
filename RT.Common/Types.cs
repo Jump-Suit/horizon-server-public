@@ -2243,7 +2243,7 @@ namespace RT.Common
         AddToBuddyListConfirmationResponse = 0x64,
         PartyCreateRequest = 0x65,
         PartyCreateResponse = 0x66,
-        PartyJoinRequest = 0x067,
+        PartyJoinRequest = 0x67,
         PartyJoinResponse = 0x68,
         GameListRequest = 0x69,
         PartyListResponse = 0x6A,

@@ -3071,8 +3071,8 @@ namespace Server.Database
                     {
                         OwnerByID = 2147483646;
 
-                        Logger.Warn($"FileNameBeginsWith: {FileNameBeginsWith.Remove(FileNameBeginsWith.Length - 1)} OwnerByID: {OwnerByID}");
-                        result = await GetDbAsync<List<FileDTO>>($"FileServices/getFileList?AppId={appId}&FileNameBeginsWith={FileNameBeginsWith.Remove(FileNameBeginsWith.Length - 1)}&OwnerByID={OwnerByID}");
+                        Logger.Warn($"FileNameBeginsWith: {FileNameBeginsWith} OwnerByID: {OwnerByID}");
+                        result = await GetDbAsync<List<FileDTO>>($"FileServices/getFileList?AppId={appId}&FileNameBeginsWith={FileNameBeginsWith}&OwnerByID={OwnerByID}");
 
                     }
                 }
@@ -4194,7 +4194,7 @@ namespace Server.Database
                         new AppIdDTO()
                         {
                             Name = "All",
-                            AppIds = Enumerable.Range(0, 100000).ToList()
+                            AppIds = Enumerable.Range(0, 28000).ToList()
                         }
                     };
                 }

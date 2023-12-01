@@ -19,7 +19,7 @@ namespace RT.Models
             Payload = reader.ReadRest();
         }
 
-        public override void Serialize(Server.Common.Stream.MessageWriter writer)
+        public override void Serialize(MessageWriter writer)
         {
             writer.Write(TargetOrSource);
             writer.Write(Payload);
