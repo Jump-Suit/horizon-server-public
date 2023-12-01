@@ -1549,7 +1549,6 @@ namespace Server.Medius
                     return;
                 }
 
-                mps.SendServerCreateGameWithAttributesRequest(request.MessageID.ToString(), client.AccountId, party.Id, true, (int)party.Attributes, client.ApplicationId, party.MaxPlayers);
 
             }
             catch (Exception e)
