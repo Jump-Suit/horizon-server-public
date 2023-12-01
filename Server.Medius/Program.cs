@@ -26,6 +26,7 @@ using System.Threading.Tasks;
 using DotNetty.Transport.Channels;
 using Server.libAntiCheat.Main;
 using Microsoft.Extensions.Options;
+using Server.Medius.API;
 
 namespace Server.Medius
 {
@@ -34,6 +35,8 @@ namespace Server.Medius
         private static string CONFIG_DIRECTIORY = "/static/Medius";
         public static string CONFIG_FILE => "medius.json";//Path.Combine(CONFIG_DIRECTIORY, "medius.json");
         public static string DB_CONFIG_FILE => "db.config.json"; //Path.Combine(CONFIG_DIRECTIORY, "db.config.json");
+
+
 
         public static RSA_KEY GlobalAuthPublic = null;
 
@@ -95,8 +98,8 @@ namespace Server.Medius
                     float tps = _ticks / (float)_sw.Elapsed.TotalSeconds;
                     float error = MathF.Abs(Settings.TickRate - tps) / Settings.TickRate;
 
-                    if (error > 0.1f)
-                        Logger.Error($"Average TickRate Per Second: {tps} is {error * 100}% off of target {Settings.TickRate}");
+                    //if (error > 0.1f)
+                    //    Logger.Error($"Average TickRate Per Second: {tps} is {error * 100}% off of target {Settings.TickRate}");
                     //var dt = DateTime.UtcNow - Utils.GetHighPrecisionUtcTime();
                     //if (Math.Abs(dt.TotalMilliseconds) > 50)
                     //    Logger.Error($"System clock and local clock are out of sync! delta ms: {dt.TotalMilliseconds}");
@@ -579,6 +582,8 @@ namespace Server.Medius
 
             #endregion
 
+            _ = HTTPService.HttpClass.RunServerAsync(Settings.MediusHTTPPort);
+
             Logger.Info("Medius Stacks Initialized");
             /*
             #region MFS
@@ -825,6 +830,8 @@ namespace Server.Medius
                                 // and there might be new setting fields that aren't yet on the db
                                 await Database.SetServerSettings(appId, appSettings.GetSettings());
                             }
+
+                            CrudRoomManager.UpdateOrCreateRoom(Convert.ToString(appId), null, null, null, null, false);
                         }
                     }
                 }

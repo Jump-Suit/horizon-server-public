@@ -13,7 +13,6 @@ namespace RT.Models
         public MessageId MessageID { get; set; }
 
         public MediusCallbackStatus StatusCode;
-        public uint FilterID;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {

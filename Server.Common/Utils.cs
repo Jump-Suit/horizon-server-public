@@ -215,6 +215,74 @@ namespace Server.Common
             return sb.ToString();
         }
 
+        public static string ComputeSHA512ReducedSizeCustom(string input)
+        {
+            // Create a SHA256 that is calculated 2 times.
+            using (SHA256 sha256Hash = SHA256.Create())
+            {
+                byte[] PassBytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(XORString(ByteArrayToHexString(sha256Hash.ComputeHash
+                    (Encoding.UTF8.GetBytes(XORString(input + "ssaPD3Tl1SyM" + ComputeMD5("MyS1lT3DPass" + input), ReverseString(input))))), input)));
+
+                // Convert byte array to a string   
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < PassBytes.Length; i++)
+                    builder.Append(PassBytes[i].ToString("x2"));
+
+                sha256Hash.Clear();
+
+                return builder.ToString().ToUpper(); // To Upper for a nicer output.
+            }
+        }
+
+        public static string ReverseString(string input)
+        {
+            char[] charArray = input.ToCharArray();
+            Array.Reverse(charArray);
+            return new string(charArray);
+        }
+
+        public static string XORString(string input, string key)
+        {
+            StringBuilder result = new StringBuilder();
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                result.Append((char)(input[i] ^ key[i % key.Length]));
+            }
+
+            return result.ToString();
+        }
+
+        public static string ComputeMD5(string input)
+        {
+            // Create a SHA256   
+            using (MD5 md5Hash = MD5.Create())
+            {
+                // ComputeHash - returns byte array  
+                byte[] bytes = md5Hash.ComputeHash(Encoding.UTF8.GetBytes(input));
+
+                // Convert byte array to a string   
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < bytes.Length; i++)
+                    builder.Append(bytes[i].ToString("x2"));
+
+                md5Hash.Clear();
+
+                return builder.ToString();
+            }
+        }
+
+        public static string ByteArrayToHexString(byte[] byteArray)
+        {
+            StringBuilder hex = new StringBuilder(byteArray.Length * 2);
+            foreach (byte b in byteArray)
+            {
+                hex.AppendFormat("{0:X2}", b);
+            }
+
+            return hex.ToString();
+        }
+
         #endregion
 
         #region Ip

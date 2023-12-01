@@ -5,6 +5,7 @@ using RT.Common;
 using RT.Cryptography;
 using RT.Models;
 using Server.Common;
+using Server.Medius.API;
 using Server.Medius.Config;
 using Server.Medius.Models;
 using Server.Medius.PluginArgs;
@@ -237,13 +238,13 @@ namespace Server.Medius
                         int gameOrPartyId = int.Parse(createGameWithAttrResponse.MessageID.Value.Split('-')[0]);
                         int accountId = int.Parse(createGameWithAttrResponse.MessageID.Value.Split('-')[1]);
                         string msgId = createGameWithAttrResponse.MessageID.Value.Split('-')[2];
-                        bool partyType = bool.Parse(createGameWithAttrResponse.MessageID.Value.Split('-')[3]);
+                        int partyType = int.Parse(createGameWithAttrResponse.MessageID.Value.Split('-')[3]);
 
                         var game = Program.Manager.GetGameByGameId(gameOrPartyId);
                         var party = Program.Manager.GetPartyByPartyId(gameOrPartyId);
 
                         var rClient = Program.Manager.GetClientByAccountId(accountId, data.ClientObject.ApplicationId);
-                        if(partyType == true)
+                        if(partyType == 1)
                         {
                             party.DMEWorldId = createGameWithAttrResponse.WorldID;
                             await party.PartyCreated();
@@ -265,7 +266,7 @@ namespace Server.Medius
                                     StatusCode = MediusCallbackStatus.MediusFail
                                 });
 
-                                await game.EndGame();
+                                await game.EndGame(data.ApplicationId);
                             }
                             else
                             {
@@ -300,7 +301,7 @@ namespace Server.Medius
                                     StatusCode = MediusCallbackStatus.MediusFail
                                 });
 
-                                await game.EndGame();
+                                await game.EndGame(game.ApplicationId);
                             }
                             else
                             {
@@ -329,7 +330,7 @@ namespace Server.Medius
                         int gameOrPartyId = int.Parse(joinGameResponse.MessageID.Value.Split('-')[0]);
                         int accountId = int.Parse(joinGameResponse.MessageID.Value.Split('-')[1]);
                         string msgId = joinGameResponse.MessageID.Value.Split('-')[2];
-                        bool partyType = bool.Parse(joinGameResponse.MessageID.Value.Split('-')[3]);
+                        int partyType = int.Parse(joinGameResponse.MessageID.Value.Split('-')[3]);
 
                         var game = Program.Manager.GetGameByGameId(gameOrPartyId);
                         var party = Program.Manager.GetPartyByPartyId(gameOrPartyId);
@@ -337,7 +338,7 @@ namespace Server.Medius
 
                         IPHostEntry host = Dns.GetHostEntry(Program.Settings.NATIp);
 
-                        if(partyType == true)
+                        if(partyType == 1)
                         {
                             rClient?.Queue(new MediusPartyJoinByIndexResponse()
                             {
@@ -779,7 +780,7 @@ namespace Server.Medius
                 case MediusServerMoveGameWorldOnMeRequest serverMoveGameWorldOnMeRequest:
                     {
                         //Fetch Current Game, and Update it with the new one
-                        var game = Program.Manager.GetGameByGameId(serverMoveGameWorldOnMeRequest.CurrentMediusWorldID);
+                        var game = Program.Manager.GetGameByDmeWorldId(data.ClientObject.SessionKey, serverMoveGameWorldOnMeRequest.CurrentMediusWorldID);
                         if(game.WorldID != serverMoveGameWorldOnMeRequest.CurrentMediusWorldID)
                         {
                             data.ClientObject.Queue(new MediusServerMoveGameWorldOnMeResponse()
@@ -822,6 +823,7 @@ namespace Server.Medius
                 case MediusServerEndGameOnMeRequest serverEndGameOnMeRequest:
                     {
 
+                        //await CrudRoomManager.RemoveGame(data.ClientObject.ApplicationId.ToString(), serverEndGameOnMeRequest.MediusWorldID.ToString(), GameName);
 
                         data.ClientObject.Queue(new MediusServerEndGameOnMeResponse()
                         {
@@ -847,6 +849,7 @@ namespace Server.Medius
                 case MediusServerConnectNotification connectNotification:
                     {
                         Logger.Info("MediusServerConnectNotification Received");
+                        //Logger.Warn($"sessionkey {(data.ClientObject as DMEObject).SessionKey} worldid {(int)connectNotification.MediusWorldUID}");
                         if(Program.Manager.GetGameByDmeWorldId((data.ClientObject as DMEObject).SessionKey, (int)connectNotification.MediusWorldUID) != null)
                         {
                             await Program.Manager.GetGameByDmeWorldId((data.ClientObject as DMEObject).SessionKey, (int)connectNotification.MediusWorldUID)?.OnMediusServerConnectNotification(connectNotification);
@@ -886,7 +889,7 @@ namespace Server.Medius
 
                         if(game != null && endGameRequest.BrutalFlag == true)
                         {
-                            await game.EndGame();
+                            await game.EndGame(game.ApplicationId);
 
                             data.ClientObject.Queue(new MediusServerEndGameResponse()
                             {

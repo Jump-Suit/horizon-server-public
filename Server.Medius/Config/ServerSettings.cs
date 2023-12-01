@@ -378,6 +378,13 @@ namespace Server.Medius.Config
 
         #endregion
 
+        #region Additional Config Options 
+
+        public int MediusHTTPPort { get; set; } = 61920; 
+
+        public string HTTPSCertificateFile { get; set; } = $"{Directory.GetCurrentDirectory()}/static/SSL/MultiServer.pfx";
+
+        #endregion
         /// <summary>
         /// Logging settings.
         /// </summary>

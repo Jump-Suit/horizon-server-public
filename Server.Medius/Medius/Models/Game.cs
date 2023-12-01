@@ -3,6 +3,7 @@ using RT.Common;
 using RT.Models;
 using Server.Common;
 using Server.Database.Models;
+using Server.Medius.API;
 using Server.Medius.PluginArgs;
 using Server.Plugins.Interface;
 using System;
@@ -56,11 +57,11 @@ namespace Server.Medius.Models
         public int GenericField6;
         public int GenericField7;
         public int GenericField8;
-        public string RequestData;
+        public byte[] RequestData;
         public uint GroupMemberListSize;
-        public char[] GroupMemberList;
+        public byte[] GroupMemberList;
         public uint AppDataSize;
-        public char[] AppData;
+        public byte[] AppData;
         public MediusWorldStatus WorldStatus => _worldStatus;
         public MediusWorldAttributesType Attributes;
         public MediusMatchOptions MatchOptions;
@@ -92,10 +93,12 @@ namespace Server.Medius.Models
         {
             if (createGame is MediusCreateGameRequest r)
             {
+                /*
                 if(client.ApplicationId == 24180)
                 {
                     r.MaxPlayers = 10;
                 }
+                */
                 FromCreateGameRequest(r);
             }
             else if (createGame is MediusCreateGameRequest0 r0)
@@ -344,14 +347,14 @@ namespace Server.Medius.Models
             }
         }
 
-        public virtual async Task OnMediusServerConnectNotification(MediusServerConnectNotification notification)
+        public virtual async Task OnMediusServerConnectNotification(MediusServerConnectNotification connectNotification)
         {
-            var player = Clients.FirstOrDefault(x => x.Client.SessionKey == notification.PlayerSessionKey);
+            var player = Clients.FirstOrDefault(x => x.Client.SessionKey == connectNotification.PlayerSessionKey);
 
             if (player == null)
                 return;
 
-            switch (notification.ConnectEventType)
+            switch (connectNotification.ConnectEventType)
             {
                 case MGCL_EVENT_TYPE.MGCL_EVENT_CLIENT_CONNECT:
                     {
@@ -360,7 +363,8 @@ namespace Server.Medius.Models
                     }
                 case MGCL_EVENT_TYPE.MGCL_EVENT_CLIENT_DISCONNECT:
                     {
-                        await OnPlayerLeft(player);
+                        await OnPlayerLeft(player, connectNotification);
+
                         break;
                     }
             }
@@ -388,13 +392,21 @@ namespace Server.Medius.Models
         public virtual async Task OnPlayerJoined(GameClient player)
         {
             player.InGame = true;
-            Logger.Warn("Player joined!");
 
+            bool isHost;
             if (player.Client == Host)
             {
-                Logger.Warn("Player added as HOST!");
+                Logger.Info($"[Game] -> OnHostJoined -> {player.Client.ApplicationId} - {player.Client?.CurrentGame?.GameName} (id : {player.Client?.WorldId}) -> {player.Client?.AccountName} -> {player.Client?.LanguageType}");
+
+                isHost = true;
                 hasHostJoined = true;
+            } else
+            {
+                Logger.Info($"[Game] -> OnPlayerJoined -> {player.Client.ApplicationId} - {player.Client?.CurrentGame?.GameName} (id : {player.Client?.WorldId}) -> {player.Client?.AccountName} -> {player.Client?.LanguageType}");
+                isHost = false;
             }
+
+            CrudRoomManager.UpdateOrCreateRoom(player.Client.ApplicationId.ToString(), player.Client.CurrentGame.GameName, player.Client.WorldId.ToString(), player.Client.AccountName, player.Client.LanguageType.ToString(), isHost);
 
             // Send to plugins
             await Program.Plugins.OnEvent(PluginEvent.MEDIUS_PLAYER_ON_JOINED_GAME, new OnPlayerGameArgs() { Player = player.Client, Game = this });
@@ -419,7 +431,7 @@ namespace Server.Medius.Models
             //client.CurrentChannel?.SendSystemMessage(client, $"Gamemode is {CustomGamemode?.FullName ?? "default"}.");
 		}
 		
-        protected virtual async Task OnPlayerLeft(GameClient player)
+        protected virtual async Task OnPlayerLeft(GameClient player, MediusServerConnectNotification connectNotification)
         {
             // 
             Logger.Info($"Game {Id}: {GameName}: {player.Client} left.");
@@ -427,28 +439,34 @@ namespace Server.Medius.Models
             // 
             player.InGame = false;
 
-            // Update player object
-            await player.Client.LeaveGame(this);
-            await player.Client.LeaveChannel(ChatChannel);
-
             // Remove from collection
-            if(player.Client.CurrentGame != null)
+            if (player.Client.CurrentGame != null)
             {
                 await RemovePlayer(player.Client);
             }
+
+            // Update player object
+            await player.Client.LeaveGame(this);
+            await player.Client.LeaveChannel(ChatChannel);
         }
 
         public virtual async Task RemovePlayer(ClientObject client)
         {
             // 
-            Logger.Info($"Game {Id}: {GameName}: {client} removed.");
+            Logger.Info($"Game {Id}: {GameName}: player {client} removed.");
+
+            CrudRoomManager.RemoveUser(client.ApplicationId.ToString(), client.CurrentGame.GameName, client.WorldId.ToString(), client.AccountName);
+
+
+            if (PlayerCount <= 1)
+                await CrudRoomManager.RemoveGame(client.ApplicationId.ToString(), client.WorldId.ToString(), GameName);
 
             // Remove host
             if (Host == client)
             {
                 // Send to plugins
                 await Program.Plugins.OnEvent(PluginEvent.MEDIUS_GAME_ON_HOST_LEFT, new OnPlayerGameArgs() { Player = client, Game = this });
-
+                
                 Host = null;
             }
 
@@ -459,12 +477,13 @@ namespace Server.Medius.Models
             Clients.RemoveAll(x => x.Client == client);
         }
 
-        public virtual async Task OnEndGameReport(MediusEndGameReport report)
+        public virtual async Task OnEndGameReport(MediusEndGameReport report, int appId)
         {
             try
             {
                 ///Send database EndGameReport info
-                await EndGame();
+                await EndGame(appId);
+
                 Logger.Info($"Successful local delete of game world [{report.MediusWorldID}]");
             } catch (Exception e)
             {
@@ -478,11 +497,12 @@ namespace Server.Medius.Models
             if (report.MediusWorldID != Id)
                 return;
 
+            /*
             if(appId == 24180)
             {
                 report.MaxPlayers = 10;
             }
-
+            */
             //Id = report.MediusWorldID;
             GameName = report.GameName;
             GameStats = report.GameStats;
@@ -516,7 +536,6 @@ namespace Server.Medius.Models
                     _ = Program.Database.UpdateGame(ToGameDTO());
             }
         }
-
         public virtual async Task OnWorldReport0(MediusWorldReport0 report)
         {
             // Ensure report is for correct game world
@@ -600,7 +619,7 @@ namespace Server.Medius.Models
             return Task.CompletedTask;
         }
 
-        public virtual async Task EndGame()
+        public virtual async Task EndGame(int appId)
         {
             // destroy flag
             destroyed = true;
@@ -675,7 +694,6 @@ namespace Server.Medius.Models
 
                         // Send to plugins
                         await Program.Plugins.OnEvent(PluginEvent.MEDIUS_GAME_ON_ENDED, new OnGameArgs() { Game = this });
-
                         return;
                     }
             }

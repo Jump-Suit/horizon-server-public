@@ -262,8 +262,10 @@ namespace Server.Medius.Models
             {
                 client?.Queue(new MediusBinaryFwdMessage1()
                 {
+                    MessageID= msg.MessageID,
                     MessageType = msg.MessageType,
                     OriginatorAccountID = source.AccountId,
+                    MessageSize = msg.MessageSize,
                     Message = msg.Message
                 });
             }
