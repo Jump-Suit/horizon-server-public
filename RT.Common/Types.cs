@@ -894,6 +894,14 @@ namespace RT.Common
         BroadcastBinaryMsgAcrossEntireUniverseDeprecated0
     }
 
+    public enum MediusMessageType : int
+    {
+        /// <summary>
+        /// Applies to request to the annoncements message.
+        /// </summary>
+        AnnouncementMessage,
+    }
+
     [Flags]
     public enum MediusWorldGenericFieldLevelType : int
     {
@@ -952,6 +960,16 @@ namespace RT.Common
         /// </summary>
         ExtraMediusTextFilter = 0xffffff
     }
+    #endregion
+
+    #region MediusGameListSortDirection
+
+    public enum MediusGameListSortDirection : int
+    {
+        MEDIUS_SORT_ASCENDING,
+        MEDIUS_SORT_DESCENDING,
+    }
+
     #endregion
 
     public enum MediusSortOrder : int
@@ -1272,10 +1290,26 @@ namespace RT.Common
     [Flags]
     public enum MediusWorldAttributesType : int
     {
+        /// <summary>
+        /// Default game world attributes. Nothing special.
+        /// </summary>
         GAME_WORLD_NONE = 0,
+        /// <summary>
+        /// Supports connected spectator worlds
+        /// </summary>
         GAME_WORLD_ALLOW_REBROADCAST = 1,
+        /// <summary>
+        /// Indicates that this world is a spectator world
+        /// </summary>
         GAME_WORLD_ALLOW_SPECTATOR = 2,
+        /// <summary>
+        /// Indicates this world was generated internally <Br></Br>
+        /// Not by a client request
+        /// </summary>
         GAME_WORLD_INTERNAL = 4,
+        /// <summary>
+        /// Unknown
+        /// </summary>
         GAME_WORLD_RECORD = 8
     }
     #endregion
@@ -1866,17 +1900,17 @@ namespace RT.Common
         ServerSetAttributesResponse = 0x17,
         ServerCreateGameWithAttributesRequest = 0x18,
         ServerCreateGameWithAttributesResponse = 0x19,
-        ServerWorldReportOnMe = 0x20,
-        ServerSessionBeginRequest1 = 0x21,
-        ServerSessionBeginResponse1 = 0x22,
-        ServerSessionBeginRequest2 = 0x24,
-        ServerCreateGameWithAttributesRequest2 = 0x26, //TEST
         ServerConnectGamesRequest = 0x1A,
         ServerConnectGamesResponse = 0x1B,
         ServerConnectNotification = 0x1C,
         ServerCreateGameOnSelfRequest = 0x1D,
         ServerDisconnectPlayerRequest = 0x1E,
         ServerCreateGameOnMeRequest = 0x1F,
+        ServerWorldReportOnMe = 0x20,
+        ServerSessionBeginRequest1 = 0x21,
+        ServerSessionBeginResponse1 = 0x22,
+        ServerSessionBeginRequest2 = 0x24,
+        ServerCreateGameWithAttributesRequest2 = 0x25, //TEST
     }
     #endregion
 

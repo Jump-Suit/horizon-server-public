@@ -30,7 +30,7 @@ namespace Server.NAT
         }
 
         /// <summary>
-        /// Start the NAT UDP Server.
+        /// Start the SCE-RT NAT UDP Server.
         /// </summary>
         public async Task Start()
         {
@@ -45,17 +45,11 @@ namespace Server.NAT
                 // Send ip and port back if the last byte isn't 0xD4
                 if (message.Content.ReadableBytes == 4 && message.Content.GetByte(message.Content.ReaderIndex + 3) != 0xD4)
                 {
+                    Logger.Info($"Recieved External IP {(message.Sender as IPEndPoint).Address.MapToIPv4()} & Port {(ushort)(message.Sender as IPEndPoint).Port} request, sending their IP & Port as response!");
                     var buffer = channel.Allocator.Buffer(6);
-                    if (Program.Settings.OverridePort.HasValue)
-                    {
-                        buffer.WriteBytes((message.Recipient as IPEndPoint).Address.MapToIPv4().GetAddressBytes());
-                        buffer.WriteUnsignedShort((ushort)Program.Settings.OverridePort.Value);
-                    }
-                    else
-                    {
-                        buffer.WriteBytes((message.Sender as IPEndPoint).Address.MapToIPv4().GetAddressBytes());
-                        buffer.WriteUnsignedShort((ushort)(message.Sender as IPEndPoint).Port);
-                    }
+
+                    buffer.WriteBytes((message.Sender as IPEndPoint).Address.MapToIPv4().GetAddressBytes());
+                    buffer.WriteUnsignedShort((ushort)(message.Sender as IPEndPoint).Port);
                     channel.WriteAndFlushAsync(new DatagramPacket(buffer, message.Sender));
                 }
             };

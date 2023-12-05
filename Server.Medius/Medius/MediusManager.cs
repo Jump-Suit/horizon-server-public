@@ -251,6 +251,22 @@ namespace Server.Medius
             return null;
         }
 
+        public Party GetPartyAll(string name, int appId)
+        {
+            foreach (var lookupByAppId in _lookupsByAppId)
+            {
+                lock (lookupByAppId.Value.PartyIdToGame)
+                {
+                    var party = lookupByAppId.Value.PartyIdToGame.FirstOrDefault(x => x.Value?.ApplicationId == appId && x.Value.PartyName == name).Value;
+                    if (party != null)
+                        return party;
+                }
+            }
+
+            return null;
+        }
+
+
         public Channel GetWorldByName(string worldName)
         {
             foreach (var lookupByAppId in _lookupsByAppId)
@@ -1329,13 +1345,12 @@ namespace Server.Medius
             if (party == null)
             {
                 Logger.Warn($"Join Game Request Handler Error: Error in retrieving party info from MUM cache [{request.MediusWorldID}]");
-                /*
+                
                 client.Queue(new MediusPartyJoinByIndexResponse()
                 {
                     MessageID = request.MessageID,
                     StatusCode = MediusCallbackStatus.MediusNoResult
                 });
-                */
             }
 
             #region Password
@@ -1548,7 +1563,15 @@ namespace Server.Medius
                     });
                     return;
                 }
-
+                /*
+                client.Queue(new MediusPartyCreateResponse()
+                {
+                    MessageID = request.MessageID,
+                    MediusWorldID = -1,
+                    StatusCode = MediusCallbackStatus.MediusTransactionTimedOut
+                });
+                */
+                mps.SendServerCreateGameWithAttributesRequest(request.MessageID.ToString(), client.AccountId, party.Id, true, (int)party.Attributes, client.ApplicationId, party.MaxPlayers);
 
             }
             catch (Exception e)

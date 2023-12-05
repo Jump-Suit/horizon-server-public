@@ -3,6 +3,9 @@ using Server.Common;
 
 namespace RT.Models
 {
+    /// <summary>
+    /// PartyJoinResponse in earlier Medius 3.00 PS3, was later modified to join by an Index 
+    /// </summary>
     [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.PartyJoinByIndexResponse)]
     public class MediusPartyJoinByIndexResponse : BaseLobbyExtMessage, IMediusResponse
     {
@@ -28,7 +31,6 @@ namespace RT.Models
         public NetConnectionInfo ConnectionInfo;
 
         public int partyIndex;
-
         public int maxPlayers;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)

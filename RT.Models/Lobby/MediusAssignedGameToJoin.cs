@@ -35,7 +35,7 @@ namespace RT.Models.Lobby
         public MediusGameHostType GameHostType;
         public NetAddressList AddressList;
         public uint AppDataSize;
-        public char[] AppData;
+        public byte[] AppData;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -66,7 +66,7 @@ namespace RT.Models.Lobby
             GameHostType = reader.Read<MediusGameHostType>();
             AddressList = reader.Read<NetAddressList>();
             AppDataSize = reader.ReadUInt32();
-            AppData = reader.ReadChars((int)AppDataSize);
+            AppData = reader.ReadBytes((int)AppDataSize);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)

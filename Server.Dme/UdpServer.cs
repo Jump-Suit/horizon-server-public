@@ -184,6 +184,20 @@ namespace Server.Dme
                         _boundChannel.WriteAndFlushAsync(new ScertDatagramPacket(msg, packet.Source));
                         break;
                     }
+
+                case RT_MSG_CLIENT_CONNECT_READY_AUX_UDP readyAuxUdp:
+                    {
+                        ClientObject?.OnConnectionCompleted();
+
+                        var msg = new RT_MSG_SERVER_CONNECT_COMPLETE()
+                        {
+                            ClientCountAtConnect = (ushort)ClientObject.DmeWorld.Clients.Count
+                        };
+
+                        _boundChannel.WriteAndFlushAsync(new ScertDatagramPacket(msg, packet.Source));
+                        break;
+                    }
+
                 case RT_MSG_SERVER_ECHO serverEchoReply:
                     {
 

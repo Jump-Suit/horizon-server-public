@@ -159,9 +159,9 @@ namespace Server.Dme.Models
             SessionKey = sessionKey;
 
             // 
-            this.DmeId = dmeId;
-            this.DmeWorld = dmeWorld;
-            this.AggTimeMs = Program.GetAppSettingsOrDefault(ApplicationId).DefaultClientWorldAggTime;
+            DmeId = dmeId;
+            DmeWorld = dmeWorld;
+            AggTimeMs = Program.GetAppSettingsOrDefault(ApplicationId).DefaultClientWorldAggTime;
 
             // Generate new token
             byte[] tokenBuf = new byte[12];
@@ -177,7 +177,7 @@ namespace Server.Dme.Models
             // 
             //this.DmeId = dmeId;
             //this.DmeWorld = dmeWorld;
-            this.AggTimeMs = Program.GetAppSettingsOrDefault(ApplicationId).DefaultClientWorldAggTime;
+            AggTimeMs = Program.GetAppSettingsOrDefault(ApplicationId).DefaultClientWorldAggTime;
 
             // Generate new token
             byte[] tokenBuf = new byte[12];

@@ -378,7 +378,8 @@ namespace Server.Dme.Models
             await Task.Delay(100);
 
             // find existing client and reuse
-            var existingClient = Clients.FirstOrDefault(x => x.Value.SessionKey == request.ConnectInfo.SessionKey);
+            var existingClient = Clients.FirstOrDefault(x => x.Value.SessionKey == request.ConnectInfo.SessionKey); 
+
             if (existingClient.Value != null)
             {
                 // found existing
@@ -387,7 +388,8 @@ namespace Server.Dme.Models
                     MessageID = request.MessageID,
                     DmeClientIndex = existingClient.Value.DmeId,
                     AccessKey = existingClient.Value.Token,
-                    Confirmation = MGCL_ERROR_CODE.MGCL_SUCCESS
+                    Confirmation = MGCL_ERROR_CODE.MGCL_SUCCESS,
+                    pubKey = request.ConnectInfo.ServerKey
                 };
             }
 

@@ -218,7 +218,7 @@ namespace Server.UniverseInformation
                         data.ApplicationId = clientConnectTcp.AppId;
                         scertClient.ApplicationID = clientConnectTcp.AppId;
 
-                        List<int> pre108ServerComplete = new List<int>() { 10334, 10421, 10540 };
+                        List<int> pre108ServerComplete = new List<int>() { 10334, 10421, 10442, 10540, 10724 };
 
                         if (scertClient.CipherService.HasKey(CipherContext.RC_CLIENT_SESSION) && scertClient.RsaAuthKey != null && scertClient.CipherService.EnableEncryption == true)
                         {

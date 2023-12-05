@@ -41,7 +41,7 @@ namespace RT.Models
             //
             writer.Write(StatusCode);
             writer.Write(MessageID ?? MessageId.Empty);
-            writer.Write(3);
+            writer.Write(new byte[3]);
         }
 
         public override string ToString()

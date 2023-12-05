@@ -70,7 +70,7 @@ namespace Server.Medius
                 case RT_MSG_CLIENT_CONNECT_TCP clientConnectTcp:
                     {
                         //Pre ProtovolVer 108 games that need ServerComplete
-                        List<int> pre108ServerComplete = new List<int>() { 10114, 10164, 10190, 10124, 10284, 10330, 10334, 10414, 10421, 10442, 10540, 10680, 10683 };
+                        List<int> pre108ServerComplete = new List<int>() { 10114, 10164, 10190, 10124, 10284, 10330, 10334, 10414, 10421, 10442, 10540, 10680, 10683, 10724 };
                         
                         ///<summary>
                         /// Some do not post-108 so we have to account for those too!
@@ -940,8 +940,10 @@ namespace Server.Medius
                 #region Version Server
                 case MediusVersionServerRequest mediusVersionServerRequest:
                     {
+                        List<int> appIdBeforeSession = new List<int> { 10442, 10724 };
+
                         // ERROR - Need a session
-                        if (data.ClientObject == null && data.ApplicationId != 10442) // KILLZONE PS2 CREATES A SESSION HERE FIRST ON CONNECT
+                        if (data.ClientObject == null && !appIdBeforeSession.Contains(data.ApplicationId)) // KILLZONE PS2 GET VERSION SERVER INFO BEFORE SESSION
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {mediusVersionServerRequest} without a session.");
 
                         if (Settings.MediusServerVersionOverride == true)
@@ -971,17 +973,20 @@ namespace Server.Medius
                             }
                             #endregion
 
-                            #region Killzone TCES
-                            else if (data.ApplicationId == 10442)
+                            #region Killzone Beta/Retail
+                            else if (appIdBeforeSession.Contains(data.ApplicationId))
                             {
-                                data.ClientObject = Program.LobbyServer.ReserveClient(mediusVersionServerRequest);
+                                //data.ClientObject = Program.LobbyServer.ReserveClient(mediusVersionServerRequest);
 
 
-                                data.ClientObject.Queue(new MediusVersionServerResponse()
+                                data.SendQueue.Enqueue(new RT_MSG_SERVER_APP()
                                 {
-                                    MessageID = mediusVersionServerRequest.MessageID,
-                                    VersionServer = "Medius Authentication Server Version 1.50.0009",
-                                    StatusCode = MediusCallbackStatus.MediusSuccess,
+                                    Message = new MediusVersionServerResponse()
+                                    {
+                                        MessageID = mediusVersionServerRequest.MessageID,
+                                        VersionServer = "Medius Authentication Server Version 1.50.0009",
+                                        StatusCode = MediusCallbackStatus.MediusSuccess,
+                                    }
                                 });
                             }
                             else
@@ -1000,21 +1005,31 @@ namespace Server.Medius
                         else
                         {
                             // If MediusServerVersionOverride is false, we send our own Version String
-                            // AND if its Killzone PS2 we make the ClientObject
-                            if(data.ApplicationId == 10442)
+                            // AND if its Killzone PS2 we make the ClientObject BEFORE SESSIONBEGIN
+                            if(appIdBeforeSession.Contains(data.ApplicationId))
                             {
-                                data.ClientObject = Program.LobbyServer.ReserveClient(mediusVersionServerRequest);
+                                //data.ClientObject = Program.LobbyServer.ReserveClient(mediusVersionServerRequest);
+                                data.SendQueue.Enqueue(new RT_MSG_SERVER_APP()
+                                {
+                                    Message = new MediusVersionServerResponse()
+                                    {
+                                        MessageID = mediusVersionServerRequest.MessageID,
+                                        VersionServer = "Medius Authentication Server Version 1.50.0009",
+                                        StatusCode = MediusCallbackStatus.MediusSuccess,
+                                    }
+                                });
+                            } else
+                            {
+
+                                data.ClientObject.Queue(new MediusVersionServerResponse()
+                                {
+                                    MessageID = mediusVersionServerRequest.MessageID,
+                                    VersionServer = Settings.MASVersion,
+                                    StatusCode = MediusCallbackStatus.MediusSuccess,
+                                });
                             }
 
-
-                            data.ClientObject.Queue(new MediusVersionServerResponse()
-                            {
-                                MessageID = mediusVersionServerRequest.MessageID,
-                                VersionServer = Settings.MASVersion,
-                                StatusCode = MediusCallbackStatus.MediusSuccess,
-                            });
                         }
-
                         break;
                     }
 
@@ -2414,7 +2429,7 @@ namespace Server.Medius
                         StatusCode = MediusCallbackStatus.MediusSuccess,
                         AccountID = data.ClientObject.AccountId,
                         AccountType = MediusAccountType.MediusMasterAccount,
-                        MediusWorldID = 1,
+                        MediusWorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ClientObject.ApplicationId).Id,
                         ConnectInfo = new NetConnectionInfo()
                         {
                             AccessKey = data.ClientObject.Token,
@@ -2448,7 +2463,7 @@ namespace Server.Medius
                             AccessKey = data.ClientObject.Token,
                             SessionKey = data.ClientObject.SessionKey,
                             WorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ClientObject.ApplicationId).Id,
-                            ServerKey = new RSA_KEY() { }, //Some Older Medius games don't set a RSA Key
+                            ServerKey = Program.GlobalAuthPublic, //Some Older Medius games don't set a RSA Key
                             AddressList = new NetAddressList()
                             {
                                 AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]

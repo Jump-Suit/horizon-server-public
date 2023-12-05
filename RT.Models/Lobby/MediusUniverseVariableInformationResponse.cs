@@ -31,7 +31,7 @@ namespace RT.Models
         public string SvoURL; // UNIVERSE_SVO_URL_MAXLEN
         public bool EndOfList;
 
-        public List<int> approvedList = new List<int> { 10421, 10994, 20043, 20464, 21093, 21614, 21624, 21834, 20371, 20374, 21324, 21514, 22073, 22500, 22920, 22924, 22930, 22924};
+        public List<int> approvedList = new List<int> { 10421, 10994, 20244, 20464, 21093, 21094, 21614, 21624, 21834, 20371, 20374, 21324, 21514, 21784, 22073, 22500, 22920, 22924, 22930, 22924};
 
         public List<int> unapprovedList = new List<int> { 20060, 23360, 20474 };
 

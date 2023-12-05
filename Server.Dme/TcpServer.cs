@@ -625,7 +625,7 @@ namespace Server.Dme
                             }, clientChannel);
                             break;
                         }
-
+                        /*
                         Queue(new RT_MSG_SERVER_APP()
                         {
                             Message = new TypePing()
@@ -635,7 +635,7 @@ namespace Server.Dme
                                 RequestEcho = ping.RequestEcho
                             }
                         });
-                        /*
+                        */
                         data.ClientObject.EnqueueTcp(new RT_MSG_SERVER_APP() { 
                             Message = new TypePing()
                             {
@@ -644,7 +644,7 @@ namespace Server.Dme
                                 RequestEcho = ping.RequestEcho
                             }
                         });
-                        */
+                        
                         break;
                     }
 

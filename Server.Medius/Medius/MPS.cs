@@ -115,7 +115,7 @@ namespace Server.Medius
                         data.ApplicationId = clientConnectTcp.AppId;
                         scertClient.ApplicationID = clientConnectTcp.AppId;
 
-                        List<int> pre108ServerConnect = new List<int>() { 10190, 10114, 10124, 10284, 10330, 10334, 10421, 10540, 10680 };
+                        List<int> pre108ServerConnect = new List<int>() { 10190, 10114, 10124, 10164, 10284, 10330, 10334, 10421, 10540, 10680, 10724 };
                         //List<int> pre108NoServerConnect = new List<int>() { 10782 };
 
 
@@ -969,12 +969,14 @@ namespace Server.Medius
             return null;
         }
 
-        public void SendServerCreateGameWithAttributesRequest(string messageId, int acctId, int gameId, bool partyType, int gameAttributes, int clientAppId, int gameMaxPlayers)
+        public void SendServerCreateGameWithAttributesRequest(string msgId, int acctId, int gameId, bool partyType, int gameAttributes, int clientAppId, int gameMaxPlayers)
         {
+            //{gameId}-{acctId}-{messageId}-{partyType}
             Queue(new RT_MSG_SERVER_APP() { 
+                
                 Message = new MediusServerCreateGameWithAttributesRequest()
                 {
-                    MessageID = new MessageId($"{gameId}-{acctId}-{messageId}-{partyType}"),
+                    MessageID = new MessageId($"{gameId}-{acctId}-{msgId}-{1}"),
                     MediusWorldUID = (uint)gameId,
                     Attributes = (MediusWorldAttributesType)gameAttributes,
                     ApplicationID = clientAppId,

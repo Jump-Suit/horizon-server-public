@@ -1,5 +1,7 @@
 using RT.Common;
 using Server.Common;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace RT.Models
 {
@@ -26,6 +28,9 @@ namespace RT.Models
         public string LobbyName; // LOBBYNAME_MAXLEN
         public bool EndOfList;
 
+        public List<int> channelListResponse0 = new List<int>() { };
+
+        public List<int> channelListResponse1 = new List<int>() { 10202, 10304, 10724 };
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
             // 
@@ -51,8 +56,14 @@ namespace RT.Models
             SecurityLevel = reader.Read<MediusWorldSecurityLevelType>();
             GenericField1 = reader.ReadUInt32();
 
-            //WRC4 uses these fields
-            if (reader.MediusVersion > 108 || reader.AppId == 10304 || reader.AppId == 10202)
+            // Check pre-108 games that use channelList1
+            if (reader.MediusVersion == 108 && channelListResponse1.Contains(reader.AppId))
+            {
+                GenericField2 = reader.ReadUInt32();
+                GenericField3 = reader.ReadUInt32();
+                GenericField4 = reader.ReadUInt32();
+                GenericFieldLevel = reader.Read<MediusWorldGenericFieldLevelType>();
+            } else if (reader.MediusVersion > 108) // Default generally for newer mediustitles
             {
                 GenericField2 = reader.ReadUInt32();
                 GenericField3 = reader.ReadUInt32();
@@ -89,13 +100,20 @@ namespace RT.Models
             writer.Write(SecurityLevel);
             writer.Write(GenericField1);
 
-            if (writer.MediusVersion > 108 || writer.AppId == 10304 || writer.AppId == 10202)
+            if (writer.MediusVersion == 108 && channelListResponse1.Contains(writer.AppId))
+            {
+                writer.Write(GenericField2);
+                writer.Write(GenericField3);
+                writer.Write(GenericField4);
+                writer.Write(GenericFieldLevel);
+            } else if(writer.MediusVersion > 108)
             {
                 writer.Write(GenericField2);
                 writer.Write(GenericField3);
                 writer.Write(GenericField4);
                 writer.Write(GenericFieldLevel);
             }
+
             writer.Write(LobbyName, Constants.LOBBYNAME_MAXLEN);
             writer.Write(EndOfList);
             writer.Write(new byte[3]);

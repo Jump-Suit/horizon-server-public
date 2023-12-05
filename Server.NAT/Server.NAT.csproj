@@ -7,6 +7,7 @@
 
 	<PropertyGroup>
 		<SourceRevisionId>build$([System.DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ss:fffZ"))</SourceRevisionId>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -14,6 +15,7 @@
     <PackageReference Include="DotNetty.Handlers" Version="0.7.5" />
     <PackageReference Include="DotNetty.Transport" Version="0.7.5" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.1.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	<PackageReference Include="NReco.Logging.File" Version="1.0.5" />
   </ItemGroup>

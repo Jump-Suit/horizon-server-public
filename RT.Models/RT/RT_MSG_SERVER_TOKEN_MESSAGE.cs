@@ -29,7 +29,10 @@ namespace RT.Models
             {
 
                 tokenMsgType = reader.Read<RT_TOKEN_MESSAGE_TYPE>();
-                targetToken = reader.Read<ushort>();
+                if(tokenMsgType == RT_TOKEN_MESSAGE_TYPE.RT_TOKEN_SERVER_OWNED)
+                {
+                    targetToken = reader.Read<ushort>();
+                }
             }
         }
 
@@ -49,7 +52,10 @@ namespace RT.Models
             } else
             {
                 writer.Write(tokenMsgType);
-                writer.Write(targetToken);
+                if(tokenMsgType == RT_TOKEN_MESSAGE_TYPE.RT_TOKEN_SERVER_OWNED)
+                {
+                    writer.Write(targetToken);
+                }
             }
         }
 
