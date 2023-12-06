@@ -936,7 +936,7 @@ namespace Server.Medius
                     
                     game.Host.Queue(new MediusServerJoinGameRequest()
                     {
-                        MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
+                        MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}-{0}"),
                         ConnectInfo = new NetConnectionInfo()
                         {
                             Type = NetConnectionType.NetConnectionTypePeerToPeerUDP,
@@ -962,13 +962,13 @@ namespace Server.Medius
 
                     game.Host.Queue(new MediusServerJoinGameRequest()
                     {
-                        MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
+                        MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}-{0}"),
                         ConnectInfo = new NetConnectionInfo()
                         {
                             Type = NetConnectionType.NetConnectionTypePeerToPeerUDP,
                             AccessKey = client.Token,
                             SessionKey = client.SessionKey,
-                            WorldID = game.DMEWorldId,
+                            WorldID = game.Id,
                             ServerKey = Program.GlobalAuthPublic,
                             AddressList = new NetAddressList()
                             {
@@ -1096,7 +1096,7 @@ namespace Server.Medius
                 {
                     game.Host.Queue(new MediusServerJoinGameRequest()
                     {
-                        MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}"),
+                        MessageID = new MessageId($"{game.Id}-{client.AccountId}-{request.MessageID}-{0}"),
                         ConnectInfo = new NetConnectionInfo()
                         {
                             Type = NetConnectionType.NetConnectionTypePeerToPeerUDP,
@@ -1406,7 +1406,7 @@ namespace Server.Medius
                         WorldID = party.DMEWorldId,
                         AccessKey = client.Token,
                         SessionKey = client.SessionKey,
-                        ServerKey = Program.GlobalAuthPublic
+                        ServerKey = request.pubKey
                     }
                 });
 
@@ -1551,7 +1551,7 @@ namespace Server.Medius
                 var party = new Party(client, request, client.CurrentChannel, dme);
                 await AddParty(party);
 
-                //await client.JoinParty(party, party.Id);
+                await client.JoinParty(party, party.Id);
 
                 if (mps == null)
                 {

@@ -350,7 +350,7 @@ namespace Server.Medius
                                     AccessKey = rClient.Token,
                                     SessionKey = rClient.SessionKey,
                                     WorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(rClient.ApplicationId).Id,
-                                    ServerKey = new RSA_KEY(),
+                                    ServerKey = joinGameResponse.pubKey,
                                     AddressList = new NetAddressList()
                                     {
                                         AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
@@ -780,7 +780,7 @@ namespace Server.Medius
                 case MediusServerMoveGameWorldOnMeRequest serverMoveGameWorldOnMeRequest:
                     {
                         //Fetch Current Game, and Update it with the new one
-                        var game = Program.Manager.GetGameByDmeWorldId(data.ClientObject.SessionKey, serverMoveGameWorldOnMeRequest.CurrentMediusWorldID);
+                        var game = Program.Manager.GetGameByGameId(serverMoveGameWorldOnMeRequest.CurrentMediusWorldID);
                         if(game.WorldID != serverMoveGameWorldOnMeRequest.CurrentMediusWorldID)
                         {
                             data.ClientObject.Queue(new MediusServerMoveGameWorldOnMeResponse()

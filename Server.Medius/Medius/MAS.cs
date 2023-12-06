@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 
 namespace Server.Medius
@@ -92,10 +93,24 @@ namespace Server.Medius
 
                         if(clientConnectTcp.AccessToken == null && clientConnectTcp.SessionKey == null)
                         {
+                            char[] charsToRemove = { ':', 'f', '{', '}' };
                             var clientObjects = Program.Manager.GetClients(data.ApplicationId);
-                            data.ClientObject = clientObjects.FirstOrDefault();
 
-                            Logger.Warn($"clientobject: {data.ClientObject}");
+                            string connectingIP = ((IPEndPoint)clientChannel.RemoteAddress).Address.ToString().Trim(charsToRemove);
+
+                            //var clientObjects2 = clientObjects.Where(acct => acct.IP == IPAddress.Parse(connectingIP)).ToList();
+                            foreach(var client in clientObjects)
+                            {
+                                string clientIPStr = client.IP.ToString().Trim(charsToRemove);
+
+                                if (clientIPStr == connectingIP)
+                                {
+                                    data.ClientObject = client;
+                                }
+                                Logger.Warn($"clientobject: {data.ClientObject}");
+                            }
+
+
                         }
 
                         //If this is a PS3 client
@@ -210,9 +225,10 @@ namespace Server.Medius
 
                 case MediusServerSessionBeginRequest mgclSessionBeginRequest:
                     {
-                        List<int> nonSecure = new List<int>() { 10010, 10031,  };
+                        List<int> nonSecure = new List<int>() { 10010, 10031 };
+                        List<int> preCreateClient = new List<int>() { 10680 };
                         //UYA Public Beta v1.0
-                        if (mgclSessionBeginRequest.ApplicationID == 10680)
+                        if (preCreateClient.Contains(data.ApplicationId))
                         {
                             Logger.Info("R&C 3: UYA Public Beta v1.0 reserving MGCL Client prior to MAS login!");
                             // Create client object
@@ -2112,7 +2128,7 @@ namespace Server.Medius
                                         data.ClientObject.Queue(new MediusTextFilterResponse()
                                         {
                                             MessageID = textFilterRequest.MessageID,
-                                            StatusCode = MediusCallbackStatus.MediusSuccess,
+                                            StatusCode = MediusCallbackStatus.MediusPass,
                                             Text = textFilterRequest.Text.Trim()
                                         });
                                     }
@@ -2123,7 +2139,7 @@ namespace Server.Medius
                                     data.ClientObject.Queue(new MediusTextFilterResponse()
                                     {
                                         MessageID = textFilterRequest.MessageID,
-                                        StatusCode = MediusCallbackStatus.MediusSuccess,
+                                        StatusCode = MediusCallbackStatus.MediusPass,
                                         Text = Program.FilterTextFilter(data.ApplicationId, TextFilterContext.ACCOUNT_NAME, textFilterRequest.Text).Trim()
                                     });
                                     break;
@@ -2286,6 +2302,11 @@ namespace Server.Medius
             List<int> pre108Secure = new List<int>() { 10124, 10680, 10683 };
 
             //
+            if(data.ClientObject.ApplicationId == 10694)
+            {
+                char[] charsToRemove = { ':', 'f' };
+                data.ClientObject.SetIp(((System.Net.IPEndPoint)clientChannel.RemoteAddress).Address.ToString().Trim(charsToRemove));
+            }
             await data.ClientObject.Login(accountDto);
 
             #region Update DB IP and CID
@@ -2421,7 +2442,7 @@ namespace Server.Medius
                         },
                     });
                 }
-                else if (data.ClientObject.ApplicationId == 10683)
+                else if (data.ClientObject.ApplicationId == 10031) //10683
                 {
                     data.ClientObject.Queue(new MediusAccountLoginResponse()
                     {
@@ -2434,8 +2455,8 @@ namespace Server.Medius
                         {
                             AccessKey = data.ClientObject.Token,
                             SessionKey = data.ClientObject.SessionKey,
-                            WorldID = 1,
-                            ServerKey = Program.GlobalAuthPublic,
+                            WorldID = Program.Manager.GetOrCreateDefaultLobbyChannel(data.ClientObject.ApplicationId).Id,
+                            ServerKey = new RSA_KEY(),
                             AddressList = new NetAddressList()
                             {
                                 AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]

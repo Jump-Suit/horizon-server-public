@@ -15,7 +15,7 @@ namespace RT.Models
         public IPEndPoint EndPoint;
         public ushort PlayerId;
         public ushort ScertId;
-        public ushort UNK_26;
+        public ushort OrdinalID;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -34,7 +34,7 @@ namespace RT.Models
                 EndPoint = new IPEndPoint(reader.ReadIPAddress(), (int)reader.ReadUInt16());
                 PlayerId = reader.ReadUInt16();
                 ScertId = reader.ReadUInt16();
-                UNK_26 = reader.ReadUInt16();
+                OrdinalID = reader.ReadUInt16();
             }
         }
 
@@ -57,7 +57,7 @@ namespace RT.Models
                 writer.Write((ushort)EndPoint.Port);
                 writer.Write(PlayerId);
                 writer.Write(ScertId);
-                writer.Write(UNK_26);
+                writer.Write(OrdinalID);
             }
         }
 
@@ -69,7 +69,7 @@ namespace RT.Models
                 $"EndPoint: {EndPoint} " +
                 $"PlayerId: {PlayerId} " +
                 $"ScertId: {ScertId} " +
-                $"UNK_26: {UNK_26}";
+                $"UNK_26: {OrdinalID}";
         }
     }
 }

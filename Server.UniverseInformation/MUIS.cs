@@ -263,6 +263,7 @@ namespace Server.UniverseInformation
                             PlayerCount = 0x0001,
                             IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
                         }, clientChannel);
+
                         break;
                     }
                 case RT_MSG_CLIENT_CONNECT_READY_TCP clientConnectReadyTcp:

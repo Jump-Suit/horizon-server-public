@@ -425,10 +425,11 @@ namespace Server.Dme
 
                         data.ClientObject = Program.GetClientByAccessToken(clientConnectTcp.AccessToken);
 
-                        if (!scertClient.IsPS3Client && scertClient.CipherService.HasKey(CipherContext.RC_CLIENT_SESSION))
+                        if (enableEncryption == true && scertClient.CipherService.HasKey(CipherContext.RC_CLIENT_SESSION) && scertClient.RsaAuthKey != null)
                         {
                             //Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
                         }
+                        
                         Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
                         {
                             PlayerId = (ushort)data.ClientObject.DmeId,

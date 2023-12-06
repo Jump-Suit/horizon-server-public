@@ -264,10 +264,7 @@ namespace Server.Medius
                     }
                 case RT_MSG_CLIENT_CONNECT_READY_REQUIRE clientConnectReadyRequire:
                     {
-                        if (!scertClient.IsPS3Client && scertClient.CipherService.EnableEncryption == true)
-                        {
-                            Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
-                        }
+
                         Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
                         {
                             PlayerId = 0,
@@ -4780,10 +4777,14 @@ namespace Server.Medius
                             AppType = MediusApplicationType.MediusAppTypeGame,
                             WorldStatus = MediusWorldStatus.WorldActive,
                             MinPlayers = partyCreateRequest.MinPlayers,
-                            MaxPlayers = partyCreateRequest.MaxPlayers
+                            MaxPlayers = partyCreateRequest.MaxPlayers,
                         };
 
+                        partyChannel.Clients.Add(data.ClientObject);
+
                         await Program.Manager.AddChannel(partyChannel);
+
+
 
                         await Program.Manager.CreateParty(data.ClientObject, partyCreateRequest);
                         break;
@@ -5178,7 +5179,9 @@ namespace Server.Medius
                         if (!data.ClientObject.IsLoggedIn)
                             throw new InvalidOperationException($"INVALID OPERATION: {clientChannel} sent {gameList_ExtraInfoRequest0} without being logged in.");
 
-                        if (data.ClientObject.ApplicationId == 10952 || data.ClientObject.ApplicationId == 10954 || data.ClientObject.ApplicationId == 11234 || data.ClientObject.ApplicationId == 10394 || data.ClientObject.ApplicationId == 10933)
+                        List<int> appIdCheck = new List<int>() { 10694, 10952 , 10954, 11234, 10394, 10933};
+
+                        if (appIdCheck.Contains(data.ClientObject.ApplicationId))
                         {
                             var gameList = Program.Manager.GetGameListAppId(
                             data.ClientObject.ApplicationId,
@@ -5942,6 +5945,9 @@ namespace Server.Medius
                         
                         // Set filter
                         var filter = data.ClientObject.SetGameListFilter(setGameListFilterRequest0);
+
+                        
+                        data.ClientObject.KeepAliveUntilNextConnection();
 
                         // Give reply
                         data.ClientObject.Queue(new MediusSetGameListFilterResponse0()
@@ -6881,7 +6887,8 @@ namespace Server.Medius
                                 data.ClientObject.FilterMask4,
                                 data.ClientObject.FilterMaskLevel
                             );
-                        } else 
+                        } 
+                        else 
                         //Default
                         {
                             lobbyChannels = Program.Manager.GetChannelList(
