@@ -27,7 +27,7 @@ namespace RT.Models
             StatusCode = reader.Read<MediusCallbackStatus>();
             ClanID = reader.ReadInt32();
 
-            /*
+            
             if (reader.MediusVersion == 113)
             {
                 ClanMessageID = reader.ReadInt32();
@@ -37,8 +37,8 @@ namespace RT.Models
             {
                 Message = reader.ReadString(Constants.CLANMSG_MAXLEN);
             }
-            */
-            Message = reader.ReadString(Constants.CLANMSG_MAXLEN);
+            
+            //Message = reader.ReadString(Constants.CLANMSG_MAXLEN);
             EndOfList = reader.ReadBoolean();
         }
 
@@ -52,7 +52,7 @@ namespace RT.Models
             writer.Write(StatusCode);
             writer.Write(ClanID);
 
-            /*
+            
             if (writer.MediusVersion == 113)
             {
                 writer.Write(ClanMessageID);
@@ -62,9 +62,9 @@ namespace RT.Models
             {
                 writer.Write(Message, Constants.CLANMSG_MAXLEN);
             }
-            */
+            
 
-            writer.Write(Message, Constants.CLANMSG_MAXLEN);
+            //writer.Write(Message, Constants.CLANMSG_MAXLEN);
             writer.Write(EndOfList);
         }
 

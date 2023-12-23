@@ -39,7 +39,7 @@ namespace RT.Models
         public uint GroupMemberListSize;
         public uint ApplicationDataSize;
         public byte[] GroupMemberAccountIDList;
-        public byte[] ApplicationData;
+        public string ApplicationData;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -83,7 +83,7 @@ namespace RT.Models
             GroupMemberListSize = reader.ReadUInt32();
             ApplicationDataSize = reader.ReadUInt32();
             GroupMemberAccountIDList = reader.ReadBytes((int)GroupMemberListSize);
-            ApplicationData = reader.ReadBytes((int)GroupMemberListSize);
+            ApplicationData = reader.ReadString((int)GroupMemberListSize);
 
         }
 
@@ -129,7 +129,7 @@ namespace RT.Models
             writer.Write(GroupMemberListSize);
             writer.Write(ApplicationDataSize);
             writer.Write(GroupMemberAccountIDList);
-            writer.Write(ApplicationData);
+            writer.Write(ApplicationData, (int)ApplicationDataSize);
         }
 
         public override string ToString()
@@ -163,7 +163,7 @@ namespace RT.Models
                 $"GroupMemberListSize: {GroupMemberListSize} " +
                 $"ApplicationDataSize: {ApplicationDataSize} " +
                 $"GroupMemberAccountIDList: {GroupMemberAccountIDList} " +
-                $"ApplicationData: {ApplicationData}";
+                $"ApplicationData: {string.Join("", ApplicationData)}";
         }
     }
 }

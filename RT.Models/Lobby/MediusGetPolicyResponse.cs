@@ -61,37 +61,5 @@ namespace RT.Models
                 $"Policy: {Policy} " +
                 $"EndOfText: {EndOfText}";
         }
-
-        public static List<MediusGetPolicyResponse> FromText(MessageId messageId, string policy)
-        {
-            List<MediusGetPolicyResponse> policies = new List<MediusGetPolicyResponse>();
-            int i = 0;
-
-            while (i < policy.Length)
-            {
-                // Determine length of string
-                int len = policy.Length - i;
-                if (len > Constants.POLICY_MAXLEN)
-                    len = Constants.POLICY_MAXLEN;
-
-                // Add policy subtext
-                policies.Add(new MediusGetPolicyResponse()
-                {
-                    MessageID = messageId,
-                    StatusCode = MediusCallbackStatus.MediusSuccess,
-                    Policy = policy.Substring(i, len)
-                });
-
-                // Increment i
-                i += len;
-            }
-
-            // Set end of text
-            if (policies.Count > 0)
-                policies[policies.Count - 1].EndOfText = true;
-
-            //
-            return policies;
-        }
     }
 }

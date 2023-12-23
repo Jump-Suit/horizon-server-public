@@ -24,6 +24,8 @@ namespace RT.Models.Lobby
 
         public MediusAssignedGameToJoin mediusAssignedGameToJoin;
 
+
+        public int Unk1;
         public uint GameWorldID;
         public uint TeamID;
         public int PlayerCount;
@@ -48,7 +50,7 @@ namespace RT.Models.Lobby
         public MediusGameHostType GameHostType;
         public NetAddressList AddressList;
         public uint AppDataSize;
-        public byte[] AppData;
+        public string AppData;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -65,10 +67,10 @@ namespace RT.Models.Lobby
 
             if (StatusCode == MediusCallbackStatus.MediusJoinAssignedGame)
             {
-                
-                GameWorldID = reader.ReadUInt32();
-                TeamID = reader.ReadUInt32();
                 reader.ReadBytes(4);
+                GameWorldID = reader.ReadUInt32();
+                //reader.ReadBytes(2);
+                TeamID = reader.ReadUInt32();
                 PlayerCount = reader.ReadInt32();
                 GameName = reader.ReadString(Constants.GAMENAME_MAXLEN);
                 GameStats = reader.ReadBytes(Constants.GAMESTATS_MAXLEN);
@@ -91,7 +93,7 @@ namespace RT.Models.Lobby
                 GameHostType = reader.Read<MediusGameHostType>();
                 AddressList = reader.Read<NetAddressList>();
                 AppDataSize = reader.ReadUInt32();
-                AppData = reader.ReadBytes((int)AppDataSize);
+                AppData = reader.ReadString((int)AppDataSize);
             }
         }
 
@@ -109,12 +111,13 @@ namespace RT.Models.Lobby
 
             
             
-            
             if (StatusCode == MediusCallbackStatus.MediusJoinAssignedGame)
             {
+                //writer.Write(new byte[4] /*{ 0, 0, 0, 0 }*/);
+
+                writer.Write(Unk1);
                 writer.Write(GameWorldID);
                 writer.Write(TeamID);
-                writer.Write(new byte[4]);
                 writer.Write(PlayerCount);
                 writer.Write(GameName, Constants.GAMENAME_MAXLEN);
                 writer.Write(GameStats, Constants.GAMESTATS_MAXLEN);
@@ -137,7 +140,7 @@ namespace RT.Models.Lobby
                 writer.Write(GameHostType);
                 writer.Write(AddressList);
                 writer.Write(AppDataSize);
-                writer.Write(AppData);
+                writer.Write(AppData, (int)AppDataSize);
             }
             
 

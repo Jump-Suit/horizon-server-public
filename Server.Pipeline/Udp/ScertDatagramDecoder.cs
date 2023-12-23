@@ -36,12 +36,14 @@ namespace Server.Pipeline.Udp
 
         protected override void Decode(IChannelHandlerContext context, DatagramPacket message, List<object> output)
         {
-            if (!message.Content.IsReadable())
-                return;
+            while (message.Content.IsReadable())
+            {
+                object decoded = Decode(context, message);
+                if (decoded == null)
+                    break;
 
-            object decoded = Decode(context, message);
-            if (decoded != null)
                 output.Add(decoded);
+            }
         }
 
         /// <summary>
@@ -66,7 +68,10 @@ namespace Server.Pipeline.Udp
             var scertClient = context.GetAttribute(Constants.SCERT_CLIENT).Get();
 
             if (frameLength <= 0)
+            {
+                input.Content.SetReaderIndex(input.Content.ReaderIndex + headerLength);
                 return BaseScertMessage.Instantiate((RT_MSG_TYPE)(id & 0x7F), null, new byte[0], (int)scertClient.MediusVersion, scertClient.ApplicationID, scertClient.CipherService);
+            }
 
             if (id >= 0x80)
             {

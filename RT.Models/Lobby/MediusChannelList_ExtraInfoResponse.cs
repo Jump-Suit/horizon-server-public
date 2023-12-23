@@ -30,7 +30,7 @@ namespace RT.Models
 
         public List<int> channelListResponse0 = new List<int>() { };
 
-        public List<int> channelListResponse1 = new List<int>() { 10202, 10304, 10724 };
+        public List<int> channelListResponse1 = new List<int>() { 10202, 10304, 10550, 10724 };
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
             // 

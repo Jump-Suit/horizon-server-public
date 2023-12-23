@@ -6,10 +6,10 @@ using System.IO;
 namespace RT.Models
 {
     
-    [MediusMessage(NetMessageClass.MessageClassDME, NetMessageTypeIds.NetMessageNewsEUlaResponse)]
+    [MediusMessage(NetMessageClass.MessageClassApplication, NetMessageTypeIds.NetMessageNewsEulaResponse)]
     public class NetMessageNewsEulaResponse : BaseApplicationMessage
     {
-        public override NetMessageTypeIds PacketType => NetMessageTypeIds.NetMessageNewsEUlaResponse;
+        public override NetMessageTypeIds PacketType => NetMessageTypeIds.NetMessageNewsEulaResponse;
 
         public override byte IncomingMessage => 0;
         public override byte Size => 10;

@@ -74,6 +74,9 @@ namespace Server.Medius
         private static DateTime _lastConfigRefresh = Utils.GetHighPrecisionUtcTime();
         private static DateTime _lastComponentLog = Utils.GetHighPrecisionUtcTime();
 
+        public static bool started = false;
+
+
         private static int _ticks = 0;
         private static Stopwatch _sw = new Stopwatch();
         private static HighResolutionTimer _timer;
@@ -122,7 +125,7 @@ namespace Server.Medius
                     else
                     {
                         _lastSuccessfulDbAuth = Utils.GetHighPrecisionUtcTime();
-                        Logger.Info("Successfully authenticated with the db middleware server");
+                        Logger.Info("Attempting to authenticate with cache server");
 
                         // pass to manager
                         await Manager.OnDatabaseAuthenticated();
@@ -133,9 +136,9 @@ namespace Server.Medius
                         #region Check Cache Server Simulated
                         if (Database._settings.SimulatedMode != true)
                         {
-                            Logger.Info("Connected to Cache Server");
+                            Logger.Info("Authenticated with Cache Server");
                         } else {
-                            Logger.Info("Connected to Cache Server (Simulated)");
+                            Logger.Info("Authenticated with to Cache Server (Simulated)");
                         }
                         #endregion
 /*
@@ -193,13 +196,32 @@ namespace Server.Medius
             catch (Exception ex)
             {
                 Logger.Error(ex);
-
+                /*
                 await AuthenticationServer.Stop();
                 await LobbyServer.Stop();
                 await ProxyServer.Stop();
                 await ProfileServer.Stop();
                 await MatchmakingServer.Stop();
+                */
             }
+        }
+
+        private static async Task LoopServer()
+        {
+            // iterate
+            while (started)
+            {
+                // tick
+                await TickAsync();
+
+                await Task.Delay(1000 / 10);
+            }
+
+            await AuthenticationServer.Stop();
+            await LobbyServer.Stop();
+            await ProxyServer.Stop();
+            await ProfileServer.Stop();
+            await MatchmakingServer.Stop();
         }
 
         static async Task StartServerAsync()
@@ -314,9 +336,9 @@ namespace Server.Medius
                 {
                     Logger.Info($"MLS Version: {Settings.MLSVersion}");
                     Logger.Info($"Enabling MLS on Server IP = {SERVER_IP} TCP Port = {LobbyServer.TCPPort} UDP Port = {LobbyServer.UDPPort}.");
-                    Logger.Info($"Medius Lobby Server running under ApplicationID {AppIdArray}");
+                    //Logger.Info($"Medius Lobby Server running under ApplicationID {AppIdArray}");
 
-                    DMEServerResetMetrics();
+                    //DMEServerResetMetrics();
 
                     LobbyServer.Start();
                     Logger.Info("Medius Lobby Server Initialized and Now Accepting Clients");
@@ -599,6 +621,12 @@ namespace Server.Medius
             #endregion
             */
 
+            started = true;
+
+            await Task.Run(LoopServer);
+
+
+            /* DEPRECATED 
             #region Timer
             // start timer
             _timer = new HighResolutionTimer();
@@ -625,6 +653,7 @@ namespace Server.Medius
             }
 
             #endregion
+            */
         }
 
         
@@ -709,7 +738,6 @@ namespace Server.Medius
                 {
                     Logger.Info($"ConfigManager Cannot Reload Configuration File {CONFIG_FILE}");
                 }
-                //Program.AntiCheatPlugin.mc_anticheat_event(AnticheatEventCode.anticheatLEAVEGAME, data.ClientObject.WorldId, data.ClientObject.AccountId, Program.AntiCheatClient, updateUserState, 256);
             });
 
 
@@ -1065,6 +1093,39 @@ namespace Server.Medius
             }
         }
         #endregion
+
+        public static List<MediusGetPolicyResponse> GetPolicyFromText(MessageId messageId, string policy)
+        {
+            List<MediusGetPolicyResponse> policies = new List<MediusGetPolicyResponse>();
+            int i = 0;
+
+            while (i < policy.Length)
+            {
+                // Determine length of string
+                int len = policy.Length - i;
+                if (len > Constants.POLICY_MAXLEN)
+                    len = Constants.POLICY_MAXLEN;
+
+                // Add policy subtext
+                policies.Add(new MediusGetPolicyResponse()
+                {
+                    MessageID = messageId,
+                    StatusCode = MediusCallbackStatus.MediusSuccess,
+                    Policy = policy.Substring(i, len)
+                });
+
+                // Increment i
+                i += len;
+                Logger.Debug($"Sending Policy Chunk {i} of {len} Len {policy.Length} bytes");
+            }
+
+            // Set end of text
+            if (policies.Count > 0)
+                policies[policies.Count - 1].EndOfText = true;
+
+            //
+            return policies;
+        }
 
         public static void MFS_transferInit()
         {

@@ -1634,7 +1634,7 @@ namespace Server.Database
                             ClanName = clanName,
                             ClanLeaderAccount = creatorAccount,
                             ClanMember = new List<AccountDTO>(new AccountDTO[] { creatorAccount }),
-                            ClanInvitation = new List<ClanInvitationDTO>(),
+                            ClanInvitations = new List<ClanInvitationDTO>(),
                             ClanMessages = new List<ClanMessageDTO>(),
                             ClanMediusStats = Convert.ToBase64String(new byte[Constants.CLANSTATS_MAXLEN]),
                             ClanStats = new int[Constants.LADDERSTATSWIDE_MAXLEN],
@@ -1690,7 +1690,7 @@ namespace Server.Database
                             ClanName = clanName,
                             ClanLeaderAccount = creatorAccount,
                             ClanMember = new List<AccountDTO>(new AccountDTO[] { creatorAccount }),
-                            ClanInvitation = new List<ClanInvitationDTO>(),
+                            ClanInvitations = new List<ClanInvitationDTO>(),
                             ClanMessages = new List<ClanMessageDTO>(),
                             ClanMediusStats = Convert.ToBase64String(new byte[Constants.CLANSTATS_MAXLEN]),
                             ClanStats = new int[Constants.LADDERSTATSWIDE_MAXLEN],
@@ -2054,6 +2054,65 @@ namespace Server.Database
         /// <summary>
         /// ClanUpdateMetaDataSVO
         /// </summary>
+        /// <param name="ClanUpdateMetaDataSVO">Clan creation parameters.</param>
+        /// <returns>Returns created clan.</returns>
+        public async Task<bool> SVOCreateClanEvent(SVOEventDTO SVOEvent)
+        {
+            bool result = false;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    //SVO unimplemented
+                }
+                else
+                {
+                    var response = (await PostDbAsync($"SVO/Calendar_CreateClanEvent", SVOEvent)).IsSuccessStatusCode;// Deserialize on success
+                    result = response;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// ClanUpdateMetaDataSVO
+        /// </summary>
+        /// <param name="ClanUpdateMetaDataSVO">Clan creation parameters.</param>
+        /// <returns>Returns created clan.</returns>
+        public async Task<List<SVOEventDTO>> SVOGetCalendarEvents(int appId,int acctId, int clanId, string startDate, string endDate, bool bTween)
+        {
+            List<SVOEventDTO> result = null;
+
+            try
+            {
+                if (_settings.SimulatedMode)
+                {
+                    //SVO unimplemented
+                }
+                else
+                {
+                    var response = await GetDbAsync($"SVO/Calendar_GetEvents?&appId={appId}&acctId={acctId}&clanId={clanId}&startDate={startDate}&endDate={endDate}&bTween={bTween}");// Deserialize on success
+                    if (response.IsSuccessStatusCode)
+                        result = JsonConvert.DeserializeObject<List<SVOEventDTO>>(await response.Content.ReadAsStringAsync());
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// ClanUpdateMetaDataSVO
+        /// </summary>
         /// <param name="ClanSendInviteNews">Clan creation parameters.</param>
         /// <returns>Returns created clan.</returns>
         public async Task<bool> ClanSendInvite(int clanId, string playerName, string inviteMsg, int appId)
@@ -2135,7 +2194,7 @@ namespace Server.Database
                         member.ClanId = null;
 
                     // revoke invitations
-                    foreach (var inv in clan.ClanInvitation)
+                    foreach (var inv in clan.ClanInvitations)
                         inv.ResponseStatus = 3;
 
                     // remove
@@ -2282,11 +2341,11 @@ namespace Server.Database
                         return false;
 
                     // check if invitations already made
-                    if (clan.ClanInvitation.Any(x => x.AccountId == accountId && x.ResponseStatus == 0))
+                    if (clan.ClanInvitations.Any(x => x.AccountId == accountId && x.ResponseStatus == 0))
                         return false;
 
                     // add
-                    clan.ClanInvitation.Add(new ClanInvitationDTO()
+                    clan.ClanInvitations.Add(new ClanInvitationDTO()
                     {
                         Id = _simulatedClanInvitationIdCounter++,
                         AppId = clan.AppId,
@@ -2332,7 +2391,7 @@ namespace Server.Database
                 if (_settings.SimulatedMode)
                 {
                     // get clans
-                    var clans = _simulatedClans.Where(x => x.ClanInvitation.Any(y => y.AccountId == accountId));
+                    var clans = _simulatedClans.Where(x => x.ClanInvitations.Any(y => y.AccountId == accountId));
 
                     // 
                     result = clans
@@ -2340,7 +2399,7 @@ namespace Server.Database
                         {
                             LeaderAccountId = x.ClanLeaderAccount.AccountId,
                             LeaderAccountName = x.ClanLeaderAccount.AccountName,
-                            Invitation = x.ClanInvitation.FirstOrDefault(y => y.AccountId == accountId)
+                            Invitation = x.ClanInvitations.FirstOrDefault(y => y.AccountId == accountId)
                         })
                         .Where(x => x.Invitation != null)
                         .ToList();
@@ -2375,12 +2434,12 @@ namespace Server.Database
                 if (_settings.SimulatedMode)
                 {
                     // find invitation
-                    var invite = _simulatedClans.Select(x => x.ClanInvitation.FirstOrDefault(y => y.Id == inviteId)).FirstOrDefault(x => x != null);
+                    var invite = _simulatedClans.Select(x => x.ClanInvitations.FirstOrDefault(y => y.Id == inviteId)).FirstOrDefault(x => x != null);
                     if (invite == null)
                         return false;
 
                     // get clan
-                    var clan = _simulatedClans.FirstOrDefault(x => x.ClanInvitation.Contains(invite));
+                    var clan = _simulatedClans.FirstOrDefault(x => x.ClanInvitations.Contains(invite));
                     if (clan == null)
                         return false;
 
@@ -2456,7 +2515,7 @@ namespace Server.Database
                         return false;
 
                     // find invitation
-                    var invite = clan.ClanInvitation.FirstOrDefault(x => x.AccountId == targetAccountId);
+                    var invite = clan.ClanInvitations.FirstOrDefault(x => x.AccountId == targetAccountId);
                     if (invite == null)
                         return false;
 
@@ -2895,8 +2954,8 @@ namespace Server.Database
                         Id = 1,
                         AppId = 0,
                         PolicyType = policyType,
-                        EulaTitle = "Eula Test",
-                        EulaBody = "Eula Body",
+                        EulaTitle = "Simulated Policy Title.",
+                        EulaBody = "Simulated Policy Body.",
 
                     };
                     
@@ -3566,7 +3625,16 @@ namespace Server.Database
                 {
                     
                     return new ChannelDTO[]
-                    {   
+                    {   /*
+                        new ChannelDTO()
+                        {
+                            AppId = 10540,
+                            Id = 1,
+                            Name = "Rank1",
+                            MaxPlayers = 256,
+                            GenericField1 = 1,
+                            GenericFieldFilter = 1
+                        },
                         /*
                         new ChannelDTO()
                         {
@@ -3598,6 +3666,15 @@ namespace Server.Database
                             GenericFieldFilter = 32
                         },
                         */
+                        new ChannelDTO()
+                        {
+                            AppId = 10550,
+                            Id = 1,
+                            Name = "US",
+                            MaxPlayers = 128,
+                            GenericField1 = 1000,
+                            GenericFieldFilter = 16
+                        },
                         new ChannelDTO()
                         {
                             AppId = 10694,

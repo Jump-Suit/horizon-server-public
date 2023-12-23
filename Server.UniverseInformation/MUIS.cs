@@ -15,7 +15,10 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Server.UniverseInformation.Config;
-    
+using System.IO;
+using Newtonsoft.Json.Linq;
+using System.Globalization;
+
 namespace Server.UniverseInformation
 {
     /// <summary>
@@ -218,7 +221,7 @@ namespace Server.UniverseInformation
                         data.ApplicationId = clientConnectTcp.AppId;
                         scertClient.ApplicationID = clientConnectTcp.AppId;
 
-                        List<int> pre108ServerComplete = new List<int>() { 10334, 10421, 10442, 10540, 10724 };
+                        List<int> pre108ServerComplete = new List<int>() { 10130, 10334, 10421, 10442, 10538, 10540, 10550, 10582, 10584, 10724 };
 
                         if (scertClient.CipherService.HasKey(CipherContext.RC_CLIENT_SESSION) && scertClient.RsaAuthKey != null && scertClient.CipherService.EnableEncryption == true)
                         {
@@ -502,6 +505,60 @@ namespace Server.UniverseInformation
                         //Check if Client AppId equals the Appid in CompatibleAppId list
                         if (data.ApplicationId == compAppId)
                         {
+                            #region PokePatch
+                            if (Program.Settings.PokePatchOn == true)
+                            {
+                                //PokePatch Handler
+                                if (File.Exists(Directory.GetCurrentDirectory() + $"/static/poke_config.json"))
+                                {
+                                    try
+                                    {
+                                        var jsonObject = JObject.Parse(File.ReadAllText(Directory.GetCurrentDirectory() + $"/static/poke_config.json"));
+
+                                        foreach (var appProperty in jsonObject.Properties())
+                                        {
+                                            string? appId = appProperty.Name;
+
+                                            if (!string.IsNullOrEmpty(appId) && appId == data.ApplicationId.ToString())
+                                            {
+                                                var innerObject = appProperty.Value as JObject;
+
+                                                if (innerObject != null)
+                                                {
+                                                    foreach (var offsetProperty in innerObject.Properties())
+                                                    {
+                                                        string? offset = offsetProperty.Name;
+                                                        string? valuestr = offsetProperty.Value.ToString();
+
+                                                        if (!string.IsNullOrEmpty(offset) && !string.IsNullOrEmpty(valuestr) && uint.TryParse(offset.Replace("0x", ""), NumberStyles.HexNumber, null, out uint offsetValue) && uint.TryParse(valuestr, NumberStyles.HexNumber, null, out uint hexValue))
+                                                        {
+                                                            Logger.Info($"PPATCH:X Begin poke for ({appId},{clientChannel.Id})  with infos : offset: {offset} - value: {valuestr}");
+                                                            Queue(new RT_MSG_SERVER_MEMORY_POKE()
+                                                            {
+                                                                start_Address = offsetValue,
+                                                                Payload = BitConverter.GetBytes(hexValue),
+                                                                SkipEncryption = true
+
+                                                            }, clientChannel);
+                                                        }
+                                                        else
+                                                            Logger.Warn($"PPATCH:X MemoryPoke failed to convert json properties! Check json syntax.");
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Logger.Warn($"PPATCH:X MemoryPoke failed to initialise with exception: {ex}");
+                                    }
+                                }
+
+                            } else {
+                                Logger.Debug($"PPATCH:X {Program.Settings.PokePatchOn}");
+                            }
+                            #endregion
+
                             if (Program.Settings.Universes.TryGetValue(data.ApplicationId, out var infos))
                             {
                                 //Send Standard/Variable Flow
@@ -544,6 +601,24 @@ namespace Server.UniverseInformation
                                                 EndOfList = true,
                                             }
                                         }, clientChannel);
+                                        #endregion
+
+                                        #region News
+                                        if (getUniverseInfo.InfoType.HasFlag(MediusUniverseVariableInformationInfoFilter.INFO_NEWS))
+                                        {
+                                            Logger.Info("MUIS: News bit set in request");
+
+                                            Queue(new RT_MSG_SERVER_APP()
+                                            {
+                                                Message = new MediusUniverseNewsResponse()
+                                                {
+                                                    MessageID = getUniverseInfo.MessageID,
+                                                    StatusCode = MediusCallbackStatus.MediusSuccess,
+                                                    News = "Simulated News",
+                                                    EndOfList = isLast
+                                                }
+                                            }, clientChannel);
+                                        }
                                         #endregion
                                     }
                                     else
@@ -603,25 +678,27 @@ namespace Server.UniverseInformation
                                                 EndOfList = isLast
                                             }
                                         }, clientChannel);
-                                    }
 
-                                    #region News
-                                    if (getUniverseInfo.InfoType.HasFlag(MediusUniverseVariableInformationInfoFilter.INFO_NEWS))
-                                    {
-                                        Logger.Info("MUIS: News bit set in request");
 
-                                        Queue(new RT_MSG_SERVER_APP()
+
+                                        #region News
+                                        if (getUniverseInfo.InfoType.HasFlag(MediusUniverseVariableInformationInfoFilter.INFO_NEWS))
                                         {
-                                            Message = new MediusUniverseNewsResponse()
+                                            Logger.Info("MUIS: News bit set in request");
+
+                                            Queue(new RT_MSG_SERVER_APP()
                                             {
-                                                MessageID = getUniverseInfo.MessageID,
-                                                StatusCode = MediusCallbackStatus.MediusSuccess,
-                                                News = "Simulated News",
-                                                EndOfList = true
-                                            }
-                                        }, clientChannel);
+                                                Message = new MediusUniverseNewsResponse()
+                                                {
+                                                    MessageID = getUniverseInfo.MessageID,
+                                                    StatusCode = MediusCallbackStatus.MediusSuccess,
+                                                    News = "Simulated News",
+                                                    EndOfList = isLast
+                                                }
+                                            }, clientChannel);
+                                        }
+                                        #endregion
                                     }
-                                    #endregion
 
                                     Logger.Info($"MUIS: send univ info:  [{Program.Settings.Logging.LogLevel}/{Program.Settings.Universes.ToArray().Length}]");
                                 }

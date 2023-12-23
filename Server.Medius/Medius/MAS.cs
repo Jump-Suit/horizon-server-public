@@ -71,7 +71,7 @@ namespace Server.Medius
                 case RT_MSG_CLIENT_CONNECT_TCP clientConnectTcp:
                     {
                         //Pre ProtovolVer 108 games that need ServerComplete
-                        List<int> pre108ServerComplete = new List<int>() { 10114, 10164, 10190, 10124, 10284, 10330, 10334, 10414, 10421, 10442, 10540, 10680, 10683, 10724 };
+                        List<int> pre108ServerComplete = new List<int>() { 10114, 10130, 10164, 10190, 10124, 10284, 10330, 10334, 10414, 10421, 10442, 10538, 10540, 10550, 10582, 10584, 10680, 10683, 10724 };
                         
                         ///<summary>
                         /// Some do not post-108 so we have to account for those too!
@@ -96,6 +96,8 @@ namespace Server.Medius
                             char[] charsToRemove = { ':', 'f', '{', '}' };
                             var clientObjects = Program.Manager.GetClients(data.ApplicationId);
 
+                            Logger.Info($"clientObjects {clientObjects.Count}");
+
                             string connectingIP = ((IPEndPoint)clientChannel.RemoteAddress).Address.ToString().Trim(charsToRemove);
 
                             //var clientObjects2 = clientObjects.Where(acct => acct.IP == IPAddress.Parse(connectingIP)).ToList();
@@ -103,10 +105,11 @@ namespace Server.Medius
                             {
                                 string clientIPStr = client.IP.ToString().Trim(charsToRemove);
 
+
+                                Logger.Warn($"clientobject IP compare: {clientIPStr} to active connection: {connectingIP}");
+
                                 if (clientIPStr == connectingIP)
-                                {
                                     data.ClientObject = client;
-                                }
                                 Logger.Warn($"clientobject: {data.ClientObject}");
                             }
 
@@ -965,8 +968,9 @@ namespace Server.Medius
                         if (Settings.MediusServerVersionOverride == true)
                         {
                             #region F1 2005 PAL
+                            List<int> F12005AppIds = new List<int> { 10952, 10954 };
                             // F1 2005 PAL SCES / F1 2005 PAL TCES
-                            if (data.ApplicationId == 10954 || data.ApplicationId == 10952)
+                            if (F12005AppIds.Contains(data.ApplicationId))
                             {
                                 data.ClientObject.Queue(new MediusVersionServerResponse()
                                 {
@@ -984,6 +988,18 @@ namespace Server.Medius
                                 {
                                     MessageID = mediusVersionServerRequest.MessageID,
                                     VersionServer = "Medius Authentication Server Version 1.40.PRE8",
+                                    StatusCode = MediusCallbackStatus.MediusSuccess,
+                                });
+                            }
+                            #endregion
+
+                            #region EyeToy Chat Beta
+                            else if (data.ApplicationId == 10550)
+                            {
+                                data.ClientObject.Queue(new MediusVersionServerResponse()
+                                {
+                                    MessageID = mediusVersionServerRequest.MessageID,
+                                    VersionServer = "Medius Authentication Server Version 1.43.0000",
                                     StatusCode = MediusCallbackStatus.MediusSuccess,
                                 });
                             }
@@ -1013,7 +1029,7 @@ namespace Server.Medius
                                 data.ClientObject.Queue(new MediusVersionServerResponse()
                                 {
                                     MessageID = mediusVersionServerRequest.MessageID,
-                                    VersionServer = "Medius Authentication Server Version 3.09",
+                                    VersionServer = "Medius Authentication Server Version 3.05.201109161400",
                                     StatusCode = MediusCallbackStatus.MediusSuccess,
                                 });
                             }
@@ -1065,8 +1081,10 @@ namespace Server.Medius
 
                             if (r.IsCompletedSuccessfully)
                             {
-                                if (locations == null || locations.Length == 0)
+                                if (locations.Length == 0)
                                 {
+                                    Logger.Info("No Locations found.");
+
                                     data.ClientObject.Queue(new MediusGetLocationsResponse()
                                     {
                                         MessageID = getLocationsRequest.MessageID,
@@ -1093,6 +1111,8 @@ namespace Server.Medius
                             }
                             else
                             {
+                                Logger.Error($"GetLocationsRequest failed [{r.Exception}]");
+
                                 data.ClientObject.Queue(new MediusGetLocationsResponse()
                                 {
                                     MessageID = getLocationsRequest.MessageID,
@@ -1795,11 +1815,18 @@ namespace Server.Medius
                                             string txt = r.Result.EulaBody;
                                             if (!string.IsNullOrEmpty(r.Result.EulaTitle))
                                                 txt = r.Result.EulaTitle + "\n" + txt;
-                                            data.ClientObject.Queue(MediusGetPolicyResponse.FromText(getPolicyRequest.MessageID, txt));
+                                            Logger.Info($"GetPolicy Succeeded:{getPolicyRequest.MessageID}");
+                                            data.ClientObject.Queue(Program.GetPolicyFromText(getPolicyRequest.MessageID, txt));
+                                        }
+                                        else if (r.IsCompletedSuccessfully && r.Result == null)
+                                        {
+                                            Logger.Debug($"Sending blank Policy since no chunks were found");
+                                            data.ClientObject.Queue(new MediusGetPolicyResponse() { MessageID = getPolicyRequest.MessageID, StatusCode = MediusCallbackStatus.MediusSuccess, Policy = "", EndOfText = true });
                                         }
                                         else
                                         {
-                                            data.ClientObject.Queue(new MediusGetPolicyResponse() { MessageID = getPolicyRequest.MessageID, StatusCode = MediusCallbackStatus.MediusSuccess, Policy = "", EndOfText = true });
+                                            Logger.Error($"GetPolicy Failed = [{r.Exception}]");
+                                            data.ClientObject.Queue(new MediusGetPolicyResponse() { MessageID = getPolicyRequest.MessageID, StatusCode = MediusCallbackStatus.MediusSuccess, Policy = "NONE", EndOfText = true });
                                         }
                                     });
                                     break;
@@ -1816,11 +1843,18 @@ namespace Server.Medius
                                             string txt = r.Result.EulaBody;
                                             if (!string.IsNullOrEmpty(r.Result.EulaTitle))
                                                 txt = r.Result.EulaTitle + "\n" + txt;
-                                            data.ClientObject.Queue(MediusGetPolicyResponse.FromText(getPolicyRequest.MessageID, txt));
+                                            Logger.Info($"GetPolicy Succeeded:{getPolicyRequest.MessageID}");
+                                            data.ClientObject.Queue(Program.GetPolicyFromText(getPolicyRequest.MessageID, txt));
+                                        }
+                                        else if (r.IsCompletedSuccessfully && r.Result == null)
+                                        {
+                                            Logger.Debug($"Sending blank Policy since no chunks were found");
+                                            data.ClientObject.Queue(new MediusGetPolicyResponse() { MessageID = getPolicyRequest.MessageID, StatusCode = MediusCallbackStatus.MediusSuccess, Policy = "", EndOfText = true });
                                         }
                                         else
                                         {
-                                            data.ClientObject.Queue(new MediusGetPolicyResponse() { MessageID = getPolicyRequest.MessageID, StatusCode = MediusCallbackStatus.MediusSuccess, Policy = "", EndOfText = true });
+                                            Logger.Error($"GetPolicy Failed = [{r.Exception}]");
+                                            data.ClientObject.Queue(new MediusGetPolicyResponse() { MessageID = getPolicyRequest.MessageID, StatusCode = MediusCallbackStatus.MediusSuccess, Policy = "NONE", EndOfText = true });
                                         }
                                     });
 
@@ -2298,14 +2332,16 @@ namespace Server.Medius
         {
             var fac = new PS2CipherFactory();
             var rsa = fac.CreateNew(CipherContext.RSA_AUTH) as PS2_RSA;
+            IPHostEntry host = Dns.GetHostEntry(Program.Settings.NATIp);
 
-            List<int> pre108Secure = new List<int>() { 10124, 10680, 10683 };
+            List<int> pre108Secure = new List<int>() { 10010, 10031, 10190, 10124, 10680, 10683 };
+            List<int> p2pSetIP = new List<int>() { 10010, 10031, 10164, 10190, 10330, 10694, 10782, 10884, 10974, 21834, 21924 };
 
             //
-            if(data.ClientObject.ApplicationId == 10694)
+            if(p2pSetIP.Contains(data.ClientObject.ApplicationId))
             {
-                char[] charsToRemove = { ':', 'f' };
-                data.ClientObject.SetIp(((System.Net.IPEndPoint)clientChannel.RemoteAddress).Address.ToString().Trim(charsToRemove));
+                char[] charsToRemove = { ':', 'f', '{', '}' };
+                data.ClientObject.SetIp(((IPEndPoint)clientChannel.RemoteAddress).Address.ToString().Trim(charsToRemove));
             }
             await data.ClientObject.Login(accountDto);
 
@@ -2320,9 +2356,6 @@ namespace Server.Medius
 
             // 
             Logger.Info($"LOGGING IN AS {data.ClientObject.AccountName} with access token {data.ClientObject.Token}");
-
-
-            IPHostEntry host = Dns.GetHostEntry(Program.Settings.NATIp);
 
             // Tell client
             if (ticket == true)
@@ -2414,7 +2447,7 @@ namespace Server.Medius
 
                 #region If PS2/PSP
 
-                if (data.ClientObject.MediusVersion > 108 || pre108Secure.Contains(data.ClientObject.ApplicationId))
+                if (data.ClientObject.MediusVersion > 108)
                 {
 
                     data.ClientObject.Queue(new MediusAccountLoginResponse()
@@ -2442,7 +2475,7 @@ namespace Server.Medius
                         },
                     });
                 }
-                else if (data.ClientObject.ApplicationId == 10031) //10683
+                else if (pre108Secure.Contains(data.ClientObject.ApplicationId)) //10683
                 {
                     data.ClientObject.Queue(new MediusAccountLoginResponse()
                     {
@@ -2512,8 +2545,17 @@ namespace Server.Medius
             var fac = new PS2CipherFactory();
             var rsa = fac.CreateNew(CipherContext.RSA_AUTH) as PS2_RSA;
 
+            List<int> p2pSetIP = new List<int>() { 10010 };
+
             int iAccountID = Program.Manager.AnonymousAccountIDGenerator(Program.Settings.AnonymousIDRangeSeed);
             Logger.Info($"AnonymousIDRangeSeedGenerator AccountID returned {iAccountID}");
+
+            //
+            if (p2pSetIP.Contains(data.ClientObject.ApplicationId))
+            {
+                char[] charsToRemove = { ':', 'f', '{', '}' };
+                data.ClientObject.SetIp(((IPEndPoint)clientChannel.RemoteAddress).Address.ToString().Trim(charsToRemove));
+            }
 
             //
             //await data.ClientObject.Login(accountDto);

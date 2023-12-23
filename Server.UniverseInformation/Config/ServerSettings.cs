@@ -60,6 +60,8 @@ namespace Server.UniverseInformation.Config
         /// </summary>
         public bool EncryptMessages { get; set; } = true;
 
+        public bool PokePatchOn {  get; set; } = true;
+
         /// <summary>
         /// Universes.
         /// </summary>

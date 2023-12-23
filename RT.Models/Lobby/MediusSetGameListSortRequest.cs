@@ -3,10 +3,10 @@ using Server.Common;
 
 namespace RT.Models
 {
-    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.SetGameListSortPriorityRequest)]
+    [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.SetGameListSortRequest)]
     public class MediusSetGameListSortRequest : BaseLobbyExtMessage, IMediusRequest
     {
-        public override byte PacketType => (byte)MediusLobbyExtMessageIds.SetGameListSortPriorityRequest;
+        public override byte PacketType => (byte)MediusLobbyExtMessageIds.SetGameListSortRequest;
 
         public MessageId MessageID { get; set; }
         public string SessionKey { get; set; } // Constants.SESSIONKEY_MAXLEN
@@ -17,10 +17,8 @@ namespace RT.Models
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
-            // 
             base.Deserialize(reader);
 
-            //
             MessageID = reader.Read<MessageId>();
             SessionKey = reader.ReadString(Constants.SESSIONKEY_MAXLEN);
             SortPriority = reader.ReadInt32();
@@ -31,10 +29,8 @@ namespace RT.Models
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
         {
-            // 
             base.Serialize(writer);
 
-            //
             writer.Write(MessageID ?? MessageId.Empty);
             writer.Write(SessionKey, Constants.SESSIONKEY_MAXLEN);
             writer.Write(SortPriority);

@@ -42,6 +42,7 @@ namespace Server.Dme
             AUTHENTICATED
         }
 
+        private ConcurrentDictionary<string, ClientObject> _appIdToClient = new ConcurrentDictionary<string, ClientObject>();
         private ConcurrentDictionary<string, ClientObject> _accessTokenToClient = new ConcurrentDictionary<string, ClientObject>();
         private ConcurrentDictionary<string, ClientObject> _sessionKeyToClient = new ConcurrentDictionary<string, ClientObject>();
 
@@ -66,6 +67,13 @@ namespace Server.Dme
 
         #region Clients
 
+        public ClientObject GetClientByAppId(string appId)
+        {
+            if (_accessTokenToClient.TryGetValue(appId, out var result))
+                return result;
+
+            return null;
+        }
         public ClientObject GetClientByAccessToken(string accessToken)
         {
             if (_accessTokenToClient.TryGetValue(accessToken, out var result))

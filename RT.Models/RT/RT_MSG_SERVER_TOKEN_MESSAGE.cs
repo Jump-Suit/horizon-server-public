@@ -29,7 +29,10 @@ namespace RT.Models
             {
 
                 tokenMsgType = reader.Read<RT_TOKEN_MESSAGE_TYPE>();
-                if(tokenMsgType == RT_TOKEN_MESSAGE_TYPE.RT_TOKEN_SERVER_OWNED)
+                if(tokenMsgType == RT_TOKEN_MESSAGE_TYPE.RT_TOKEN_SERVER_OWNED 
+                    /* ONLY HOME */
+                     || tokenMsgType == RT_TOKEN_MESSAGE_TYPE.RT_TOKEN_SERVER_GRANTED
+                     || tokenMsgType == RT_TOKEN_MESSAGE_TYPE.RT_TOKEN_SERVER_FREED)
                 {
                     targetToken = reader.Read<ushort>();
                 }
@@ -52,7 +55,10 @@ namespace RT.Models
             } else
             {
                 writer.Write(tokenMsgType);
-                if(tokenMsgType == RT_TOKEN_MESSAGE_TYPE.RT_TOKEN_SERVER_OWNED)
+                if(tokenMsgType == RT_TOKEN_MESSAGE_TYPE.RT_TOKEN_SERVER_OWNED
+                     /* ONLY HOME */
+                     || tokenMsgType == RT_TOKEN_MESSAGE_TYPE.RT_TOKEN_SERVER_GRANTED
+                     || tokenMsgType == RT_TOKEN_MESSAGE_TYPE.RT_TOKEN_SERVER_FREED)
                 {
                     writer.Write(targetToken);
                 }

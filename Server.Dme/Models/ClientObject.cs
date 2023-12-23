@@ -23,7 +23,7 @@ namespace Server.Dme.Models
 
         static readonly IInternalLogger _logger = InternalLoggerFactory.GetInstance<ClientObject>();
         protected virtual IInternalLogger Logger => _logger;
-
+        public IPAddress IP { get; protected set; } = IPAddress.Any;
         /// <summary>
         /// 
         /// </summary>
@@ -187,9 +187,10 @@ namespace Server.Dme.Models
 
         public void BeginUdp()
         {
+            
             if (Udp != null)
                 return;
-
+            
             Udp = new UdpServer(this);
             _ = Udp.Start();
         }
@@ -357,6 +358,30 @@ namespace Server.Dme.Models
 
             return RecvFlag.HasFlag(flag);
         }
+
+        #region SetIP
+        public void SetIp(string ip)
+        {
+            switch (Uri.CheckHostName(ip))
+            {
+                case UriHostNameType.IPv4:
+                    {
+                        IP = IPAddress.Parse(ip).MapToIPv4() ?? IPAddress.Any;
+                        break;
+                    }
+                case UriHostNameType.Dns:
+                    {
+                        IP = Dns.GetHostAddresses(ip).FirstOrDefault()?.MapToIPv4() ?? IPAddress.Any;
+                        break;
+                    }
+                default:
+                    {
+                        Logger.Error($"Unhandled UriHostNameType {Uri.CheckHostName(ip)} from {ip} in DMEObject.SetIp()");
+                        break;
+                    }
+            }
+        }
+        #endregion
 
         public override string ToString()
         {

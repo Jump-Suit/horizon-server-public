@@ -4,7 +4,7 @@ using Server.Common;
 namespace RT.Models
 {
     [MediusMessage(NetMessageClass.MessageClassLobbyExt, MediusLobbyExtMessageIds.JoinLeastPopulatedChannelResponse)]
-    public class MediusJoinLeastPopulatedChannelResponse : BaseLobbyMessage, IMediusResponse
+    public class MediusJoinLeastPopulatedChannelResponse : BaseLobbyExtMessage, IMediusResponse
     {
         public override byte PacketType => (byte)MediusLobbyExtMessageIds.JoinLeastPopulatedChannelResponse;
 
@@ -23,7 +23,7 @@ namespace RT.Models
 
             //
             MessageID = reader.Read<MessageId>();
-            reader.ReadBytes(3);
+            //reader.ReadBytes(3);
 
             // 
             StatusCode = reader.Read<MediusCallbackStatus>();
@@ -38,7 +38,7 @@ namespace RT.Models
 
             //
             writer.Write(MessageID ?? MessageId.Empty);
-            writer.Write(new byte[3]);
+            //writer.Write(new byte[3]);
 
             // 
             writer.Write(StatusCode);

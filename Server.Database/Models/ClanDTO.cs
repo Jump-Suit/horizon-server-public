@@ -12,7 +12,7 @@ namespace Server.Database.Models
         public string ClanTAG { get; set; }
         public AccountDTO ClanLeaderAccount { get; set; }
         public List<AccountDTO> ClanMember { get; set; }
-        public List<ClanInvitationDTO> ClanInvitation { get; set; }
+        public List<ClanInvitationDTO> ClanInvitations { get; set; }
         public List<ClanMessageDTO> ClanMessages { get; set; }
         public List<ClanMetaDataDTO> SVOClanMetaData { get; set; }
         public List<ClanNewsDTO> SVOClanNews { get; set; }

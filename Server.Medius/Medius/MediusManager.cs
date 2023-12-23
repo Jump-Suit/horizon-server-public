@@ -388,8 +388,27 @@ namespace Server.Medius
 
             var appIdsInGroup = GetAppIdsInGroup(client.ApplicationId);
             string gameName = null;
+            Game game = null;
+            Channel gameChannel = null;
+
             if (request is MediusCreateGameRequest r)
+            {
                 gameName = r.GameName;
+                if (client.ApplicationId == 23360)
+                {
+                    gameChannel = new Channel()
+                    {
+                        MaxPlayers = r.MaxPlayers,
+                        MinPlayers = r.MinPlayers,
+                        ApplicationId = r.ApplicationID,
+                        Name = gameName,
+                        Type = ChannelType.Game,
+                        
+                    };
+
+                    await Program.Manager.AddChannel(gameChannel);
+                }
+            }
             else if (request is MediusCreateGameRequest1 r1)
                 gameName = r1.GameName;
 
@@ -428,7 +447,15 @@ namespace Server.Medius
             // Create and add
             try
             {
-                var game = new Game(client, request, client.CurrentChannel, dme);
+                if (client.ApplicationId == 23360)
+                {
+
+                    game = new Game(client, request, gameChannel, dme);
+                } else
+                {
+
+                    game = new Game(client, request, client.CurrentChannel, dme);
+                }
                 await AddGame(game);
 
                 // Send create game request to dme server
@@ -561,7 +588,7 @@ namespace Server.Medius
                 return;
             }
 
-            //P2P
+            //P2P Matchmaking (Twisted Metal X)
             if(client.ApplicationId == 21834)
             {
 
@@ -593,7 +620,7 @@ namespace Server.Medius
                         return;
                     }
 
-                    mps.SendServerCreateGameWithAttributesRequest(matchCreateGameRequest.MessageID.ToString(), client.AccountId, game.Id, false, (int)game.Attributes, client.ApplicationId, game.MaxPlayers);
+                    mps.SendServerCreateGameWithAttributesRequestP2P(matchCreateGameRequest.MessageID.ToString(), client.AccountId, game.Id, false, game, client);
 
                     /*
                     client.Queue(new MediusMatchCreateGameResponse()
@@ -1101,6 +1128,7 @@ namespace Server.Medius
                         {
                             Type = NetConnectionType.NetConnectionTypePeerToPeerUDP,
                             WorldID = game.DMEWorldId,
+                            AccessKey = client.Token,
                             SessionKey = client.SessionKey,
                             ServerKey = Program.GlobalAuthPublic
                         }
@@ -1116,6 +1144,7 @@ namespace Server.Medius
                         {
                             Type = NetConnectionType.NetConnectionTypeClientServerTCP,
                             WorldID = game.DMEWorldId,
+                            AccessKey = client.Token,
                             SessionKey = client.SessionKey,
                             ServerKey = Program.GlobalAuthPublic
                         }
@@ -1345,12 +1374,13 @@ namespace Server.Medius
             if (party == null)
             {
                 Logger.Warn($"Join Game Request Handler Error: Error in retrieving party info from MUM cache [{request.MediusWorldID}]");
-                
+                /*
                 client.Queue(new MediusPartyJoinByIndexResponse()
                 {
                     MessageID = request.MessageID,
                     StatusCode = MediusCallbackStatus.MediusNoResult
                 });
+                */
             }
 
             #region Password
@@ -1564,6 +1594,7 @@ namespace Server.Medius
                     return;
                 }
                 /*
+                //TEMP
                 client.Queue(new MediusPartyCreateResponse()
                 {
                     MessageID = request.MessageID,

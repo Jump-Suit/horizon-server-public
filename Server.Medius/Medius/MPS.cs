@@ -115,7 +115,7 @@ namespace Server.Medius
                         data.ApplicationId = clientConnectTcp.AppId;
                         scertClient.ApplicationID = clientConnectTcp.AppId;
 
-                        List<int> pre108ServerConnect = new List<int>() { 10190, 10114, 10124, 10164, 10284, 10330, 10334, 10421, 10540, 10680, 10724 };
+                        List<int> pre108ServerConnect = new List<int>() { 10190, 10114, 10124, 10130, 10164, 10284, 10330, 10334, 10421, 10538, 10540, 10550, 10582, 10584, 10680, 10724 };
                         //List<int> pre108NoServerConnect = new List<int>() { 10782 };
 
 
@@ -967,6 +967,39 @@ namespace Server.Medius
             }
 
             return null;
+        }
+
+        public void SendServerCreateGameWithAttributesRequestP2P(string msgId, int acctId, int gameId, bool partyType, Game game, ClientObject client)
+        {
+            //{gameId}-{acctId}-{messageId}-{partyType}
+            Queue(new RT_MSG_SERVER_APP()
+            {
+
+                Message = new MediusServerCreateGameWithAttributesRequest2()
+                {
+                    MessageID = new MessageId($"{msgId}"),
+                    MediusWorldUID = (uint)gameId,
+                    Attributes = game.Attributes,
+                    ApplicationID = client.ApplicationId,
+                    MaxClients = game.MaxPlayers,
+                    ConnectInfo = new NetConnectionInfo()
+                    {
+                        AccessKey = client.Token,
+                        SessionKey = client.SessionKey,
+                        WorldID = gameId,
+                        ServerKey = new RSA_KEY(),
+                        AddressList = new NetAddressList()
+                        {
+                            AddressList = new NetAddress[Constants.NET_ADDRESS_LIST_COUNT]
+                                                {
+                                                        new NetAddress() { BinaryAddress = BitConverter.ToUInt32(client.IP.GetAddressBytes()), BinaryPort = 0, AddressType = NetAddressType.NetAddressTypeBinaryExternal },//Address = game.netAddressList.AddressList[0].Address, Port = game.netAddressList.AddressList[0].Port, AddressType = NetAddressType.NetAddressTypeBinaryExternal},
+                                                        new NetAddress() { AddressType = NetAddressType.NetAddressNone},
+                                                }
+                        },
+                        Type = NetConnectionType.NetConnectionTypePeerToPeerUDP
+                    }
+                }
+            }, channel);
         }
 
         public void SendServerCreateGameWithAttributesRequest(string msgId, int acctId, int gameId, bool partyType, int gameAttributes, int clientAppId, int gameMaxPlayers)

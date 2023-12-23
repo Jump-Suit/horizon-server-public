@@ -12,14 +12,14 @@ namespace RT.Models
         public override NetMessageTypeIds PacketType => NetMessageTypeIds.NetMessageTypeMAPSHelloMessage;
 
         public override byte IncomingMessage => 0;
-        public override byte Size => 5;
+        public override byte Size => 8;
 
         public override byte PluginId => 31;
 
         public bool m_success;
         public bool m_isOnline;
 
-        public byte[] m_availableFactions = new byte[0];
+        public byte[] m_availableFactions = new byte[3];
 
         public override void DeserializePlugin(MessageReader reader)
         {
@@ -43,7 +43,7 @@ namespace RT.Models
             return base.ToString() + " " +
                 $"m_success: {m_success} " +
                 $"m_isOnline: {m_isOnline} " +
-                $"m_availableFactions: {m_availableFactions.ToString()}";
+                $"m_availableFactions: {m_availableFactions}";
         }
     }
 }

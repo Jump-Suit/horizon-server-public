@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace Server.NAT
 {
     /// <summary>
-    /// Unimplemented NAT.
+    /// SCE-RT NAT.
     /// </summary>
     public class NAT
     {

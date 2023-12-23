@@ -11,7 +11,7 @@ namespace RT.Models.ServerPlugins
         public override NetMessageTypeIds PacketType => NetMessageTypeIds.NetMessageTypeAccountLogoutResponse;
 
         public override byte IncomingMessage => 0;
-        public override byte Size => 0;
+        public override byte Size => 4;
 
         public override byte PluginId => 0;
 
@@ -20,17 +20,19 @@ namespace RT.Models.ServerPlugins
         public override void DeserializePlugin(MessageReader reader)
         {
             m_success = reader.ReadBoolean();
+            reader.ReadBytes(3);
         }
 
         public override void SerializePlugin(MessageWriter writer)
         {
             writer.Write(m_success);
+            writer.Write(new byte[3]);
         }
 
         public override string ToString()
         {
             return base.ToString() + " " +
-                $"Success: {m_success}";
+                $"m_success: {m_success}";
         }
 
     }

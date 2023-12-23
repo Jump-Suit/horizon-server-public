@@ -122,9 +122,7 @@ namespace RT.Models
             //var msgSize = reader.ReadUInt16();
             var msgTypeBW = reader.Read<NetMessageTypeIds>();
 
-
-            var msgTypeByteInt = Convert.ToInt32(msgTypeBW);
-            var msgTypeReversed = ReverseBytesInt(msgTypeByteInt);
+            var msgTypeReversed = ReverseBytesInt(Convert.ToInt32(msgTypeBW));
             //var reversedMsgType = Reverse(Convert.ToInt32(msgTypeBW));
 
 

@@ -1909,8 +1909,8 @@ namespace RT.Common
         ServerWorldReportOnMe = 0x20,
         ServerSessionBeginRequest1 = 0x21,
         ServerSessionBeginResponse1 = 0x22,
+        ServerCreateGameWithAttributesRequest2 = 0x23, //TEST
         ServerSessionBeginRequest2 = 0x24,
-        ServerCreateGameWithAttributesRequest2 = 0x25, //TEST
     }
     #endregion
 
@@ -3164,7 +3164,7 @@ namespace RT.Common
         NetMessageCharacterListRequest = 566,
         NetMessageCharacterListResponse = 567,
         NetMessageNewsEulaRequest = 574, // 23E
-        NetMessageNewsEUlaResponse = 575,
+        NetMessageNewsEulaResponse = 575,
         NetMessageServerStatusRequest = 587,
         NetMessageServerStatusResponse = 588, //Needs Debug Check
 

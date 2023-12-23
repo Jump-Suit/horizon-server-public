@@ -245,6 +245,12 @@ namespace Server.Dme
                         break;
                     }
 
+                case RT_MSG_CLIENT_FLUSH_ALL flushAll:
+                    {
+
+                        return;
+                    }
+
                 case RT_MSG_CLIENT_DISCONNECT _:
                 case RT_MSG_CLIENT_DISCONNECT_WITH_REASON _:
                     {

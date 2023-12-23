@@ -456,6 +456,11 @@ namespace Server.Dme
             return null;
         }
 
+        public static ClientObject GetClients(string appId)
+        {
+            return Managers.Select(x => x.Value.GetClientByAppId(appId)).FirstOrDefault(x => x != null);
+        }
+
         public static ClientObject GetClientByAccessToken(string accessToken)
         {
             return Managers.Select(x => x.Value.GetClientByAccessToken(accessToken)).FirstOrDefault(x => x != null);

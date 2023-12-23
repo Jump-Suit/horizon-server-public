@@ -32,7 +32,6 @@ namespace RT.Models
 
             //
             reader.ReadBytes(3);
-
             StatusCode = reader.Read<MediusCallbackStatus>();
             UniverseName = reader.ReadString(Constants.UNIVERSENAME_MAXLEN);
             DNS = reader.ReadString(Constants.UNIVERSEDNS_MAXLEN);
@@ -55,7 +54,6 @@ namespace RT.Models
 
             //
             writer.Write(new byte[3]);
-
             writer.Write(StatusCode);
             writer.Write(UniverseName, Constants.UNIVERSENAME_MAXLEN);
             writer.Write(DNS, Constants.UNIVERSEDNS_MAXLEN);

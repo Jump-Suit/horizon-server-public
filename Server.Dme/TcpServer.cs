@@ -357,28 +357,41 @@ namespace Server.Dme
                         } 
                         */
 
-
                         data.ApplicationId = clientConnectTcpAuxUdp.AppId;
                         data.ClientObject = Program.GetClientByAccessToken(clientConnectTcpAuxUdp.AccessToken);
-                        
-                        
-                        if(data.ClientObject == null)
+
+                        if (data.ClientObject == null)
                         {
                             Logger.Warn("Access Token for client not found, fallback to Sessionkey!");
                             data.ClientObject = Program.GetClientBySessionKey(clientConnectTcpAuxUdp.SessionKey);
+                            if (data.ClientObject != null)
+                            {
+
+                                Logger.Warn("CLIENTOBJECT FALLBACK FOUND!!");
+                                //var clients = Program.GetClients(clientConnectTcpAuxUdp.AppId);
+                                //Logger.Warn($"Clients Count for AppId {clients.Count()}");
+                                /*
+                                foreach (var client in clients)
+                                {
+                                    if (client.Token == clientConnectTcp.AccessToken)
+                                    {
+
+                                        Logger.Warn("CLIENTOBJECT FALLBACK FOUND!!");
+                                        data.ClientObject = client;
+                                    }
+                                }
+                                */
+                            } else
+                            {
+                                Logger.Warn("AccessToken and SessionKey null! FALLBACK WITH NEW CLIENTOBJECT!");
+                                //var clients = Program.GetClientsByAppId(clientConnectTcpAuxUdp.AppId);
+                                //data.ClientObject = clients.Where(x => x.Token == clientConnectTcpAuxUdp.AccessToken).FirstOrDefault();  
+                                ClientObject clientObject = new ClientObject(clientConnectTcpAuxUdp.SessionKey);
+                                clientObject.ApplicationId = clientConnectTcpAuxUdp.AppId;
+                                data.ClientObject = clientObject;
+                            }
                         }
 
-                        
-                        if (data.ClientObject == null)
-                        {
-                            Logger.Warn("AccessToken and SessionKey null! FALLBACK WITH NEW CLIENTOBJECT!");
-                            //var clients = Program.GetClientsByAppId(clientConnectTcpAuxUdp.AppId);
-                            //data.ClientObject = clients.Where(x => x.Token == clientConnectTcpAuxUdp.AccessToken).FirstOrDefault();  
-                            ClientObject clientObject = new ClientObject(clientConnectTcpAuxUdp.SessionKey);
-                            clientObject.ApplicationId = clientConnectTcpAuxUdp.AppId;
-                            data.ClientObject = clientObject;
-                        }
-                        
                         /*
                         if (data.ClientObject == null || data.ClientObject.DmeWorld == null || data.ClientObject.DmeWorld.WorldId != clientConnectTcpAuxUdp.ARG1)
                             throw new Exception($"Client connected with invalid world id!");
@@ -411,6 +424,7 @@ namespace Server.Dme
                                 PlayerCount = (ushort)data.ClientObject.DmeWorld.Clients.Count,
                                 IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
                             }, clientChannel);
+
                             Queue(new RT_MSG_SERVER_INFO_AUX_UDP()
                             {
                                 Ip = Program.SERVER_IP,
@@ -425,11 +439,37 @@ namespace Server.Dme
 
                         data.ClientObject = Program.GetClientByAccessToken(clientConnectTcp.AccessToken);
 
+                        if (data.ClientObject == null)
+                        {
+                            Logger.Warn("Access Token for client not found, fallback to Sessionkey!");
+                            data.ClientObject = Program.GetClientBySessionKey(clientConnectTcp.SessionKey);
+                            if (data.ClientObject != null)
+                            {
+
+                                Logger.Warn("CLIENTOBJECT FALLBACK FOUND!!");
+                            }
+                            else
+                            {
+                                Logger.Warn("AccessToken and SessionKey null! FALLBACK WITH NEW CLIENTOBJECT!");
+                                //var clients = Program.GetClientsByAppId(clientConnectTcpAuxUdp.AppId);
+                                //data.ClientObject = clients.Where(x => x.Token == clientConnectTcpAuxUdp.AccessToken).FirstOrDefault();  
+                                ClientObject clientObject = new ClientObject(clientConnectTcp.SessionKey);
+                                clientObject.ApplicationId = clientConnectTcp.AppId;
+                                data.ClientObject = clientObject;
+                            }
+                        }
+
                         if (enableEncryption == true && scertClient.CipherService.HasKey(CipherContext.RC_CLIENT_SESSION) && scertClient.RsaAuthKey != null)
                         {
                             //Queue(new RT_MSG_SERVER_CRYPTKEY_GAME() { GameKey = scertClient.CipherService.GetPublicKey(CipherContext.RC_CLIENT_SESSION) }, clientChannel);
                         }
-                        
+
+                        data.ClientObject.OnTcpConnected(clientChannel);
+                        data.ClientObject.ScertId = GenerateNewScertClientId();
+                        data.ClientObject.MediusVersion = scertClient.MediusVersion;
+                        if (!_scertIdToClient.TryAdd(data.ClientObject.ScertId, data.ClientObject))
+                            throw new Exception($"Duplicate scert client id");
+
                         Queue(new RT_MSG_SERVER_CONNECT_ACCEPT_TCP()
                         {
                             PlayerId = (ushort)data.ClientObject.DmeId,
@@ -437,6 +477,8 @@ namespace Server.Dme
                             PlayerCount = (ushort)data.ClientObject.DmeWorld.Clients.Count,
                             IP = (clientChannel.RemoteAddress as IPEndPoint)?.Address
                         }, clientChannel);
+
+                        //pre108Complete 
 
                         if(scertClient.MediusVersion == 108 || scertClient.ApplicationID == 10683)
                         {
@@ -469,6 +511,7 @@ namespace Server.Dme
                             GameHostType = (byte)MGCL_GAME_HOST_TYPE.MGCLGameHostClientServerAuxUDP,
                             Timebase = (uint)data.ClientObject.DmeWorld.WorldTimer.ElapsedMilliseconds
                         }, clientChannel);
+
                         Queue(new RT_MSG_SERVER_INFO_AUX_UDP()
                         {
                             Ip = Program.SERVER_IP,
@@ -523,7 +566,10 @@ namespace Server.Dme
                 case RT_MSG_CLIENT_SET_AGG_TIME setAggTime:
                     {
                         Logger.Info($"rt_msg_server_process_client_set_agg_time_msg: new agg time = {setAggTime.AggTime}");
-                        if (scertClient.ApplicationID != 10954 || scertClient.ApplicationID != 10952) {
+
+                        List<int> preClientObject = new List<int> { 10952, 10954, 10130 };
+
+                        if (preClientObject.Contains(scertClient.ApplicationID)) {
                             data.ClientObject.AggTimeMs = setAggTime.AggTime;
                         } // We don't set AggTime here YET, the client object isn't created! for Pre-108 clients
                         break;
