@@ -93,6 +93,7 @@ namespace RT.Models
 
 
             EndOfList = reader.ReadBoolean();
+            //reader.ReadBytes(3);
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)

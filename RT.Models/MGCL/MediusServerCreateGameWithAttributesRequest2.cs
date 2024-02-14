@@ -13,6 +13,7 @@ namespace RT.Models
         public int MaxClients;
         public MediusWorldAttributesType Attributes;
         public uint MediusWorldUID;
+        public NetConnectionInfo ConnectInfo;
 
         public override void Deserialize(Server.Common.Stream.MessageReader reader)
         {
@@ -26,6 +27,7 @@ namespace RT.Models
             MaxClients = reader.ReadInt32();
             Attributes = reader.Read<MediusWorldAttributesType>();
             MediusWorldUID = reader.ReadUInt32();
+            ConnectInfo = reader.Read<NetConnectionInfo>();
         }
 
         public override void Serialize(Server.Common.Stream.MessageWriter writer)
@@ -40,6 +42,7 @@ namespace RT.Models
             writer.Write(MaxClients);
             writer.Write(Attributes);
             writer.Write(MediusWorldUID);
+            writer.Write(ConnectInfo);
         }
 
         public override string ToString()

@@ -240,7 +240,7 @@ namespace Server.Medius.Config
         /// Enable posting of debug information from the client <br></br>
         /// Set to false to disable, set to true to enable.            
         /// </summary>
-        public bool PostDebugInfoEnable = false;
+        public bool PostDebugInfoEnable = true;
         #endregion
 
         #region Anti-Cheat (and related info)
